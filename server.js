@@ -9,6 +9,8 @@ dotenv.config();
 
 /* ---------------- ROUTES ---------------- */
 const authRoutes = require("./routes/authRoutes");
+const contactRoutes = require('./routes/contactRoutes');
+const testimonialRoutes = require('./routes/testimonialRoutes');
 
 /* ---------------- APP ---------------- */
 const app = express();
@@ -23,6 +25,8 @@ app.use(morgan("dev"));
 /* ---------------- ROUTES ---------------- */
 
 app.use("/auth", authRoutes);
+app.use('/contact', contactRoutes);
+app.use('/testimonials', testimonialRoutes);
 
 /* ---------------- HEALTH CHECK ---------------- */
 app.get("/health", (req, res) => {
