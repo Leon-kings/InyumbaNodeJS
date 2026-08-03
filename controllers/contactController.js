@@ -1,4 +1,5 @@
 const Contact = require("../models/Contact");
+const Notification = require("../models/Notification");
 const nodemailer = require("nodemailer");
 const { validationResult } = require("express-validator");
 
@@ -28,7 +29,115 @@ const verifySMTP = async () => {
   }
 };
 
-// Email functions
+// ===========================
+// NOTIFICATION FUNCTIONS
+// ===========================
+
+// Create notification for admin about new contact
+const createAdminNotification = async (contact, type) => {
+  try {
+    let message = "";
+    let metadata = {};
+
+    switch (type) {
+      case "created":
+        message = `📩 New contact from ${contact.name} (${contact.email})`;
+        metadata = {
+          name: contact.name,
+          email: contact.email,
+          messagePreview: contact.messagePreview || contact.message.substring(0, 100) + "...",
+          status: contact.status,
+          ipAddress: contact.ipAddress,
+        };
+        break;
+      case "read":
+        message = `👀 Contact from ${contact.name} has been read`;
+        metadata = {
+          name: contact.name,
+          email: contact.email,
+          readAt: new Date(),
+        };
+        break;
+      case "replied":
+        message = `✅ Reply sent to ${contact.name} (${contact.email})`;
+        metadata = {
+          name: contact.name,
+          email: contact.email,
+          replyMessage: contact.replyMessage,
+          repliedAt: new Date(),
+        };
+        break;
+      default:
+        message = `📩 New contact from ${contact.name}`;
+    }
+
+    const notification = new Notification({
+      type: `contact_${type}`,
+      contactId: contact._id,
+      contactName: contact.name,
+      contactEmail: contact.email,
+      message: message,
+      isRead: false,
+      isGlobal: false,
+      status: "new",
+      metadata: metadata,
+      target: "admin", // Only for admin
+      data: {
+        contactId: contact._id,
+        name: contact.name,
+        email: contact.email,
+        message: contact.message,
+        status: contact.status,
+        createdAt: contact.createdAt,
+        ipAddress: contact.ipAddress,
+        userAgent: contact.userAgent,
+      },
+    });
+
+    await notification.save();
+    console.log(`✅ Contact notification created: ${message}`);
+    return notification;
+  } catch (error) {
+    console.error("❌ Error creating contact notification:", error);
+    return null;
+  }
+};
+
+// Create notification for user when replied
+const createUserNotification = async (contact) => {
+  try {
+    const notification = new Notification({
+      type: "contact_replied",
+      contactId: contact._id,
+      contactName: contact.name,
+      contactEmail: contact.email,
+      message: `✅ Your message has been replied to by our team`,
+      isRead: false,
+      isGlobal: false,
+      status: "new",
+      target: "user", // For user
+      data: {
+        contactId: contact._id,
+        name: contact.name,
+        email: contact.email,
+        replyMessage: contact.replyMessage,
+        repliedAt: contact.repliedAt,
+      },
+    });
+
+    await notification.save();
+    console.log(`✅ User notification created for ${contact.email}`);
+    return notification;
+  } catch (error) {
+    console.error("❌ Error creating user notification:", error);
+    return null;
+  }
+};
+
+// ===========================
+// EMAIL FUNCTIONS
+// ===========================
+
 const sendEmailToAdmin = async ({ name, email, message }) => {
   try {
     const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
@@ -199,7 +308,6 @@ const sendEmailToUser = async ({
 
 // ============ CONTROLLER FUNCTIONS ============
 
-// 1. Submit Contact Form
 // ===========================
 // FORMAT IP ADDRESS
 // ===========================
@@ -234,6 +342,7 @@ const getClientIP = (req) => {
   return "0.0.0.0";
 };
 
+// 1. Submit Contact Form
 exports.submitContact = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -251,10 +360,8 @@ exports.submitContact = async (req, res) => {
     const { name, email, message } = req.body;
 
     // Check for duplicate submissions
-
     const recentSubmission = await Contact.findOne({
       email,
-
       createdAt: {
         $gte: new Date(Date.now() - 5 * 60 * 1000),
       },
@@ -263,30 +370,27 @@ exports.submitContact = async (req, res) => {
     if (recentSubmission) {
       return res.status(429).json({
         success: false,
-
         message: "Please wait 5 minutes before submitting again",
       });
     }
 
     // Create new contact
-
     const contact = new Contact({
       name,
-
       email,
-
       message,
-
-      // Clean IPv4 address
       ipAddress: getClientIP(req),
-
       userAgent: req.headers["user-agent"],
     });
 
     await contact.save();
 
-    // Send emails
+    // ===========================
+    // CREATE ADMIN NOTIFICATION
+    // ===========================
+    await createAdminNotification(contact, "created");
 
+    // Send emails
     try {
       await Promise.all([
         sendEmailToAdmin({
@@ -294,7 +398,6 @@ exports.submitContact = async (req, res) => {
           email,
           message,
         }),
-
         sendEmailToUser({
           name,
           email,
@@ -307,29 +410,20 @@ exports.submitContact = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-
       message: "Contact form submitted successfully",
-
       data: {
         id: contact._id,
-
         name: contact.name,
-
         email: contact.email,
-
         status: contact.status,
-
         ipAddress: contact.ipAddress,
-
         createdAt: contact.createdAt,
       },
     });
   } catch (error) {
     console.error("Submit contact error:", error);
-
     return res.status(500).json({
       success: false,
-
       message: "Failed to submit contact form",
     });
   }
@@ -394,11 +488,14 @@ exports.getContactById = async (req, res) => {
       });
     }
 
-    // Mark as read
+    // Mark as read and create notification
     if (contact.status === "pending") {
       contact.status = "read";
       contact.readAt = new Date();
       await contact.save();
+
+      // Create notification for read
+      await createAdminNotification(contact, "read");
     }
 
     res.status(200).json({
@@ -470,8 +567,14 @@ exports.updateContactStatus = async (req, res) => {
       });
     }
 
+    const oldStatus = contact.status;
     contact.status = status;
     await contact.save();
+
+    // Create notification for status change
+    if (status === "replied") {
+      await createAdminNotification(contact, "replied");
+    }
 
     res.status(200).json({
       success: true,
@@ -520,7 +623,18 @@ exports.replyToContact = async (req, res) => {
 
       contact.status = "replied";
       contact.repliedAt = new Date();
+      contact.replyMessage = replyMessage;
       await contact.save();
+
+      // ===========================
+      // CREATE NOTIFICATIONS
+      // ===========================
+      
+      // Create admin notification
+      await createAdminNotification(contact, "replied");
+      
+      // Create user notification
+      await createUserNotification(contact);
 
       res.status(200).json({
         success: true,
@@ -644,14 +758,10 @@ exports.exportContacts = async (req, res) => {
   }
 };
 
-// ===========================
-// EDIT CONTACT
-// ===========================
-
+// 11. Edit Contact
 exports.editContact = async (req, res) => {
   try {
     const { id } = req.params;
-
     const { name, email, message, status } = req.body;
 
     const contact = await Contact.findById(id);
@@ -663,56 +773,139 @@ exports.editContact = async (req, res) => {
       });
     }
 
-    // ===========================
-    // UPDATE FIELDS
-    // ===========================
-
-    if (name) {
-      contact.name = name;
-    }
-
-    if (email) {
-      contact.email = email;
-    }
-
-    if (message) {
-      contact.message = message;
-    }
-
-    if (status) {
-      contact.status = status;
-    }
+    // Update fields
+    if (name) contact.name = name;
+    if (email) contact.email = email;
+    if (message) contact.message = message;
+    if (status) contact.status = status;
 
     await contact.save();
 
     return res.status(200).json({
       success: true,
-
       message: "Contact updated successfully",
-
       data: {
         id: contact._id,
-
         name: contact.name,
-
         email: contact.email,
-
         message: contact.message,
-
         status: contact.status,
-
         createdAt: contact.createdAt,
-
         updatedAt: contact.updatedAt,
       },
     });
   } catch (error) {
     console.error("Edit contact error:", error);
-
     return res.status(500).json({
       success: false,
-
       message: "Failed to update contact",
+    });
+  }
+};
+
+// 12. Get Contact Notifications (Admin)
+exports.getContactNotifications = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const status = req.query.status;
+
+    let query = { 
+      type: { $regex: /^contact_/ },
+      target: { $in: ['admin', 'both'] }
+    };
+    
+    if (status) query.status = status;
+
+    const [notifications, total, unreadCount] = await Promise.all([
+      Notification.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Notification.countDocuments(query),
+      Notification.countDocuments({ 
+        ...query, 
+        isRead: false, 
+        status: 'new' 
+      }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: notifications,
+      unreadCount,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Get contact notifications error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch notifications",
+    });
+  }
+};
+
+// 13. Mark Notification as Read
+exports.markNotificationAsRead = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id);
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    notification.isRead = true;
+    notification.status = "read";
+    notification.readAt = new Date();
+    await notification.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Notification marked as read",
+      data: notification,
+    });
+  } catch (error) {
+    console.error("Mark notification as read error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to mark notification as read",
+    });
+  }
+};
+
+// 14. Mark All Notifications as Read
+exports.markAllNotificationsAsRead = async (req, res) => {
+  try {
+    await Notification.updateMany(
+      { type: { $regex: /^contact_/ }, isRead: false },
+      { 
+        $set: { 
+          isRead: true, 
+          status: "read",
+          readAt: new Date()
+        } 
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "All notifications marked as read",
+    });
+  } catch (error) {
+    console.error("Mark all notifications as read error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to mark all notifications as read",
     });
   }
 };

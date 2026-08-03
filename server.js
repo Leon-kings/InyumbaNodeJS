@@ -12,6 +12,7 @@ const authRoutes = require("./routes/authRoutes");
 const contactRoutes = require('./routes/contactRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const teamRoutes = require('./routes/teamRoutes');
+const houseRoutes = require('./routes/houseRoutes');
 
 /* ---------------- APP ---------------- */
 const app = express();
@@ -29,6 +30,7 @@ app.use("/auth", authRoutes);
 app.use('/contact', contactRoutes);
 app.use('/testimonials', testimonialRoutes);
 app.use('/team', teamRoutes);
+app.use('/houses', houseRoutes);
 
 /* ---------------- HEALTH CHECK ---------------- */
 app.get("/health", (req, res) => {
