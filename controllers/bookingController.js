@@ -493,61 +493,105 @@ const getBookingById = async (req, res) => {
 };
 
 // UPDATE BOOKING (with optional screenshot update)
+
+// UPDATE BOOKING
 const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
 
-    const booking = await Booking.findOne({ bookingId: id });
+    const booking = await Booking.findById(id);
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Booking not found'
+        message: "Booking not found",
       });
     }
 
     const allowedUpdates = [
-      'fullName', 'email', 'phone', 'idNumber', 'university', 'studentId', 'purpose',
-      'houseName', 'houseType', 'district', 'sector', 'cell', 'village',
-      'ownerName', 'ownerContact', 'ownerEmail',
-      'checkIn', 'checkOut', 'months', 'guests', 'specialRequests',
-      'monthlyRent', 'serviceFee', 'totalAmount',
-      'paymentMethod', 'momoNumber',
-      'paymentStatus', 'status', 'notes'
+      "fullName",
+      "email",
+      "phone",
+      "idNumber",
+      "university",
+      "studentId",
+      "purpose",
+      "houseName",
+      "houseType",
+      "district",
+      "sector",
+      "cell",
+      "village",
+      "ownerName",
+      "ownerContact",
+      "ownerEmail",
+      "checkIn",
+      "checkOut",
+      "months",
+      "guests",
+      "specialRequests",
+      "monthlyRent",
+      "serviceFee",
+      "totalAmount",
+      "paymentMethod",
+      "momoNumber",
+      "paymentStatus",
+      "status",
+      "notes",
     ];
 
     const updates = {};
-    allowedUpdates.forEach(field => {
+
+    allowedUpdates.forEach((field) => {
       if (updateData[field] !== undefined) {
         updates[field] = updateData[field];
       }
     });
 
+
     // If new screenshot uploaded, update paymentScreenshot
     if (req.file) {
-      updates.paymentScreenshot = req.file.path;
-      console.log('📸 Updated payment screenshot:', req.file.path);
+      updates.paymentScreenshot = {
+        url: req.file.path,
+        publicId: req.file.filename || "",
+      };
+
+      console.log("📸 Updated payment screenshot:", req.file.path);
     }
 
-    if (updates.checkIn) updates.checkIn = new Date(updates.checkIn);
-    if (updates.checkOut) updates.checkOut = new Date(updates.checkOut);
 
-    const updatedBooking = await Booking.findOneAndUpdate(
-      { bookingId: id },
+    // Convert dates
+    if (updates.checkIn) {
+      updates.checkIn = new Date(updates.checkIn);
+    }
+
+    if (updates.checkOut) {
+      updates.checkOut = new Date(updates.checkOut);
+    }
+
+
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      id,
       { $set: updates },
-      { new: true, runValidators: true }
+      {
+        new: true,
+        runValidators: true,
+      }
     );
+
 
     res.json({
       success: true,
-      message: 'Booking updated successfully',
-      data: updatedBooking
+      message: "Booking updated successfully",
+      data: updatedBooking,
     });
+
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -561,32 +605,37 @@ const updateBookingStatus = async (req, res) => {
     if (!status) {
       return res.status(400).json({
         success: false,
-        message: 'Status is required'
+        message: "Status is required",
       });
     }
 
-    const booking = await Booking.findOne({ bookingId: id });
+    const booking = await Booking.findById(id);
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Booking not found'
+        message: "Booking not found",
       });
     }
 
     booking.status = status;
-    if (notes) booking.notes = notes;
+
+    if (notes) {
+      booking.notes = notes;
+    }
+
     await booking.save();
 
     res.json({
       success: true,
-      message: 'Booking status updated',
-      data: booking
+      message: "Booking status updated",
+      data: booking,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -597,85 +646,106 @@ const verifyPayment = async (req, res) => {
     const { id } = req.params;
     const { paymentStatus, notes } = req.body;
 
-    const booking = await Booking.findOne({ bookingId: id });
+    const booking = await Booking.findById(id);
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Booking not found'
+        message: "Booking not found",
       });
     }
 
-    booking.paymentStatus = paymentStatus || 'verified';
-    if (notes) booking.notes = notes;
+    booking.paymentStatus = paymentStatus || "verified";
+
+    if (notes) {
+      booking.notes = notes;
+    }
+
     await booking.save();
 
-    if (paymentStatus === 'verified') {
+    if (booking.paymentStatus === "verified") {
       const emailData = {
         bookingId: booking.bookingId,
         fullName: booking.fullName,
         houseName: booking.houseName,
-        totalAmount: booking.totalAmount
+        totalAmount: booking.totalAmount,
       };
-      
+
       const verifiedEmail = paymentVerifiedEmail(emailData);
-      await sendEmail(booking.email, verifiedEmail.subject, verifiedEmail.html);
+
+      await sendEmail(
+        booking.email,
+        verifiedEmail.subject,
+        verifiedEmail.html
+      );
     }
 
     res.json({
       success: true,
-      message: 'Payment status updated',
-      data: booking
+      message: "Payment status updated",
+      data: booking,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
+
 
 // DELETE BOOKING
 const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const booking = await Booking.findOneAndDelete({ bookingId: id });
+    const booking = await Booking.findByIdAndDelete(id);
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Booking not found'
+        message: "Booking not found",
       });
     }
 
     // Delete screenshot from Cloudinary if exists
-    if (booking.paymentScreenshot) {
+    if (booking.paymentScreenshot?.url) {
       try {
-        const publicId = booking.paymentScreenshot.split('/').pop().split('.')[0];
-        await cloudinary.uploader.destroy(`booking-payments/${publicId}`);
-        console.log('🗑️ Deleted screenshot from Cloudinary:', publicId);
+        const publicId = booking.paymentScreenshot.publicId;
+
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+          console.log("🗑️ Deleted screenshot from Cloudinary:", publicId);
+        }
+
       } catch (cloudinaryError) {
-        console.error('Failed to delete from Cloudinary:', cloudinaryError);
+        console.error(
+          "Failed to delete screenshot from Cloudinary:",
+          cloudinaryError
+        );
       }
     }
 
     res.json({
       success: true,
-      message: 'Booking deleted successfully',
+      message: "Booking deleted successfully",
       data: {
+        id: booking._id,
         bookingId: booking.bookingId,
         fullName: booking.fullName,
-        email: booking.email
-      }
+        email: booking.email,
+      },
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
+
 
 // CANCEL BOOKING
 const cancelBooking = async (req, res) => {
@@ -683,36 +753,45 @@ const cancelBooking = async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
 
-    const booking = await Booking.findOne({ bookingId: id });
+    const booking = await Booking.findById(id);
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Booking not found'
+        message: "Booking not found",
       });
     }
 
-    booking.status = 'cancelled';
-    booking.notes = reason ? `Cancelled: ${reason}` : booking.notes;
+    booking.status = "cancelled";
+
+    if (reason) {
+      booking.notes = `Cancelled: ${reason}`;
+    }
+
     await booking.save();
 
     const cancelEmail = bookingCancelledEmail({
       bookingId: booking.bookingId,
       fullName: booking.fullName,
-      reason: reason
+      reason: reason || "No reason provided",
     });
-    
-    await sendEmail(booking.email, cancelEmail.subject, cancelEmail.html);
+
+    await sendEmail(
+      booking.email,
+      cancelEmail.subject,
+      cancelEmail.html
+    );
 
     res.json({
       success: true,
-      message: 'Booking cancelled',
-      data: booking
+      message: "Booking cancelled",
+      data: booking,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
