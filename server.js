@@ -9,10 +9,11 @@ dotenv.config();
 
 /* ---------------- ROUTES ---------------- */
 const authRoutes = require("./routes/authRoutes");
-const contactRoutes = require('./routes/contactRoutes');
-const testimonialRoutes = require('./routes/testimonialRoutes');
-const teamRoutes = require('./routes/teamRoutes');
-const houseRoutes = require('./routes/houseRoutes');
+const contactRoutes = require("./routes/contactRoutes");
+const testimonialRoutes = require("./routes/testimonialRoutes");
+const teamRoutes = require("./routes/teamRoutes");
+const houseRoutes = require("./routes/houseRoutes");
+const requestRoutes = require("./routes/requestRoutes");
 
 /* ---------------- APP ---------------- */
 const app = express();
@@ -27,10 +28,11 @@ app.use(morgan("dev"));
 /* ---------------- ROUTES ---------------- */
 
 app.use("/auth", authRoutes);
-app.use('/contact', contactRoutes);
-app.use('/testimonials', testimonialRoutes);
-app.use('/team', teamRoutes);
-app.use('/houses', houseRoutes);
+app.use("/contact", contactRoutes);
+app.use("/testimonials", testimonialRoutes);
+app.use("/team", teamRoutes);
+app.use("/houses", houseRoutes);
+app.use("/requests", requestRoutes);
 
 /* ---------------- HEALTH CHECK ---------------- */
 app.get("/health", (req, res) => {
