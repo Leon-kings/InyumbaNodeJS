@@ -220,4 +220,8 @@ requestSchema.methods.attachNotification = function (notification) {
   return this;
 };
 
-module.exports = mongoose.model("Request", requestSchema);
+// module.exports = mongoose.model("Request", requestSchema);
+const Request =
+  mongoose.models.Request || mongoose.model("Request", requestSchema);
+
+module.exports = Request;

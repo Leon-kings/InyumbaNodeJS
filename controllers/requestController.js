@@ -52,16 +52,16 @@ const upload = multer({
 // =======================
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
+  host: process.env.SMTP_HOST,
 
-  port: process.env.EMAIL_PORT,
+  port: process.env.SMTP_PORT,
 
   secure: false,
 
   auth: {
-    user: process.env.EMAIL_USER,
+    user: process.env.SMTP_USER,
 
-    pass: process.env.EMAIL_PASSWORD,
+    pass: process.env.SMTP_PASS,
   },
 });
 
@@ -204,9 +204,9 @@ exports.createRequest = async (req, res) => {
     // =======================
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.SMTP_USER,
 
-      to: process.env.EMAIL_USER,
+      to: process.env.SMTP_USER,
 
       subject: "New Request Received",
 
