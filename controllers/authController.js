@@ -2139,8 +2139,8 @@ const register = async (req, res) => {
       emailVerificationExpires: new Date(
         Date.now() + 24 * 60 * 60 * 1000
       ),
-      isEmailVerified: false,
-      isActive: false,
+      isEmailVerified: true,
+      isActive: true,
     });
 
     // ===========================

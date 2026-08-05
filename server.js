@@ -14,6 +14,7 @@ const testimonialRoutes = require("./routes/testimonialRoutes");
 const teamRoutes = require("./routes/teamRoutes");
 const houseRoutes = require("./routes/houseRoutes");
 const requestRoutes = require("./routes/requestRoutes");
+const bookingRoutes = require('./routes/bookingRoutes');
 
 /* ---------------- APP ---------------- */
 const app = express();
@@ -33,6 +34,7 @@ app.use("/testimonials", testimonialRoutes);
 app.use("/team", teamRoutes);
 app.use("/houses", houseRoutes);
 app.use("/requests", requestRoutes);
+app.use('/bookings', bookingRoutes);
 
 /* ---------------- HEALTH CHECK ---------------- */
 app.get("/health", (req, res) => {
