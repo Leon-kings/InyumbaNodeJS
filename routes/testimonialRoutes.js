@@ -74,9 +74,9 @@ router.get('/statistics', testimonialController.getTestimonialStatistics);
 router.get('/', testimonialController.getAllTestimonials);
 
 // Admin Routes
-router.get('/admin', testimonialController.getAllTestimonials); // With admin=true query
+// With admin=true query
 router.get('/:id', testimonialController.getTestimonialById);
-router.put('/:id/status', testimonialController.updateTestimonialStatus);
+router.patch('/:id/status', testimonialController.updateTestimonialStatus);
 router.put('/:id/featured', testimonialController.toggleFeatured);
 router.put(
   '/:id',
