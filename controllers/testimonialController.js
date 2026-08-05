@@ -939,42 +939,17 @@ exports.submitTestimonial = async (req, res) => {
 // 2. Get All Testimonials (with filters)
 exports.getAllTestimonials = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 20, 1);
     const skip = (page - 1) * limit;
-    const status = req.query.status;
-    const rating = req.query.rating;
-    const university = req.query.university;
-    const location = req.query.location;
-    const search = req.query.search;
-
-    let query = {};
-
-    // Only show approved testimonials to public
-    if (!req.query.admin) {
-      query.status = 'approved';
-    }
-
-    if (status) query.status = status;
-    if (rating) query.rating = parseInt(rating);
-    if (university) query.university = { $regex: university, $options: 'i' };
-    if (location) query.location = { $regex: location, $options: 'i' };
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-        { houseName: { $regex: search, $options: 'i' } }
-      ];
-    }
 
     const [testimonials, total] = await Promise.all([
-      Testimonial.find(query)
-        .sort({ featured: -1, createdAt: -1 })
+      Testimonial.find({})
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      Testimonial.countDocuments(query)
+      Testimonial.countDocuments({})
     ]);
 
     res.status(200).json({
@@ -989,14 +964,15 @@ exports.getAllTestimonials = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get all testimonials error:', error);
+    console.error("Get all testimonials error:", error);
+
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch testimonials'
+      message: "Failed to fetch testimonials",
+      error: error.message
     });
   }
 };
-
 // 3. Get Testimonial by ID
 exports.getTestimonialById = async (req, res) => {
   try {
