@@ -1,7 +1,7 @@
 // ============================================================
 // ROUTES / BOOKING.ROUTES.JS
 // ============================================================
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const {
   createBooking,
@@ -13,18 +13,28 @@ const {
   verifyPayment,
   deleteBooking,
   cancelBooking,
-  getBookingStats
-} = require('../controllers/bookingController');
+  getBookingStats,
+} = require("../controllers/bookingController");
+const { uploadBookingScreenshot } = require("../controllers/bookingController");
 
-router.post('/', createBooking);
-router.get('/', getBookings);
-router.get('/stats', getBookingStats);
-router.get('/email/:email', getBookingsByEmail);
-router.get('/:id', getBookingById);
-router.put('/:id', updateBooking);
-router.put('/:id/status', updateBookingStatus);
-router.put('/:id/verify-payment', verifyPayment);
-router.put('/:id/cancel', cancelBooking);
-router.delete('/:id', deleteBooking);
+router.post(
+  "/",
+  uploadBookingScreenshot.single("paymentScreenshot"),
+  createBooking,
+);
+router.get("/", getBookings);
+router.get("/stats", getBookingStats);
+router.get("/email/:email", getBookingsByEmail);
+router.get("/:id", getBookingById);
+// Update booking
+router.put(
+  "/:id",
+  uploadBookingScreenshot.single("paymentScreenshot"),
+  updateBooking
+);
+router.put("/:id/status", updateBookingStatus);
+router.put("/:id/verify-payment", verifyPayment);
+router.put("/:id/cancel", cancelBooking);
+router.delete("/:id", deleteBooking);
 
 module.exports = router;
