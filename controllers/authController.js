@@ -56,105 +56,288 @@ const validateEmail = (email) => {
 // ===========================
 // EMAIL TEMPLATES
 // ===========================
+// const generateVerificationEmail = (user, verificationCode) => {
+//   return {
+//     subject: "Verify Your Email Address ✅",
+//     html: `
+//       <!DOCTYPE html>
+//       <html>
+//         <head>
+//           <style>
+//             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+//             .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
+//             .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+//             .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+//             .verification-code {
+//               background: #f0f0f0;
+//               padding: 20px;
+//               border-radius: 8px;
+//               font-size: 32px;
+//               font-weight: bold;
+//               text-align: center;
+//               letter-spacing: 8px;
+//               color: #667eea;
+//               margin: 20px 0;
+//               font-family: monospace;
+//             }
+//             .btn {
+//               display: inline-block;
+//               padding: 14px 35px;
+//               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+//               color: white;
+//               text-decoration: none;
+//               border-radius: 5px;
+//               margin: 20px 0;
+//               font-weight: bold;
+//             }
+//             .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+//             .warning { background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0; }
+//           </style>
+//         </head>
+//         <body>
+//           <div class="container">
+//             <div class="header">
+//               <h1>Verify Your Email Address</h1>
+//             </div>
+//             <div class="content">
+//               <h2>Hello ${user.name}! 👋</h2>
+//               <p>Thank you for creating an account with us. To complete your registration, please verify your email address using the code below:</p>
+
+//               <div class="verification-code">
+//                 ${verificationCode}
+//               </div>
+
+//               <p style="text-align: center;">Enter this code on the verification page to confirm your email.</p>
+
+//               <div class="warning">
+//                 <strong>⚠️ Important:</strong> This verification code will expire in <strong>24 hours</strong>.
+//               </div>
+
+//               <p>If you didn't create an account with us, please ignore this email.</p>
+
+//               <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+//               <p style="font-size: 14px; color: #666;">
+//                 <strong>Account Details:</strong><br>
+//                 Email: ${user.email}<br>
+//                 Created: ${new Date(user.createdAt).toLocaleString()}
+//               </p>
+
+//               <p>Best regards,<br><strong>The Team</strong></p>
+//             </div>
+//             <div class="footer">
+//               <p>&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
+//               <p>This is an automated message, please do not reply to this email.</p>
+//             </div>
+//           </div>
+//         </body>
+//       </html>
+//     `,
+//     text: `
+//       Verify Your Email Address ✅
+
+//       Hello ${user.name}! 👋
+
+//       Thank you for creating an account with us. To complete your registration, please verify your email address using the code below:
+
+//       Verification Code: ${verificationCode}
+
+//       Enter this code on the verification page to confirm your email.
+
+//       ⚠️ Important: This verification code will expire in 24 hours.
+
+//       If you didn't create an account with us, please ignore this email.
+
+//       Account Details:
+//       Email: ${user.email}
+//       Created: ${new Date(user.createdAt).toLocaleString()}
+
+//       Best regards,
+//       The Team
+//     `,
+//   };
+// };
+
 const generateVerificationEmail = (user, verificationCode) => {
+  const verificationUrl =
+    "https://inyumba-studentportal.vercel.app/verification/email/status";
+
   return {
     subject: "Verify Your Email Address ✅",
     html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            .verification-code { 
-              background: #f0f0f0; 
-              padding: 20px; 
-              border-radius: 8px; 
-              font-size: 32px; 
-              font-weight: bold; 
-              text-align: center; 
-              letter-spacing: 8px;
-              color: #667eea;
-              margin: 20px 0;
-              font-family: monospace;
-            }
-            .btn { 
-              display: inline-block; 
-              padding: 14px 35px; 
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-              color: white; 
-              text-decoration: none; 
-              border-radius: 5px; 
-              margin: 20px 0; 
-              font-weight: bold;
-            }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-            .warning { background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Verify Your Email Address</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${user.name}! 👋</h2>
-              <p>Thank you for creating an account with us. To complete your registration, please verify your email address using the code below:</p>
-              
-              <div class="verification-code">
-                ${verificationCode}
-              </div>
-              
-              <p style="text-align: center;">Enter this code on the verification page to confirm your email.</p>
-              
-              <div class="warning">
-                <strong>⚠️ Important:</strong> This verification code will expire in <strong>24 hours</strong>.
-              </div>
-              
-              <p>If you didn't create an account with us, please ignore this email.</p>
-              
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-              
-              <p style="font-size: 14px; color: #666;">
-                <strong>Account Details:</strong><br>
-                Email: ${user.email}<br>
-                Created: ${new Date(user.createdAt).toLocaleString()}
-              </p>
-              
-              <p>Best regards,<br><strong>The Team</strong></p>
-            </div>
-            <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
-              <p>This is an automated message, please do not reply to this email.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `,
-    text: `
-      Verify Your Email Address ✅
-      
-      Hello ${user.name}! 👋
-      
-      Thank you for creating an account with us. To complete your registration, please verify your email address using the code below:
-      
-      Verification Code: ${verificationCode}
-      
-      Enter this code on the verification page to confirm your email.
-      
-      ⚠️ Important: This verification code will expire in 24 hours.
-      
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Verify Your Email</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .content {
+      background: white;
+      padding: 30px;
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .verification-code {
+      background: #f0f0f0;
+      padding: 20px;
+      border-radius: 8px;
+      font-size: 32px;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 8px;
+      color: #667eea;
+      margin: 20px 0;
+      font-family: monospace;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 35px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 12px;
+    }
+
+    .warning {
+      background: #fff3cd;
+      padding: 15px;
+      border-radius: 5px;
+      border-left: 4px solid #ffc107;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>Verify Your Email Address</h1>
+  </div>
+
+  <div class="content">
+
+    <p>Hello <strong>${user.name}</strong>! 👋</p>
+
+    <p>
+      Thank you for creating an account with us.
+      To complete your registration, please verify your email address using the code below:
+    </p>
+
+    <div class="verification-code">
+      ${verificationCode}
+    </div>
+
+    <p style="text-align:center;">
+      Enter this verification code on the verification page.
+    </p>
+
+    <div style="text-align:center;">
+      <a href="${verificationUrl}" class="btn">
+        Verify Email
+      </a>
+    </div>
+
+    <div class="warning">
+      <strong>ℹ️ Note:</strong><br>
+      Click the button above to open the verification page, then enter the verification code shown in this email.
+    </div>
+
+    <p>
+      Verification Page:<br>
+      <a href="${verificationUrl}">
+        ${verificationUrl}
+      </a>
+    </p>
+
+    <p>
       If you didn't create an account with us, please ignore this email.
-      
-      Account Details:
-      Email: ${user.email}
+    </p>
+
+    <hr style="margin:30px 0;border:none;border-top:1px solid #eee;">
+
+    <p style="font-size:14px;color:#666;">
+      <strong>Account Details:</strong><br>
+      Email: ${user.email}<br>
       Created: ${new Date(user.createdAt).toLocaleString()}
-      
-      Best regards,
-      The Team
-    `,
+    </p>
+
+    <p>
+      Best regards,<br>
+      <strong>The Team</strong>
+    </p>
+
+  </div>
+
+  <div class="footer">
+    <p>&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
+    <p>This is an automated message, please do not reply to this email.</p>
+  </div>
+
+</div>
+
+</body>
+</html>
+`,
+    text: `
+Verify Your Email Address ✅
+
+Hello ${user.name}! 👋
+
+Thank you for creating an account with us.
+
+Your verification code is:
+
+${verificationCode}
+
+Open the verification page below and enter the code:
+
+${verificationUrl}
+
+Account Details:
+Email: ${user.email}
+Created: ${new Date(user.createdAt).toLocaleString()}
+
+If you didn't create this account, please ignore this email.
+
+Best regards,
+The Team
+`,
   };
 };
 
@@ -276,6 +459,7 @@ const generateVerificationCode = () => {
 // ===========================
 // REGISTER - Create User with Email Verification
 // ===========================
+
 // const register = async (req, res) => {
 //   try {
 //     const { name, email, phone, password, confirmPassword } = req.body;
@@ -385,10 +569,12 @@ const generateVerificationCode = () => {
 //       phone,
 //       password: hashedPassword,
 //       emailVerificationCode: verificationCode,
-//       emailVerificationExpires: new Date(
-//         Date.now() + 24 * 60 * 60 * 1000
-//       ),
-//       isEmailVerified: true,
+
+//       // Removed expiration so the account is never
+//       // automatically deleted after 24 hours.
+//       emailVerificationExpires: null,
+
+//       isEmailVerified: false,
 //       isActive: true,
 //     });
 
@@ -422,10 +608,8 @@ const generateVerificationCode = () => {
 //         emailError.message
 //       );
 
-//       // IMPORTANT:
-//       // User is NOT deleted.
-//       // They remain in the database and can request
-//       // another verification email later.
+//       // User remains in database.
+//       // They can request another verification email later.
 //     }
 
 //     // ===========================
@@ -440,7 +624,7 @@ const generateVerificationCode = () => {
 //       },
 //       process.env.JWT_SECRET,
 //       {
-//         expiresIn: "7d",
+//         expiresIn: "1d",
 //       }
 //     );
 
@@ -543,10 +727,7 @@ const register = async (req, res) => {
     // ===========================
 
     const existingUser = await User.findOne({
-      $or: [
-        { email: normalizedEmail },
-        { phone: phone },
-      ],
+      $or: [{ email: normalizedEmail }, { phone: phone.trim() }],
     });
 
     if (existingUser) {
@@ -556,7 +737,7 @@ const register = async (req, res) => {
         errors.email = "An account with this email already exists";
       }
 
-      if (existingUser.phone === phone) {
+      if (existingUser.phone === phone.trim()) {
         errors.phone = "An account with this phone number already exists";
       }
 
@@ -584,18 +765,18 @@ const register = async (req, res) => {
     // ===========================
 
     const newUser = await User.create({
-      name,
+      name: name.trim(),
       email: normalizedEmail,
-      phone,
+      phone: phone.trim(),
       password: hashedPassword,
-      emailVerificationCode: verificationCode,
-
-      // Removed expiration so the account is never
-      // automatically deleted after 24 hours.
-      emailVerificationExpires: null,
 
       isEmailVerified: false,
       isActive: true,
+
+      emailVerificationCode: verificationCode,
+
+      // No expiration date
+      emailVerificationExpires: undefined,
     });
 
     // ===========================
@@ -605,35 +786,24 @@ const register = async (req, res) => {
     let emailSent = true;
 
     try {
-      const emailData = generateVerificationEmail(
-        newUser,
-        verificationCode
-      );
+      const emailData = generateVerificationEmail(newUser, verificationCode);
 
       await sendEmail(
         newUser.email,
         emailData.subject,
         emailData.html,
-        emailData.text
+        emailData.text,
       );
 
-      console.log(
-        `Verification email sent to ${newUser.email}`
-      );
+      console.log(`✅ Verification email sent to ${newUser.email}`);
     } catch (emailError) {
       emailSent = false;
 
-      console.error(
-        "Email sending failed:",
-        emailError.message
-      );
-
-      // User remains in database.
-      // They can request another verification email later.
+      console.error("❌ Email sending failed:", emailError.message);
     }
 
     // ===========================
-    // CREATE JWT TOKEN
+    // GENERATE JWT
     // ===========================
 
     const token = jwt.sign(
@@ -645,7 +815,7 @@ const register = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
-      }
+      },
     );
 
     // ===========================
@@ -656,7 +826,7 @@ const register = async (req, res) => {
       success: true,
       message: emailSent
         ? "Registration successful. Please check your email to verify your account."
-        : "Registration successful, but we could not send the verification email. Your account has been created successfully. Please request another verification email later.",
+        : "Registration successful, but the verification email could not be sent. You can request another verification email later.",
       requiresEmailVerification: true,
       emailSent,
       token,
@@ -673,13 +843,12 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("REGISTER ERROR");
-    console.error(error);
+    console.error("REGISTER ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Something went wrong during registration",
-      error: error.message,
+      message: "Something went wrong during registration.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -687,9 +856,79 @@ const register = async (req, res) => {
 // ===========================
 // VERIFY EMAIL - Using Code
 // ===========================
+// const verifyEmail = async (req, res) => {
+//   try {
+//     const { email, code } = req.body;
+
+//     if (!email || !code) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email and verification code are required",
+//       });
+//     }
+
+//     // Find user with matching email and verification code
+//     const user = await User.findOne({
+//       email,
+//       emailVerificationCode: code,
+//       emailVerificationExpires: { $gt: Date.now() },
+//     });
+
+//     if (!user) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid or expired verification code",
+//       });
+//     }
+
+//     if (user.isEmailVerified) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email already verified",
+//       });
+//     }
+
+//     // Mark email as verified
+//     user.isEmailVerified = true;
+//     user.emailVerificationCode = undefined;
+//     user.emailVerificationExpires = undefined;
+//     user.isActive = true; // Activate account
+//     await user.save();
+
+//     // Send welcome email
+//     const welcomeEmail = generateWelcomeEmail(user);
+//     await sendEmail(
+//       user.email,
+//       welcomeEmail.subject,
+//       welcomeEmail.html,
+//       welcomeEmail.text,
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Email verified successfully! Welcome aboard! 🎉",
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         phone: user.phone,
+//         role: user.role,
+//         isEmailVerified: true,
+//         isActive: true,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Verify email error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while verifying email",
+//     });
+//   }
+// };
+
 const verifyEmail = async (req, res) => {
   try {
-    const { email, code } = req.body;
+    let { email, code } = req.body;
 
     if (!email || !code) {
       return res.status(400).json({
@@ -698,17 +937,18 @@ const verifyEmail = async (req, res) => {
       });
     }
 
-    // Find user with matching email and verification code
+    email = email.toLowerCase().trim();
+    code = code.trim().toUpperCase();
+
     const user = await User.findOne({
       email,
       emailVerificationCode: code,
-      emailVerificationExpires: { $gt: Date.now() },
-    });
+    }).select("+emailVerificationCode +emailVerificationExpires");
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired verification code",
+        message: "Invalid verification code",
       });
     }
 
@@ -719,40 +959,22 @@ const verifyEmail = async (req, res) => {
       });
     }
 
-    // Mark email as verified
     user.isEmailVerified = true;
     user.emailVerificationCode = undefined;
     user.emailVerificationExpires = undefined;
-    user.isActive = true; // Activate account
-    await user.save();
+    user.isActive = true;
 
-    // Send welcome email
-    const welcomeEmail = generateWelcomeEmail(user);
-    await sendEmail(
-      user.email,
-      welcomeEmail.subject,
-      welcomeEmail.html,
-      welcomeEmail.text,
-    );
+    await user.save();
 
     return res.status(200).json({
       success: true,
-      message: "Email verified successfully! Welcome aboard! 🎉",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        isEmailVerified: true,
-        isActive: true,
-      },
+      message: "Email verified successfully!",
     });
   } catch (error) {
-    console.error("Verify email error:", error);
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Something went wrong while verifying email",
+      message: "Server error",
     });
   }
 };
@@ -1683,7 +1905,6 @@ const updateStatistics = async (req, res) => {
   }
 };
 
-
 const getUserStatistics = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -1704,7 +1925,6 @@ const getUserStatistics = async (req, res) => {
       isEmailVerified: false,
     });
 
-
     // Users grouped by role
     const usersByRole = await User.aggregate([
       {
@@ -1724,16 +1944,12 @@ const getUserStatistics = async (req, res) => {
       },
     ]);
 
-
     // New users created in last 30 days
     const newUsers = await User.countDocuments({
       createdAt: {
-        $gte: new Date(
-          Date.now() - 30 * 24 * 60 * 60 * 1000
-        ),
+        $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       },
     });
-
 
     // Latest registered users
     const recentUsers = await User.find()
@@ -1742,7 +1958,6 @@ const getUserStatistics = async (req, res) => {
         createdAt: -1,
       })
       .limit(5);
-
 
     return res.status(200).json({
       success: true,
@@ -1757,21 +1972,14 @@ const getUserStatistics = async (req, res) => {
       },
       recentUsers,
     });
-
-
   } catch (error) {
-
-    console.error(
-      "GET USER STATISTICS ERROR:",
-      error
-    );
+    console.error("GET USER STATISTICS ERROR:", error);
 
     return res.status(500).json({
       success: false,
       message: "Failed to fetch user statistics",
       error: error.message,
     });
-
   }
 };
 
