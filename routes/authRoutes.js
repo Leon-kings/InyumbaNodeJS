@@ -18,7 +18,8 @@ const {
   updateUser,
   updateCurrentUser,
   deleteUser,
-    getAllUsers,
+  getAllUsers,
+  getUserStatistics,
   deleteCurrentUser,
   updateStatistics,
 } = require("../controllers/authController");
@@ -53,6 +54,7 @@ router.post(
 router.post("/login", login);
 
 router.get("/", getAllUsers);
+router.get("/stats", getUserStatistics);
 
 // Verify email with code
 router.post(
@@ -146,15 +148,10 @@ router.put(
 router.get("/users", getUsers);
 
 // Get a specific user by ID
-router.get("/users/:id", getUser);
+router.get("/:id", getUser);
 
 // Update any user by ID
-router.put(
-  "/:id",
-  updateValidationRules,
-  handleValidationErrors,
-  updateUser,
-);
+router.put("/:id", updateValidationRules, handleValidationErrors, updateUser);
 
 // Delete any user by ID
 router.delete("/:id", deleteUser);
