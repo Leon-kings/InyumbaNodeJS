@@ -586,18 +586,76 @@ houseSchema.methods.getNotificationMessage = function (type) {
 // PRE-SAVE MIDDLEWARE
 // ===========================
 
+// // Auto-generate houseId if not provided
+// houseSchema.pre("save", async function (next) {
+//   if (!this.houseId) {
+//     const count = await this.constructor.countDocuments();
+//     const year = new Date().getFullYear().toString().slice(-2);
+//     const random = Math.floor(Math.random() * 1000)
+//       .toString()
+//       .padStart(3, "0");
+//     this.houseId = `HSE-${year}-${String(count + 1).padStart(4, "0")}-${random}`;
+//   }
+//   next();
+// });
+
+// // ===========================
+// // QUERY HELPERS
+// // ===========================
+
+// // Add query helper for available houses
+// houseSchema.query.available = function () {
+//   return this.where("status").equals("available").where("isActive").equals(true);
+// };
+
+// // Add query helper by location
+// houseSchema.query.byLocation = function (province, district) {
+//   let query = this;
+//   if (province) query = query.where("location.province").equals(province);
+//   if (district) query = query.where("location.district").equals(district);
+//   return query;
+// };
+
+// // Add query helper by price range
+// houseSchema.query.byPriceRange = function (min, max) {
+//   let query = this;
+//   if (min) query = query.where("pricePerMonth").gte(min);
+//   if (max) query = query.where("pricePerMonth").lte(max);
+//   return query;
+// };
+
+// // Add query helper by university
+// houseSchema.query.byUniversity = function (university) {
+//   return this.where("university").regex(new RegExp(university, "i"));
+// };
+
+// module.exports =
+//   mongoose.models.House ||
+//   mongoose.model("House", houseSchema);
+
+
+// ===========================
+// PRE-SAVE MIDDLEWARE
+// ===========================
+
 // Auto-generate houseId if not provided
-houseSchema.pre("save", async function (next) {
+houseSchema.pre("save", async function () {
   if (!this.houseId) {
     const count = await this.constructor.countDocuments();
-    const year = new Date().getFullYear().toString().slice(-2);
+
+    const year = new Date()
+      .getFullYear()
+      .toString()
+      .slice(-2);
+
     const random = Math.floor(Math.random() * 1000)
       .toString()
       .padStart(3, "0");
+
     this.houseId = `HSE-${year}-${String(count + 1).padStart(4, "0")}-${random}`;
   }
-  next();
 });
+
 
 // ===========================
 // QUERY HELPERS
@@ -605,29 +663,56 @@ houseSchema.pre("save", async function (next) {
 
 // Add query helper for available houses
 houseSchema.query.available = function () {
-  return this.where("status").equals("available").where("isActive").equals(true);
+  return this
+    .where("status")
+    .equals("available")
+    .where("isActive")
+    .equals(true);
 };
+
 
 // Add query helper by location
 houseSchema.query.byLocation = function (province, district) {
   let query = this;
-  if (province) query = query.where("location.province").equals(province);
-  if (district) query = query.where("location.district").equals(district);
+
+  if (province) {
+    query = query.where("location.province").equals(province);
+  }
+
+  if (district) {
+    query = query.where("location.district").equals(district);
+  }
+
   return query;
 };
+
 
 // Add query helper by price range
 houseSchema.query.byPriceRange = function (min, max) {
   let query = this;
-  if (min) query = query.where("pricePerMonth").gte(min);
-  if (max) query = query.where("pricePerMonth").lte(max);
+
+  if (min) {
+    query = query.where("pricePerMonth").gte(min);
+  }
+
+  if (max) {
+    query = query.where("pricePerMonth").lte(max);
+  }
+
   return query;
 };
 
+
 // Add query helper by university
 houseSchema.query.byUniversity = function (university) {
-  return this.where("university").regex(new RegExp(university, "i"));
+  return this.where("university")
+    .regex(new RegExp(university, "i"));
 };
+
+
+// ===========================
+// MODEL EXPORT
+// ===========================
 
 module.exports =
   mongoose.models.House ||
