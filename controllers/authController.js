@@ -340,12 +340,8 @@
 
 // //     const existingUser = await User.findOne({
 // //       $or: [
-// //         {
-// //           email: normalizedEmail,
-// //         },
-// //         {
-// //           phone: phone,
-// //         },
+// //         { email: normalizedEmail },
+// //         { phone: phone },
 // //       ],
 // //     });
 
@@ -371,11 +367,10 @@
 // //     // ===========================
 
 // //     const salt = await bcrypt.genSalt(10);
-
 // //     const hashedPassword = await bcrypt.hash(password, salt);
 
 // //     // ===========================
-// //     // CREATE VERIFICATION CODE
+// //     // GENERATE VERIFICATION CODE
 // //     // ===========================
 
 // //     const verificationCode = generateVerificationCode();
@@ -384,52 +379,53 @@
 // //     // CREATE USER
 // //     // ===========================
 
-// //     const newUser = new User({
+// //     const newUser = await User.create({
 // //       name,
-
 // //       email: normalizedEmail,
-
 // //       phone,
-
 // //       password: hashedPassword,
-
 // //       emailVerificationCode: verificationCode,
-
-// //       emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-
-// //       // change to true if you don't want email activation
-// //       isEmailVerified: false,
-
-// //       // user cannot login until verified
-// //       isActive: false,
+// //       emailVerificationExpires: new Date(
+// //         Date.now() + 24 * 60 * 60 * 1000
+// //       ),
+// //       isEmailVerified: true,
+// //       isActive: true,
 // //     });
-
-// //     await newUser.save();
 
 // //     // ===========================
 // //     // SEND VERIFICATION EMAIL
 // //     // ===========================
 
+// //     let emailSent = true;
+
 // //     try {
-// //       const emailData = generateVerificationEmail(newUser, verificationCode);
+// //       const emailData = generateVerificationEmail(
+// //         newUser,
+// //         verificationCode
+// //       );
 
 // //       await sendEmail(
 // //         newUser.email,
 // //         emailData.subject,
 // //         emailData.html,
-// //         emailData.text,
+// //         emailData.text
+// //       );
+
+// //       console.log(
+// //         `Verification email sent to ${newUser.email}`
 // //       );
 // //     } catch (emailError) {
-// //       console.error("Email sending failed:", emailError.message);
+// //       emailSent = false;
 
-// //       // Remove user if email failed
-// //       await User.findByIdAndDelete(newUser._id);
+// //       console.error(
+// //         "Email sending failed:",
+// //         emailError.message
+// //       );
 
-// //       return res.status(500).json({
-// //         success: false,
-// //         message:
-// //           "Account creation failed because verification email could not be sent",
-// //       });
+// //       // IMPORTANT:
+// //       // User is NOT deleted.
+// //       // They remain in the database and can request
+// //       // another verification email later.
 // //     }
 
 // //     // ===========================
@@ -442,12 +438,10 @@
 // //         email: newUser.email,
 // //         role: newUser.role,
 // //       },
-
 // //       process.env.JWT_SECRET,
-
 // //       {
 // //         expiresIn: "7d",
-// //       },
+// //       }
 // //     );
 
 // //     // ===========================
@@ -456,40 +450,31 @@
 
 // //     return res.status(201).json({
 // //       success: true,
-
-// //       message:
-// //         "Registration successful. Check your email for verification code.",
-
+// //       message: emailSent
+// //         ? "Registration successful. Please check your email to verify your account."
+// //         : "Registration successful, but we could not send the verification email. Your account has been created successfully. Please request another verification email later.",
 // //       requiresEmailVerification: true,
-
+// //       emailSent,
 // //       token,
-
 // //       user: {
 // //         id: newUser._id,
-
 // //         name: newUser.name,
-
 // //         email: newUser.email,
-
 // //         phone: newUser.phone,
-
 // //         role: newUser.role,
-
 // //         isEmailVerified: newUser.isEmailVerified,
-
 // //         isActive: newUser.isActive,
-
+// //         statistics: newUser.statistics,
 // //         createdAt: newUser.createdAt,
 // //       },
 // //     });
 // //   } catch (error) {
-// //     console.error("Register error:", error);
+// //     console.error("REGISTER ERROR");
+// //     console.error(error);
 
 // //     return res.status(500).json({
 // //       success: false,
-
 // //       message: "Something went wrong during registration",
-
 // //       error: error.message,
 // //     });
 // //   }
@@ -603,15 +588,14 @@
 //       email: normalizedEmail,
 //       phone,
 //       password: hashedPassword,
-
 //       emailVerificationCode: verificationCode,
 
-//       emailVerificationExpires: new Date(
-//         Date.now() + 24 * 60 * 60 * 1000
-//       ),
+//       // Removed expiration so the account is never
+//       // automatically deleted after 24 hours.
+//       emailVerificationExpires: null,
 
 //       isEmailVerified: false,
-//       isActive: false,
+//       isActive: true,
 //     });
 
 //     // ===========================
@@ -644,10 +628,8 @@
 //         emailError.message
 //       );
 
-//       // IMPORTANT:
-//       // User is NOT deleted.
-//       // They remain in the database and can request
-//       // another verification email later.
+//       // User remains in database.
+//       // They can request another verification email later.
 //     }
 
 //     // ===========================
@@ -662,7 +644,7 @@
 //       },
 //       process.env.JWT_SECRET,
 //       {
-//         expiresIn: "7d",
+//         expiresIn: "1d",
 //       }
 //     );
 
@@ -672,17 +654,12 @@
 
 //     return res.status(201).json({
 //       success: true,
-
 //       message: emailSent
 //         ? "Registration successful. Please check your email to verify your account."
 //         : "Registration successful, but we could not send the verification email. Your account has been created successfully. Please request another verification email later.",
-
 //       requiresEmailVerification: true,
-
 //       emailSent,
-
 //       token,
-
 //       user: {
 //         id: newUser._id,
 //         name: newUser.name,
@@ -996,25 +973,17 @@
 //     return res.status(200).json({
 //       success: true,
 //       message: "Login successful",
-
 //       token,
-
 //       user: {
 //         id: user._id,
 //         name: user.name,
 //         email: user.email,
 //         phone: user.phone,
 //         role: user.role,
-
-//         // keep returning this if you need it in frontend
 //         isEmailVerified: user.isEmailVerified,
-
 //         isActive: user.isActive,
-
 //         lastLogin: user.lastLogin,
-
 //         statistics: user.statistics,
-
 //         createdAt: user.createdAt,
 //       },
 //     });
@@ -1544,6 +1513,7 @@
 //     });
 //   }
 // };
+
 // // ===========================
 // // DELETE CURRENT USER
 // // ===========================
@@ -1642,7 +1612,6 @@
 
 //     return res.status(200).json({
 //       success: true,
-
 //       message: "Account deleted successfully",
 //     });
 //   } catch (error) {
@@ -1650,9 +1619,7 @@
 
 //     return res.status(500).json({
 //       success: false,
-
 //       message: "Something went wrong while deleting account",
-
 //       error: error.message,
 //     });
 //   }
@@ -1716,6 +1683,98 @@
 //   }
 // };
 
+
+// const getUserStatistics = async (req, res) => {
+//   try {
+//     const totalUsers = await User.countDocuments();
+
+//     const activeUsers = await User.countDocuments({
+//       isActive: true,
+//     });
+
+//     const inactiveUsers = await User.countDocuments({
+//       isActive: false,
+//     });
+
+//     const verifiedUsers = await User.countDocuments({
+//       isEmailVerified: true,
+//     });
+
+//     const unverifiedUsers = await User.countDocuments({
+//       isEmailVerified: false,
+//     });
+
+
+//     // Users grouped by role
+//     const usersByRole = await User.aggregate([
+//       {
+//         $group: {
+//           _id: "$role",
+//           count: {
+//             $sum: 1,
+//           },
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           role: "$_id",
+//           count: 1,
+//         },
+//       },
+//     ]);
+
+
+//     // New users created in last 30 days
+//     const newUsers = await User.countDocuments({
+//       createdAt: {
+//         $gte: new Date(
+//           Date.now() - 30 * 24 * 60 * 60 * 1000
+//         ),
+//       },
+//     });
+
+
+//     // Latest registered users
+//     const recentUsers = await User.find()
+//       .select("-password")
+//       .sort({
+//         createdAt: -1,
+//       })
+//       .limit(5);
+
+
+//     return res.status(200).json({
+//       success: true,
+//       statistics: {
+//         totalUsers,
+//         activeUsers,
+//         inactiveUsers,
+//         verifiedUsers,
+//         unverifiedUsers,
+//         newUsersLast30Days: newUsers,
+//         usersByRole,
+//       },
+//       recentUsers,
+//     });
+
+
+//   } catch (error) {
+
+//     console.error(
+//       "GET USER STATISTICS ERROR:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch user statistics",
+//       error: error.message,
+//     });
+
+//   }
+// };
+
 // // ===========================
 // // EXPORT ALL CONTROLLERS
 // // ===========================
@@ -1740,7 +1799,11 @@
 //   getAllUsers,
 //   deleteCurrentUser,
 //   updateStatistics,
+//   getUserStatistics,
 // };
+
+
+
 
 
 
@@ -1771,6 +1834,17 @@ const createTransporter = () => {
       },
     });
   }
+  
+  // For development, use ethereal.email
+  return nodemailer.createTransport({
+    host: "smtp.ethereal.email",
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.ETHEREAL_USER || "your-ethereal-user",
+      pass: process.env.ETHEREAL_PASS || "your-ethereal-pass",
+    },
+  });
 };
 
 // ===========================
@@ -1808,6 +1882,9 @@ const validateEmail = (email) => {
 // EMAIL TEMPLATES
 // ===========================
 const generateVerificationEmail = (user, verificationCode) => {
+  // Frontend URL from environment variable
+  const frontendUrl = process.env.FRONTEND_URL || "https://inyumba-studentportal.vercel.app";
+  
   return {
     subject: "Verify Your Email Address ✅",
     html: `
@@ -1841,8 +1918,25 @@ const generateVerificationEmail = (user, verificationCode) => {
               margin: 20px 0; 
               font-weight: bold;
             }
+            .btn:hover {
+              transform: scale(1.02);
+              box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            }
             .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
             .warning { background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0; }
+            .link-container {
+              text-align: center;
+              margin: 25px 0;
+            }
+            .verification-link {
+              word-break: break-all;
+              font-size: 14px;
+              color: #667eea;
+              background: #f8f9fa;
+              padding: 12px;
+              border-radius: 8px;
+              border: 1px solid #e9ecef;
+            }
           </style>
         </head>
         <body>
@@ -1852,19 +1946,30 @@ const generateVerificationEmail = (user, verificationCode) => {
             </div>
             <div class="content">
               <h2>Hello ${user.name}! 👋</h2>
-              <p>Thank you for creating an account with us. To complete your registration, please verify your email address using the code below:</p>
+              <p>Thank you for creating an account with us. To complete your registration, please verify your email address.</p>
+              
+              <div class="link-container">
+                <a href="${frontendUrl}/verification/email/status?email=${encodeURIComponent(user.email)}&code=${verificationCode}" class="btn">
+                  Verify Email Address
+                </a>
+              </div>
+              
+              <p style="text-align: center;">Or enter this verification code on the verification page:</p>
               
               <div class="verification-code">
                 ${verificationCode}
               </div>
               
-              <p style="text-align: center;">Enter this code on the verification page to confirm your email.</p>
-              
               <div class="warning">
                 <strong>⚠️ Important:</strong> This verification code will expire in <strong>24 hours</strong>.
               </div>
               
-              <p>If you didn't create an account with us, please ignore this email.</p>
+              <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+              <div class="verification-link">
+                ${frontendUrl}/verification/email/status?email=${encodeURIComponent(user.email)}&code=${verificationCode}
+              </div>
+              
+              <p style="margin-top: 20px;">If you didn't create an account with us, please ignore this email.</p>
               
               <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
               
@@ -1889,11 +1994,13 @@ const generateVerificationEmail = (user, verificationCode) => {
       
       Hello ${user.name}! 👋
       
-      Thank you for creating an account with us. To complete your registration, please verify your email address using the code below:
+      Thank you for creating an account with us. To complete your registration, please verify your email address by clicking the link below:
+      
+      ${frontendUrl}/verification/email/status?email=${encodeURIComponent(user.email)}&code=${verificationCode}
+      
+      Or enter this verification code on the verification page:
       
       Verification Code: ${verificationCode}
-      
-      Enter this code on the verification page to confirm your email.
       
       ⚠️ Important: This verification code will expire in 24 hours.
       
@@ -2025,6 +2132,29 @@ const generateVerificationCode = () => {
 };
 
 // ===========================
+// RENDER VERIFICATION PAGE (Backend Served)
+// ===========================
+const renderVerificationPage = (req, res) => {
+  try {
+    const { email, code } = req.query;
+    
+    // Frontend URL from environment variable
+    const frontendUrl = process.env.FRONTEND_URL || "https://inyumba-studentportal.vercel.app";
+    
+    // If email and code are provided, redirect to frontend with params
+    if (email && code) {
+      return res.redirect(`${frontendUrl}/verification/email/status?email=${encodeURIComponent(email)}&code=${code}`);
+    }
+    
+    // If no params, redirect to frontend verification page
+    return res.redirect(`${frontendUrl}/verification/email/status`);
+  } catch (error) {
+    console.error('Render verification page error:', error);
+    return res.status(500).send('Error loading verification page');
+  }
+};
+
+// ===========================
 // REGISTER - Create User with Email Verification
 // ===========================
 const register = async (req, res) => {
@@ -2139,7 +2269,7 @@ const register = async (req, res) => {
       emailVerificationExpires: new Date(
         Date.now() + 24 * 60 * 60 * 1000
       ),
-      isEmailVerified: true,
+      isEmailVerified: false,
       isActive: true,
     });
 
@@ -2173,10 +2303,8 @@ const register = async (req, res) => {
         emailError.message
       );
 
-      // IMPORTANT:
-      // User is NOT deleted.
-      // They remain in the database and can request
-      // another verification email later.
+      // User remains in database.
+      // They can request another verification email later.
     }
 
     // ===========================
@@ -2191,7 +2319,7 @@ const register = async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "7d",
+        expiresIn: "1d",
       }
     );
 
@@ -2406,6 +2534,9 @@ const checkEmailVerification = async (req, res) => {
   }
 };
 
+// ===========================
+// GET ALL USERS (Public)
+// ===========================
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
@@ -2890,7 +3021,7 @@ const updateCurrentUser = async (req, res) => {
 };
 
 // ===========================
-// GET ALL USERS
+// GET ALL USERS (Admin)
 // ===========================
 const getUsers = async (req, res) => {
   try {
@@ -3066,9 +3197,9 @@ const deleteUser = async (req, res) => {
 // ===========================
 const deleteCurrentUser = async (req, res) => {
   try {
-    const { id } = req.params;
+    const userId = req.user.id;
 
-    const user = await User.findById(id);
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -3077,7 +3208,16 @@ const deleteCurrentUser = async (req, res) => {
       });
     }
 
-    await User.findByIdAndDelete(id);
+    // Protect the main account from being deleted by regular users
+    const protectedEmail = "akingeneyeleon@gmail.com";
+    if (user.email.toLowerCase() === protectedEmail) {
+      return res.status(403).json({
+        success: false,
+        message: "This account cannot be deleted",
+      });
+    }
+
+    await User.findByIdAndDelete(userId);
 
     // Send deletion confirmation email
     const deletionHtml = `
@@ -3157,6 +3297,13 @@ const deleteCurrentUser = async (req, res) => {
       console.error("Deletion email error:", emailError.message);
     }
 
+    // Clear the token cookie
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
     return res.status(200).json({
       success: true,
       message: "Account deleted successfully",
@@ -3230,7 +3377,9 @@ const updateStatistics = async (req, res) => {
   }
 };
 
-
+// ===========================
+// GET USER STATISTICS
+// ===========================
 const getUserStatistics = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -3251,7 +3400,6 @@ const getUserStatistics = async (req, res) => {
       isEmailVerified: false,
     });
 
-
     // Users grouped by role
     const usersByRole = await User.aggregate([
       {
@@ -3271,7 +3419,6 @@ const getUserStatistics = async (req, res) => {
       },
     ]);
 
-
     // New users created in last 30 days
     const newUsers = await User.countDocuments({
       createdAt: {
@@ -3281,7 +3428,6 @@ const getUserStatistics = async (req, res) => {
       },
     });
 
-
     // Latest registered users
     const recentUsers = await User.find()
       .select("-password")
@@ -3289,7 +3435,6 @@ const getUserStatistics = async (req, res) => {
         createdAt: -1,
       })
       .limit(5);
-
 
     return res.status(200).json({
       success: true,
@@ -3305,9 +3450,7 @@ const getUserStatistics = async (req, res) => {
       recentUsers,
     });
 
-
   } catch (error) {
-
     console.error(
       "GET USER STATISTICS ERROR:",
       error
@@ -3318,7 +3461,6 @@ const getUserStatistics = async (req, res) => {
       message: "Failed to fetch user statistics",
       error: error.message,
     });
-
   }
 };
 
@@ -3335,6 +3477,9 @@ module.exports = {
   checkEmailVerification,
   forgotPassword,
   resetPassword,
+  
+  // Verification Page (Backend Served)
+  renderVerificationPage,
 
   // User Management
   getUsers,
