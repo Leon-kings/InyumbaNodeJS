@@ -387,6 +387,52 @@ exports.createHouse = async (req, res) => {
   }
 };
 
+
+// ================================
+// GET HOUSES BY HOST EMAIL
+// GET /api/houses/:email
+// ================================
+exports.getHousesByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const houses = await House.find({
+      "host.email": email.toLowerCase(),
+    }).sort({ createdAt: -1 });
+
+    if (!houses || houses.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No houses found for this user",
+        data: [],
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Houses fetched successfully",
+      count: houses.length,
+      data: houses,
+    });
+
+  } catch (error) {
+    console.error("Get houses by email error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch houses",
+      error: error.message,
+    });
+  }
+};
+
 // 2. Get All Houses
 exports.getAllHouses = async (req, res) => {
   try {

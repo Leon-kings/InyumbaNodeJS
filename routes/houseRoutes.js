@@ -22,6 +22,7 @@ router.get('/newly-added', houseController.getNewlyAddedHouses);
 router.get('/notifications', houseController.getHouseNotifications);
 router.get('/notifications/unread-count', houseController.getUnreadNotificationCount);
 router.get('/', houseController.getAllHouses);
+router.get("/:email", houseController.getHousesByEmail);
 router.get('/:id', houseController.getHouseById);
 router.get('/house-id/:houseId', houseController.getHouseByHouseId);
 
