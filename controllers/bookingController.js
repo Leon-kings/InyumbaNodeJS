@@ -329,6 +329,9 @@ const bookingCancelledEmail = (data) => ({
 // CREATE BOOKING WITH CLOUDINARY SCREENSHOT
 const createBooking = async (req, res) => {
   try {
+    console.log("📦 Booking body:", req.body);
+    console.log("📸 Uploaded file:", req.file);
+
     const {
       houseId,
       houseName,
@@ -359,6 +362,10 @@ const createBooking = async (req, res) => {
       momoNumber,
     } = req.body;
 
+
+    // ==========================
+    // Validate required fields
+    // ==========================
     if (
       !fullName ||
       !email ||
@@ -376,16 +383,34 @@ const createBooking = async (req, res) => {
       });
     }
 
-    // Get payment screenshot URL from Cloudinary if uploaded
-    let paymentScreenshot = null;
+
+    // ==========================
+    // Cloudinary Image
+    // ==========================
+    let paymentScreenshot = {
+      url: "",
+      publicId: "",
+    };
+
+
     if (req.file) {
-      paymentScreenshot = req.file.path; // Cloudinary URL
+      paymentScreenshot = {
+        url: req.file.path,
+        publicId: req.file.filename,
+      };
+
       console.log(
-        "📸 Payment screenshot uploaded to Cloudinary:",
-        paymentScreenshot,
+        "✅ Payment screenshot uploaded:",
+        paymentScreenshot
       );
+    } else {
+      console.log("⚠️ No payment screenshot uploaded");
     }
 
+
+    // ==========================
+    // Create Booking
+    // ==========================
     const booking = new Booking({
       houseId,
       houseName,
@@ -394,9 +419,11 @@ const createBooking = async (req, res) => {
       sector,
       cell,
       village,
+
       ownerName,
       ownerContact,
       ownerEmail,
+
       fullName,
       email,
       phone,
@@ -404,82 +431,126 @@ const createBooking = async (req, res) => {
       university,
       studentId,
       purpose,
+
       checkIn: new Date(checkIn),
       checkOut: new Date(checkOut),
-      months: parseInt(months),
-      guests: parseInt(guests),
+
+      months: Number(months),
+      guests: Number(guests),
+
       specialRequests,
-      monthlyRent: parseFloat(monthlyRent),
-      serviceFee: parseFloat(serviceFee),
-      totalAmount: parseFloat(totalAmount),
+
+      monthlyRent: Number(monthlyRent),
+      serviceFee: Number(serviceFee),
+      totalAmount: Number(totalAmount),
+
       paymentMethod: paymentMethod || "momo",
       momoNumber,
-      paymentScreenshot, // Store Cloudinary URL
+
+      paymentScreenshot,
+
       paymentStatus: "pending",
       status: "pending",
     });
 
+
     await booking.save();
 
+
+    // ==========================
+    // Email Data
+    // ==========================
     const emailData = {
       bookingId: booking.bookingId,
+
       fullName,
       email,
       phone,
+
       houseName,
       district,
       sector,
+
       checkIn: booking.checkIn,
       checkOut: booking.checkOut,
+
       months: booking.months,
       guests: booking.guests,
+
       specialRequests,
+
       monthlyRent: booking.monthlyRent,
       serviceFee: booking.serviceFee,
       totalAmount: booking.totalAmount,
+
       ownerName,
       ownerContact,
       university,
+
       paymentStatus: booking.paymentStatus,
-      paymentScreenshot: paymentScreenshot, // Include screenshot in email
+
+      paymentScreenshot:
+        booking.paymentScreenshot.url,
     };
 
-    // Send to guest
+
+    // ==========================
+    // Guest Email
+    // ==========================
     const guestEmail = guestConfirmationEmail(emailData);
-    await sendEmail(email, guestEmail.subject, guestEmail.html);
 
-    // Send to owner
-    if (ownerEmail) {
-      const ownerEmailTemplate = ownerNotificationEmail(emailData);
-      await sendEmail(
-        ownerEmail,
-        ownerEmailTemplate.subject,
-        ownerEmailTemplate.html,
-      );
-    } else {
-      const ownerEmailTemplate = ownerNotificationEmail(emailData);
-      await sendEmail(
-        process.env.SMTP_USER,
-        ownerEmailTemplate.subject,
-        ownerEmailTemplate.html,
-      );
-    }
+    await sendEmail(
+      email,
+      guestEmail.subject,
+      guestEmail.html
+    );
 
-    res.status(201).json({
+
+    // ==========================
+    // Owner Email
+    // ==========================
+    const ownerEmailTemplate =
+      ownerNotificationEmail(emailData);
+
+
+    await sendEmail(
+      ownerEmail || process.env.SMTP_USER,
+      ownerEmailTemplate.subject,
+      ownerEmailTemplate.html
+    );
+
+
+    // ==========================
+    // Response
+    // ==========================
+    return res.status(201).json({
       success: true,
       message: "Booking created successfully",
+
       data: {
         bookingId: booking.bookingId,
         status: booking.status,
         paymentStatus: booking.paymentStatus,
-        paymentScreenshot: paymentScreenshot, // Return the Cloudinary URL
+
+        paymentScreenshot:
+          booking.paymentScreenshot.url,
       },
     });
+
+
   } catch (error) {
-    console.error("Create booking error:", error);
-    res.status(500).json({
+
+    console.error(
+      "❌ Create booking error:",
+      error
+    );
+
+
+    return res.status(500).json({
       success: false,
-      message: error.message || "Failed to create booking",
+      message:
+        error.message ||
+        "Failed to create booking",
     });
   }
 };
