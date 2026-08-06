@@ -7,19 +7,35 @@ const User = require("../models/User");
 // ===========================
 // EMAIL CONFIGURATION
 // ===========================
+// const createTransporter = () => {
+//   // For production, use your actual email service
+//   if (process.env.NODE_ENV === "production") {
+//     return nodemailer.createTransport({
+//       host: process.env.SMTP_HOST,
+//       port: process.env.SMTP_PORT,
+//       secure: false,
+//       auth: {
+//         user: process.env.SMTP_USER,
+//         pass: process.env.SMTP_PASS,
+//       },
+//     });
+//   }
+// };
+
 const createTransporter = () => {
-  // For production, use your actual email service
-  if (process.env.NODE_ENV === "production") {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-  }
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: Number(process.env.SMTP_PORT) === 465,
+    family: 4, // Force IPv4
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+  });
 };
 
 // ===========================
