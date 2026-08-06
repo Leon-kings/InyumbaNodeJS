@@ -3230,6 +3230,98 @@ const updateStatistics = async (req, res) => {
   }
 };
 
+
+const getUserStatistics = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+
+    const activeUsers = await User.countDocuments({
+      isActive: true,
+    });
+
+    const inactiveUsers = await User.countDocuments({
+      isActive: false,
+    });
+
+    const verifiedUsers = await User.countDocuments({
+      isEmailVerified: true,
+    });
+
+    const unverifiedUsers = await User.countDocuments({
+      isEmailVerified: false,
+    });
+
+
+    // Users grouped by role
+    const usersByRole = await User.aggregate([
+      {
+        $group: {
+          _id: "$role",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          role: "$_id",
+          count: 1,
+        },
+      },
+    ]);
+
+
+    // New users created in last 30 days
+    const newUsers = await User.countDocuments({
+      createdAt: {
+        $gte: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ),
+      },
+    });
+
+
+    // Latest registered users
+    const recentUsers = await User.find()
+      .select("-password")
+      .sort({
+        createdAt: -1,
+      })
+      .limit(5);
+
+
+    return res.status(200).json({
+      success: true,
+      statistics: {
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
+        verifiedUsers,
+        unverifiedUsers,
+        newUsersLast30Days: newUsers,
+        usersByRole,
+      },
+      recentUsers,
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      "GET USER STATISTICS ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch user statistics",
+      error: error.message,
+    });
+
+  }
+};
+
 // ===========================
 // EXPORT ALL CONTROLLERS
 // ===========================
@@ -3254,4 +3346,5 @@ module.exports = {
   getAllUsers,
   deleteCurrentUser,
   updateStatistics,
+  getUserStatistics,
 };
