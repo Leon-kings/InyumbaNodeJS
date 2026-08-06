@@ -438,7 +438,7 @@ const sendEmail = async (to, subject, html, text) => {
     const transporter = createTransporter();
 
     const mailOptions = {
-      from: `"Your Platform" <${process.env.EMAIL_FROM || "noreply@yourplatform.com"}>`,
+      from: `"INYUMBA" <${process.env.EMAIL_FROM || "noreply@yourplatform.com"}>`,
       to,
       subject,
       html,
