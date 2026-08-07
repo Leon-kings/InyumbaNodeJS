@@ -636,6 +636,47 @@ const getBookingsByEmail = async (req, res) => {
   }
 };
 
+// ==========================
+// GET BOOKINGS BY LANDLORD EMAIL
+// ==========================
+const getBookingsByOwnerEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Owner email is required",
+      });
+    }
+
+    const bookings = await Booking.find({
+      ownerEmail: email.toLowerCase().trim(),
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      total: bookings.length,
+      data: bookings,
+    });
+  } catch (error) {
+    console.error(
+      "❌ Get bookings by owner email error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch bookings",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
+    });
+  }
+};
+
+
 // GET BOOKING BY ID
 const getBookingById = async (req, res) => {
   try {
@@ -1054,5 +1095,6 @@ module.exports = {
   deleteBooking,
   cancelBooking,
   getBookingStats,
+  getBookingsByOwnerEmail,
   uploadBookingScreenshot, // Export the multer middleware
 };
