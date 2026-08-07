@@ -5,6 +5,7 @@ const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 // Configure Cloudinary
 cloudinary.config({
@@ -43,11 +44,11 @@ const upload = multer({
 
 // Email Configuration
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: Number(process.env.SMTP_PORT) === 465,
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
 
-  family: 4, // Force IPv4 (fix Render IPv6 ENETUNREACH)
+  family: 4,
 
   auth: {
     user: process.env.SMTP_USER,
@@ -58,9 +59,9 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false,
   },
 
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
+  connectionTimeout: 60000,
+  greetingTimeout: 60000,
+  socketTimeout: 60000,
 });
 
 // Email Functions
@@ -581,14 +582,6 @@ exports.createHouse = async (req, res) => {
         responseRate: 0,
 
         responseTime: "24 hours",
-      },
-
-      availability: {
-        startDate: availabilityObj.startDate || new Date(),
-
-        endDate:
-          availabilityObj.endDate ||
-          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
 
       isActive: true,
