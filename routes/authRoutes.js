@@ -13,6 +13,7 @@ const {
 
   // User Management
   getUsers,
+  getUserByEmail,
   getUser,
   getCurrentUser,
   updateUser,
@@ -105,6 +106,8 @@ router.post("/logout", logout);
 
 // Get current user profile
 router.get("/profile", getCurrentUser);
+
+router.get("/:email", getUserByEmail);
 
 // Update current user profile
 router.put(

@@ -1493,6 +1493,66 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+
+
+// ===========================
+// GET USER BY EMAIL
+// GET /users/:email
+// ===========================
+const getUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.trim().toLowerCase(),
+    }).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+        isActive: user.isActive,
+        lastLogin: user.lastLogin,
+        statistics: user.statistics,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Get user by email error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching user profile",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
+    });
+  }
+};
+
+
+
 // ===========================
 // UPDATE CURRENT USER
 // ===========================
@@ -2021,6 +2081,7 @@ module.exports = {
   updateCurrentUser,
   deleteUser,
   getAllUsers,
+  getUserByEmail,
   deleteCurrentUser,
   updateStatistics,
   getUserStatistics,
