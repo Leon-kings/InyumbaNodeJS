@@ -232,168 +232,6 @@ const createUserNotification = async ({
 // ============ CONTROLLER FUNCTIONS ============
 
 // 1. Create House
-// exports.createHouse = async (req, res) => {
-//   try {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       if (req.files && req.files.length > 0) {
-//         for (const file of req.files) {
-//           await cloudinary.uploader.destroy(file.filename);
-//         }
-//       }
-//       return res.status(400).json({
-//         success: false,
-//         errors: errors.array(),
-//       });
-//     }
-
-//     const {
-//       houseId,
-//       name,
-//       description,
-//       location,
-//       university,
-//       pricePerMonth,
-//       bedrooms,
-//       bathrooms,
-//       maxGuests,
-//       amenities,
-//       status,
-//       rating,
-//       totalReviews,
-//       host,
-//       availability,
-//       isActive,
-//     } = req.body;
-
-//     if (!req.files || req.files.length === 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "At least one image is required",
-//       });
-//     }
-
-//     let locationObj = {};
-//     let hostObj = {};
-//     let availabilityObj = {};
-//     let amenitiesArray = [];
-
-//     try {
-//       locationObj =
-//         typeof location === "string" ? JSON.parse(location) : location;
-//     } catch (e) {
-//       locationObj = {};
-//     }
-
-//     try {
-//       hostObj = typeof host === "string" ? JSON.parse(host) : host;
-//     } catch (e) {
-//       hostObj = {};
-//     }
-
-//     try {
-//       availabilityObj =
-//         typeof availability === "string"
-//           ? JSON.parse(availability)
-//           : availability;
-//     } catch (e) {
-//       availabilityObj = {};
-//     }
-
-//     try {
-//       amenitiesArray =
-//         typeof amenities === "string" ? JSON.parse(amenities) : amenities || [];
-//     } catch (e) {
-//       amenitiesArray = [];
-//     }
-
-//     const images = req.files.map((file) => ({
-//       public_id: file.filename,
-//       url: file.path,
-//       secure_url: file.path,
-//     }));
-
-//     const finalHouseId = houseId || `HSE-${String(Date.now()).slice(-6)}`;
-
-//     const house = new House({
-//       houseId: finalHouseId,
-//       name,
-//       description,
-//       images,
-//       location: {
-//         province: locationObj.province || "",
-//         district: locationObj.district || "",
-//         sector: locationObj.sector || "",
-//         cell: locationObj.cell || "",
-//         village: locationObj.village || "",
-//         coordinates: {
-//           lat: locationObj.coordinates?.lat || null,
-//           lng: locationObj.coordinates?.lng || null,
-//         },
-//       },
-//       university,
-//       pricePerMonth: parseFloat(pricePerMonth),
-//       bedrooms: parseInt(bedrooms),
-//       bathrooms: parseInt(bathrooms),
-//       maxGuests: parseInt(maxGuests),
-//       amenities: amenitiesArray,
-//       status: status || "pending",
-//       rating: parseFloat(rating) || 0,
-//       totalReviews: parseInt(totalReviews) || 0,
-//       host: {
-//         name: hostObj.name || "",
-//         email: hostObj.email || "",
-//         phone: hostObj.phone || "",
-//         responseRate: parseFloat(hostObj.responseRate) || 0,
-//         responseTime: hostObj.responseTime || "24 hours",
-//       },
-//       availability: {
-//         startDate: availabilityObj.startDate || new Date(),
-//         endDate:
-//           availabilityObj.endDate ||
-//           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-//       },
-//       isActive: isActive === "true" || isActive === true,
-//     });
-
-//     await house.save();
-
-//     // Create user notification for new house
-//     await createUserNotification({
-//       type: "house_created",
-//       houseId: house._id,
-//       houseName: house.name,
-//       location: house.location,
-//     });
-
-//     // Send email notifications
-//     await sendHouseNotification({
-//       type: "Created",
-//       houseName: house.name,
-//       location: house.location,
-//       hostEmail: hostObj.email,
-//       adminEmail: process.env.ADMIN_EMAIL,
-//       houseId: house._id,
-//     });
-
-//     res.status(201).json({
-//       success: true,
-//       message: "House created successfully",
-//       data: house,
-//     });
-//   } catch (error) {
-//     console.error("Create house error:", error);
-//     if (req.files && req.files.length > 0) {
-//       for (const file of req.files) {
-//         await cloudinary.uploader.destroy(file.filename);
-//       }
-//     }
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to create house",
-//     });
-//   }
-// };
 
 exports.createHouse = async (req, res) => {
   try {
@@ -568,7 +406,7 @@ exports.createHouse = async (req, res) => {
       // USER CANNOT APPROVE HOUSE
       status: "pending",
 
-      rating: 0,
+      rating: 4,
 
       totalReviews: 0,
 
@@ -579,9 +417,9 @@ exports.createHouse = async (req, res) => {
 
         phone: hostObj.phone || "",
 
-        responseRate: 0,
+        responseRate: 5,
 
-        responseTime: "24 hours",
+        responseTime: "48 hours",
       },
 
       isActive: true,
@@ -621,7 +459,7 @@ exports.createHouse = async (req, res) => {
 
         hostEmail: hostObj.email,
 
-        adminEmail: process.env.ADMIN_EMAIL,
+        adminEmail: process.env.ADMIN_EMAIL || "inyumba@yahoo.fr",
 
         houseId: house._id,
       });
