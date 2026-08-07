@@ -14,6 +14,7 @@ const {
   deleteBooking,
   cancelBooking,
   getBookingStats,
+  getBookingsByOwnerEmail,
 } = require("../controllers/bookingController");
 const { uploadBookingScreenshot } = require("../controllers/bookingController");
 
@@ -25,6 +26,7 @@ router.post(
 router.get("/", getBookings);
 router.get("/stats", getBookingStats);
 router.get("/email/:email", getBookingsByEmail);
+router.get("/:email", getBookingsByOwnerEmail);
 router.get("/:id", getBookingById);
 // Update booking
 router.put(
