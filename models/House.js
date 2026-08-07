@@ -183,17 +183,6 @@ const houseSchema = new mongoose.Schema(
       },
     },
 
-    availability: {
-      startDate: {
-        type: Date,
-        required: [true, "Start date is required"],
-      },
-
-      endDate: {
-        type: Date,
-        required: [true, "End date is required"],
-      },
-    },
 
     isActive: {
       type: Boolean,
