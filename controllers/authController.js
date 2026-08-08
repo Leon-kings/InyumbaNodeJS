@@ -35,7 +35,7 @@ const createTransporter = () => {
       },
 
       // Prevent Render from hanging
-      connectionTimeout: 30000,
+     connectionTimeout: 120000,
 
       greetingTimeout: 30000,
 
