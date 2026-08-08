@@ -23,6 +23,8 @@ const {
   getUserStatistics,
   deleteCurrentUser,
   updateStatistics,
+  getAllNotifications,
+  getNotificationsByEmail,
 } = require("../controllers/authController");
 const { getUserActivities } = require("../controllers/activityController");
 
@@ -106,6 +108,9 @@ router.post(
 router.post("/logout", logout);
 
 router.get("/activities", getUserActivities);
+
+router.get( "/notifications", getAllNotifications );
+router.get( "/notifications/email/:email", getNotificationsByEmail );
 
 // Get current user profile
 router.get("/profile", getCurrentUser);
