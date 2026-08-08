@@ -1085,100 +1085,255 @@ exports.getNewlyAddedHouses = async (req, res) => {
   }
 };
 
-// 12. Get House Notifications
+// ==========================================
+// 12. GET HOUSE NOTIFICATIONS
+// ==========================================
+
 exports.getHouseNotifications = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page =
+      parseInt(req.query.page, 10) || 1;
+
+    const limit =
+      parseInt(req.query.limit, 10) || 20;
+
     const skip = (page - 1) * limit;
+
     const status = req.query.status;
 
-    let query = { isGlobal: true };
-    if (status) query.status = status;
+    // ===========================
+    // BUILD QUERY
+    // ===========================
 
-    const [notifications, total, unreadCount] = await Promise.all([
+    const query = {
+      isGlobal: true,
+    };
+
+    if (status) {
+      query.status = status;
+    }
+
+    // ===========================
+    // GET NOTIFICATIONS
+    // ===========================
+
+    const [
+      notifications,
+      total,
+      unreadCount,
+    ] = await Promise.all([
       Notification.find(query)
-        .sort({ createdAt: -1 })
+        .sort({
+          createdAt: -1,
+        })
         .skip(skip)
         .limit(limit)
-        .populate("houseId", "name houseId location images")
+        .populate(
+          "houseId",
+          "name houseId location images"
+        )
         .lean(),
+
       Notification.countDocuments(query),
-      Notification.getUnreadCount(),
+
+      Notification.countDocuments({
+        isGlobal: true,
+        isRead: false,
+      }),
     ]);
 
-    res.status(200).json({
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
       success: true,
+
       data: notifications,
+
       unreadCount,
+
       pagination: {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit),
+        pages:
+          Math.ceil(total / limit),
       },
     });
   } catch (error) {
-    console.error("Get house notifications error:", error);
-    res.status(500).json({
+    console.error(
+      "Get house notifications error:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
-      message: "Failed to fetch notifications",
+      message:
+        "Failed to fetch notifications",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
 
-// 13. Mark Notification as Read
-exports.markNotificationAsRead = async (req, res) => {
+
+// ==========================================
+// 13. MARK NOTIFICATION AS READ
+// ==========================================
+
+exports.markNotificationAsRead = async (
+  req,
+  res
+) => {
   try {
-    const notification = await Notification.findById(req.params.id);
+    const notification =
+      await Notification.findById(
+        req.params.id
+      );
+
+    // ===========================
+    // NOT FOUND
+    // ===========================
 
     if (!notification) {
       return res.status(404).json({
         success: false,
-        message: "Notification not found",
+        message:
+          "Notification not found",
       });
     }
 
+    // ===========================
+    // MARK AS READ
+    // ===========================
+
     notification.isRead = true;
+
     notification.status = "read";
-    notification.readBy.push({
-      userId: "admin",
-      readAt: new Date(),
-    });
+
+    // ===========================
+    // READ DATE
+    // ===========================
+
+    notification.readAt =
+      new Date();
+
+    // ===========================
+    // ADD ADMIN TO READ BY
+    // ===========================
+
+    if (
+      Array.isArray(
+        notification.readBy
+      )
+    ) {
+      const alreadyRead =
+        notification.readBy.some(
+          (reader) =>
+            String(reader.userId) ===
+            "admin"
+        );
+
+      if (!alreadyRead) {
+        notification.readBy.push({
+          userId: "admin",
+          readAt: new Date(),
+        });
+      }
+    }
+
     await notification.save();
 
-    res.status(200).json({
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
       success: true,
-      message: "Notification marked as read",
+      message:
+        "Notification marked as read",
       data: notification,
     });
   } catch (error) {
-    console.error("Mark notification as read error:", error);
-    res.status(500).json({
+    console.error(
+      "Mark notification as read error:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
-      message: "Failed to mark notification as read",
+      message:
+        "Failed to mark notification as read",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
 
-// 14. Mark All Notifications as Read
-exports.markAllNotificationsAsRead = async (req, res) => {
-  try {
-    await Notification.markAllAsRead();
 
-    res.status(200).json({
+// ==========================================
+// 14. MARK ALL NOTIFICATIONS AS READ
+// ==========================================
+
+exports.markAllNotificationsAsRead = async (
+  req,
+  res
+) => {
+  try {
+    // ===========================
+    // UPDATE ALL GLOBAL NOTIFICATIONS
+    // ===========================
+
+    const result =
+      await Notification.updateMany(
+        {
+          isGlobal: true,
+          isRead: false,
+        },
+        {
+          $set: {
+            isRead: true,
+            status: "read",
+            readAt: new Date(),
+          },
+        }
+      );
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
       success: true,
-      message: "All notifications marked as read",
+
+      message:
+        "All notifications marked as read",
+
+      modifiedCount:
+        result.modifiedCount,
     });
   } catch (error) {
-    console.error("Mark all notifications as read error:", error);
-    res.status(500).json({
+    console.error(
+      "Mark all notifications as read error:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
-      message: "Failed to mark all notifications as read",
+      message:
+        "Failed to mark all notifications as read",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
-
 // 15. Get Unread Notification Count
 exports.getUnreadNotificationCount = async (req, res) => {
   try {

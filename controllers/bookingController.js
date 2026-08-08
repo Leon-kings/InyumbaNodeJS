@@ -82,6 +82,18 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 60000,
 });
 
+transporter.verify((error, success) => {
+  if (error) {
+    console.error(
+      "❌ SMTP connection failed:",
+      error.message
+    );
+  } else {
+    console.log(
+      "✅ SMTP server for book is ready"
+    );
+  }
+});
 // ============================================================
 // SEND EMAIL FUNCTION
 // ============================================================

@@ -52,17 +52,35 @@ const upload = multer({
 // =======================
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
 
-  port: process.env.SMTP_PORT,
+  port: parseInt(process.env.SMTP_PORT, 10) || 587,
 
-  secure: false,
+  secure: String(process.env.SMTP_PORT) === "465",
 
   auth: {
     user: process.env.SMTP_USER,
 
     pass: process.env.SMTP_PASS,
   },
+
+  connectionTimeout: 30000,
+
+  greetingTimeout: 30000,
+
+  socketTimeout: 30000,
+
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ SMTP connection failed:", error.message);
+  } else {
+    console.log("✅ SMTP server is ready");
+  }
 });
 
 // =======================

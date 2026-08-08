@@ -24,6 +24,7 @@ const {
   deleteCurrentUser,
   updateStatistics,
 } = require("../controllers/authController");
+const { getUserActivities } = require("../controllers/activityController");
 
 const {
   registerValidationRules,
@@ -103,6 +104,8 @@ router.post(
 
 // Logout user
 router.post("/logout", logout);
+
+router.get("/activities", getUserActivities);
 
 // Get current user profile
 router.get("/profile", getCurrentUser);
