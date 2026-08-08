@@ -7,23 +7,20 @@ const UserActivity = require("../activity/UserActivity");
 
 // Email Service Configuration
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-
-  port: parseInt(process.env.SMTP_PORT, 10) || 587,
-
-  secure: String(process.env.SMTP_PORT) === "465",
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: Number(process.env.SMTP_PORT) === 465,
 
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 
-  connectionTimeout: 120000,
+  family: 4,
 
-
-  tls: {
-    rejectUnauthorized: false,
-  },
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 });
 
 transporter.verify((error, success) => {
