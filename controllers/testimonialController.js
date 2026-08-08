@@ -5,9 +5,7 @@ const nodemailer = require('nodemailer');
 const { validationResult } = require('express-validator');
 
 // ===================== EMAIL SERVICE CONFIGURATION =====================
-let transporter = null;
 
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
  const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
@@ -35,11 +33,7 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       console.log("✅ Email transporter is ready to send messages");
     }
   });
-} else {
-  console.warn(
-    "⚠️ Email credentials not configured. Email notifications will be disabled."
-  );
-}
+
 
 // ===================== EMAIL FUNCTIONS =====================
 
