@@ -7,36 +7,42 @@ const { validationResult } = require('express-validator');
 // ===================== EMAIL SERVICE CONFIGURATION =====================
 let transporter = null;
 
-// Initialize transporter only if credentials exist
 if (process.env.SMTP_USER && process.env.SMTP_PASS) {
   transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT) || 587,
+    host: "smtp.gmail.com",
+    port: 587,
     secure: false,
+
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      pass: process.env.SMTP_PASS,
     },
+
+    family: 4,
+
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
+
     tls: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: true,
+    },
   });
 
-  // Verify transporter configuration
-  transporter.verify(function(error, success) {
+  transporter.verify((error, success) => {
     if (error) {
-      console.error('❌ Email transporter verification failed:', error.message);
-      console.log('⚠️ Please check your SMTP credentials in environment variables');
+      console.error(
+        "❌ Email transporter verification failed:",
+        error.message
+      );
     } else {
-      console.log('✅ Email transporter is ready to send messages');
+      console.log("✅ Email transporter is ready to send messages");
     }
   });
 } else {
-  console.warn('⚠️ Email credentials not configured. Email notifications will be disabled.');
-  console.log('ℹ️ Set SMTP_USER and SMTP_PASS in environment variables to enable emails');
+  console.warn(
+    "⚠️ Email credentials not configured. Email notifications will be disabled."
+  );
 }
 
 // ===================== EMAIL FUNCTIONS =====================
