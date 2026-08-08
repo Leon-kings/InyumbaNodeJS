@@ -695,9 +695,27 @@ exports.getAllContacts = async (req, res) => {
 };
 
 // 3. Get Contact by ID
+
 exports.getContactById = async (req, res) => {
   try {
-    const contact = await Contact.findById(req.params.id);
+    const { id } = req.params;
+
+    // ===========================
+    // VALIDATE MONGODB OBJECT ID
+    // ===========================
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid contact ID",
+      });
+    }
+
+    // ===========================
+    // FIND CONTACT
+    // ===========================
+
+    const contact = await Contact.findById(id);
 
     if (!contact) {
       return res.status(404).json({
@@ -706,29 +724,49 @@ exports.getContactById = async (req, res) => {
       });
     }
 
-    // Mark as read and create notification
+    // ===========================
+    // MARK AS READ
+    // ===========================
+
     if (contact.status === "pending") {
       contact.status = "read";
       contact.readAt = new Date();
+
       await contact.save();
 
-      // Create notification for read
-      await createAdminNotification(contact, "read");
+      // ===========================
+      // CREATE READ NOTIFICATION
+      // ===========================
+
+      try {
+        await createAdminNotification(contact, "read");
+      } catch (notificationError) {
+        // Notification failure should NOT
+        // prevent the contact from being returned
+        console.error(
+          "Failed to create read notification:",
+          notificationError.message,
+        );
+      }
     }
 
-    res.status(200).json({
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
       success: true,
       data: contact,
     });
   } catch (error) {
     console.error("Get contact by ID error:", error);
-    res.status(500).json({
+
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch contact",
     });
   }
 };
-
 // 4. Get Contacts by Email
 exports.getContactsByEmail = async (req, res) => {
   try {
@@ -773,10 +811,82 @@ exports.getContactsByEmail = async (req, res) => {
 };
 
 // 5. Update Contact Status
+
+// exports.updateContactStatus = async (req, res) => {
+//   try {
+//     const { status } = req.body;
+//     const contact = await Contact.findById(req.params.id);
+
+//     if (!contact) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Contact not found",
+//       });
+//     }
+
+//     const oldStatus = contact.status;
+//     contact.status = status;
+//     await contact.save();
+
+//     // Create notification for status change
+//     if (status === "replied") {
+//       await createAdminNotification(contact, "replied");
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Contact status updated successfully",
+//       data: contact,
+//     });
+//   } catch (error) {
+//     console.error("Update contact status error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to update contact status",
+//     });
+//   }
+// };
+
 exports.updateContactStatus = async (req, res) => {
   try {
+    const { id } = req.params;
     const { status } = req.body;
-    const contact = await Contact.findById(req.params.id);
+
+    // ===========================
+    // VALIDATE CONTACT ID
+    // ===========================
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid contact ID",
+      });
+    }
+
+    // ===========================
+    // VALIDATE STATUS
+    // ===========================
+
+    const allowedStatuses = [
+      "pending",
+      "read",
+      "replied",
+      "archived",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid contact status",
+        allowedStatuses,
+      });
+    }
+
+    // ===========================
+    // FIND CONTACT
+    // ===========================
+
+    const contact = await Contact.findById(id);
 
     if (!contact) {
       return res.status(404).json({
@@ -785,23 +895,77 @@ exports.updateContactStatus = async (req, res) => {
       });
     }
 
-    const oldStatus = contact.status;
-    contact.status = status;
-    await contact.save();
+    // ===========================
+    // SAVE OLD STATUS
+    // ===========================
 
-    // Create notification for status change
-    if (status === "replied") {
-      await createAdminNotification(contact, "replied");
+    const oldStatus = contact.status;
+
+    // ===========================
+    // UPDATE STATUS
+    // ===========================
+
+    contact.status = status;
+
+    if (status === "read" && !contact.readAt) {
+      contact.readAt = new Date();
     }
 
-    res.status(200).json({
+    if (status === "replied" && !contact.repliedAt) {
+      contact.repliedAt = new Date();
+    }
+
+    await contact.save();
+
+    // ===========================
+    // CREATE NOTIFICATION
+    // ONLY WHEN STATUS CHANGES
+    // ===========================
+
+    if (
+      oldStatus !== status &&
+      status === "replied"
+    ) {
+      try {
+        await createAdminNotification(
+          contact,
+          "replied"
+        );
+      } catch (notificationError) {
+        console.error(
+          "Failed to create status notification:",
+          notificationError.message
+        );
+      }
+    }
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
       success: true,
-      message: "Contact status updated successfully",
-      data: contact,
+      message:
+        "Contact status updated successfully",
+
+      data: {
+        id: contact._id,
+        name: contact.name,
+        email: contact.email,
+        message: contact.message,
+        status: contact.status,
+        readAt: contact.readAt,
+        repliedAt: contact.repliedAt,
+        updatedAt: contact.updatedAt,
+      },
     });
   } catch (error) {
-    console.error("Update contact status error:", error);
-    res.status(500).json({
+    console.error(
+      "Update contact status error:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
       message: "Failed to update contact status",
     });
@@ -809,18 +973,45 @@ exports.updateContactStatus = async (req, res) => {
 };
 
 // 6. Reply to Contact
+
+
 exports.replyToContact = async (req, res) => {
   try {
-    const { replyMessage } = req.body;
+    const { replyMessage, status } = req.body;
 
-    if (!replyMessage || replyMessage.trim().length < 5) {
+    // ===========================
+    // VALIDATE REPLY MESSAGE
+    // ===========================
+
+    if (
+      !replyMessage ||
+      replyMessage.trim().length < 5
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Reply message must be at least 5 characters",
+        message:
+          "Reply message must be at least 5 characters",
       });
     }
 
-    const contact = await Contact.findById(req.params.id);
+    // ===========================
+    // VALIDATE CONTACT ID
+    // ===========================
+
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid contact ID",
+      });
+    }
+
+    // ===========================
+    // FIND CONTACT
+    // ===========================
+
+    const contact = await Contact.findById(id);
 
     if (!contact) {
       return res.status(404).json({
@@ -829,46 +1020,135 @@ exports.replyToContact = async (req, res) => {
       });
     }
 
-    // Send reply email to user
+    // ===========================
+    // DETERMINE STATUS
+    // ===========================
+
+    const finalStatus = status || "replied";
+
+    const allowedStatuses = [
+      "pending",
+      "read",
+      "replied",
+      "archived",
+    ];
+
+    if (!allowedStatuses.includes(finalStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid contact status",
+        allowedStatuses,
+      });
+    }
+
+    // ===========================
+    // UPDATE CONTACT FIRST
+    // ===========================
+
+    contact.status = finalStatus;
+    contact.replyMessage = replyMessage.trim();
+
+    if (finalStatus === "replied") {
+      contact.repliedAt = new Date();
+    }
+
+    await contact.save();
+
+    // ===========================
+    // CREATE NOTIFICATIONS
+    // ===========================
+
+    try {
+      // Admin notification
+      await createAdminNotification(
+        contact,
+        "replied"
+      );
+    } catch (notificationError) {
+      console.error(
+        "Admin notification error:",
+        notificationError.message
+      );
+    }
+
+    try {
+      // User notification
+      await createUserNotification(contact);
+    } catch (notificationError) {
+      console.error(
+        "User notification error:",
+        notificationError.message
+      );
+    }
+
+    // ===========================
+    // SEND REPLY EMAIL
+    // ===========================
+
+    let emailSent = true;
+
     try {
       await sendEmailToUser({
         name: contact.name,
         email: contact.email,
         message: contact.message,
+
         isReply: true,
-        replyMessage: replyMessage,
+
+        replyMessage:
+          contact.replyMessage,
+
+        status: contact.status,
       });
 
-      contact.status = "replied";
-      contact.repliedAt = new Date();
-      contact.replyMessage = replyMessage;
-      await contact.save();
-
-      // ===========================
-      // CREATE NOTIFICATIONS
-      // ===========================
-
-      // Create admin notification
-      await createAdminNotification(contact, "replied");
-
-      // Create user notification
-      await createUserNotification(contact);
-
-      res.status(200).json({
-        success: true,
-        message: "Reply sent successfully",
-        data: contact,
-      });
+      console.log(
+        `✅ Reply email sent to ${contact.email}`
+      );
     } catch (emailError) {
-      console.error("Reply email error:", emailError);
-      res.status(500).json({
-        success: false,
-        message: "Failed to send reply email",
-      });
+      emailSent = false;
+
+      console.error(
+        "❌ Reply email error:",
+        emailError.message
+      );
+
+      // IMPORTANT:
+      // Do NOT throw the error.
+      // The reply has already been saved.
     }
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+
+      message: emailSent
+        ? "Reply sent successfully"
+        : "Reply saved successfully, but the email could not be sent",
+
+      emailSent,
+
+      data: {
+        id: contact._id,
+        userId: contact.userId,
+        name: contact.name,
+        email: contact.email,
+        message: contact.message,
+        replyMessage: contact.replyMessage,
+        status: contact.status,
+        repliedAt: contact.repliedAt,
+        updatedAt: contact.updatedAt,
+      },
+    });
   } catch (error) {
-    console.error("Reply to contact error:", error);
-    res.status(500).json({
+    console.error(
+      "Reply to contact error:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
       message: "Failed to reply to contact",
     });
