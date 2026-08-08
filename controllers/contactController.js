@@ -2,19 +2,45 @@ const Contact = require("../models/Contact");
 const Notification = require("../models/Notification");
 const nodemailer = require("nodemailer");
 const { validationResult } = require("express-validator");
+const UserActivity = require("../activity/UserActivity");
 
 // Email Service Configuration
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_PORT == "465",
+
+  port: parseInt(process.env.SMTP_PORT, 10) || 587,
+
+  secure: String(process.env.SMTP_PORT) === "465",
+
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
+
   tls: {
     rejectUnauthorized: false,
   },
+});
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ SMTP connection failed:", error.message);
+
+    console.error("SMTP Host:", process.env.SMTP_HOST || "smtp.gmail.com");
+
+    console.error("SMTP Port:", process.env.SMTP_PORT || 587);
+
+    console.error(
+      "SMTP User:",
+      process.env.SMTP_USER ? "Configured" : "Missing",
+    );
+  } else {
+    console.log("✅ SMTP server is ready to accept messages");
+  }
 });
 
 // Verify SMTP connection
@@ -45,7 +71,8 @@ const createAdminNotification = async (contact, type) => {
         metadata = {
           name: contact.name,
           email: contact.email,
-          messagePreview: contact.messagePreview || contact.message.substring(0, 100) + "...",
+          messagePreview:
+            contact.messagePreview || contact.message.substring(0, 100) + "...",
           status: contact.status,
           ipAddress: contact.ipAddress,
         };
@@ -343,9 +370,99 @@ const getClientIP = (req) => {
 };
 
 // 1. Submit Contact Form
+// exports.submitContact = async (req, res) => {
+//   try {
+//     const errors = validationResult(req);
+
+//     if (!errors.isEmpty()) {
+//       return res.status(400).json({
+//         success: false,
+//         errors: errors.array().map((e) => ({
+//           field: e.path,
+//           message: e.msg,
+//         })),
+//       });
+//     }
+
+//     const { name, email, message } = req.body;
+
+//     // Check for duplicate submissions
+//     const recentSubmission = await Contact.findOne({
+//       email,
+//       createdAt: {
+//         $gte: new Date(Date.now() - 5 * 60 * 1000),
+//       },
+//     });
+
+//     if (recentSubmission) {
+//       return res.status(429).json({
+//         success: false,
+//         message: "Please wait 5 minutes before submitting again",
+//       });
+//     }
+
+//     // Create new contact
+//     const contact = new Contact({
+//       name,
+//       email,
+//       message,
+//       ipAddress: getClientIP(req),
+//       userAgent: req.headers["user-agent"],
+//     });
+
+//     await contact.save();
+
+//     // ===========================
+//     // CREATE ADMIN NOTIFICATION
+//     // ===========================
+//     await createAdminNotification(contact, "created");
+
+//     // Send emails
+//     try {
+//       await Promise.all([
+//         sendEmailToAdmin({
+//           name,
+//           email,
+//           message,
+//         }),
+//         sendEmailToUser({
+//           name,
+//           email,
+//           message,
+//         }),
+//       ]);
+//     } catch (emailError) {
+//       console.error("Email error:", emailError);
+//     }
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Contact form submitted successfully",
+//       data: {
+//         id: contact._id,
+//         name: contact.name,
+//         email: contact.email,
+//         status: contact.status,
+//         ipAddress: contact.ipAddress,
+//         createdAt: contact.createdAt,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Submit contact error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to submit contact form",
+//     });
+//   }
+// };
+
 exports.submitContact = async (req, res) => {
   try {
     const errors = validationResult(req);
+
+    // ===========================
+    // VALIDATION
+    // ===========================
 
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -359,9 +476,14 @@ exports.submitContact = async (req, res) => {
 
     const { name, email, message } = req.body;
 
-    // Check for duplicate submissions
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // ===========================
+    // CHECK FOR DUPLICATE SUBMISSIONS
+    // ===========================
+
     const recentSubmission = await Contact.findOne({
-      email,
+      email: normalizedEmail,
       createdAt: {
         $gte: new Date(Date.now() - 5 * 60 * 1000),
       },
@@ -374,54 +496,150 @@ exports.submitContact = async (req, res) => {
       });
     }
 
-    // Create new contact
+    // ===========================
+    // GET LOGGED-IN USER
+    // ===========================
+
+    // Do NOT get userId from req.body.
+    // It comes from the authenticated JWT.
+    const userId = req.user?.id || null;
+
+    // ===========================
+    // GET CLIENT INFORMATION
+    // ===========================
+
+    const ipAddress = getClientIP(req);
+
+    const userAgent = req.headers["user-agent"] || null;
+
+    // ===========================
+    // CREATE NEW CONTACT
+    // ===========================
+
     const contact = new Contact({
-      name,
-      email,
-      message,
-      ipAddress: getClientIP(req),
-      userAgent: req.headers["user-agent"],
+      userId,
+
+      name: name.trim(),
+
+      email: normalizedEmail,
+
+      message: message.trim(),
+
+      ipAddress,
+
+      userAgent,
     });
 
     await contact.save();
 
+    console.log(`✅ Contact created: ${contact._id}`);
+
+    // ===========================
+    // CREATE USER ACTIVITY
+    // ===========================
+
+    try {
+      await UserActivity.create({
+        userId: userId,
+
+        userName: contact.name,
+
+        userEmail: contact.email,
+
+        action: "contact_created",
+
+        description: `User ${contact.name} submitted a contact message`,
+
+        ipAddress,
+
+        userAgent,
+      });
+
+      console.log(`✅ User activity created for ${contact.email}`);
+    } catch (activityError) {
+      // Activity failure should NOT
+      // prevent contact submission.
+      console.error(
+        "❌ Failed to create user activity:",
+        activityError.message,
+      );
+    }
+
     // ===========================
     // CREATE ADMIN NOTIFICATION
     // ===========================
-    await createAdminNotification(contact, "created");
 
-    // Send emails
+    try {
+      await createAdminNotification(contact, "created");
+
+      console.log(`✅ Admin notification created for contact ${contact._id}`);
+    } catch (notificationError) {
+      // Notification failure should NOT
+      // prevent contact submission.
+      console.error(
+        "❌ Failed to create admin notification:",
+        notificationError.message,
+      );
+    }
+
+    // ===========================
+    // SEND EMAILS
+    // ===========================
+
     try {
       await Promise.all([
         sendEmailToAdmin({
-          name,
-          email,
-          message,
+          name: contact.name,
+          email: contact.email,
+          message: contact.message,
         }),
+
         sendEmailToUser({
-          name,
-          email,
-          message,
+          name: contact.name,
+          email: contact.email,
+          message: contact.message,
         }),
       ]);
+
+      console.log(`✅ Contact emails processed for ${contact.email}`);
     } catch (emailError) {
-      console.error("Email error:", emailError);
+      // Email failure should NOT
+      // prevent successful contact creation.
+      console.error("❌ Contact email error:", emailError.message);
     }
+
+    // ===========================
+    // RESPONSE
+    // ===========================
 
     return res.status(201).json({
       success: true,
+
       message: "Contact form submitted successfully",
+
       data: {
         id: contact._id,
+
+        userId: contact.userId,
+
         name: contact.name,
+
         email: contact.email,
+
+        message: contact.message,
+
         status: contact.status,
+
         ipAddress: contact.ipAddress,
+
+        userAgent: contact.userAgent,
+
         createdAt: contact.createdAt,
       },
     });
   } catch (error) {
     console.error("Submit contact error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to submit contact form",
@@ -629,10 +847,10 @@ exports.replyToContact = async (req, res) => {
       // ===========================
       // CREATE NOTIFICATIONS
       // ===========================
-      
+
       // Create admin notification
       await createAdminNotification(contact, "replied");
-      
+
       // Create user notification
       await createUserNotification(contact);
 
@@ -811,11 +1029,11 @@ exports.getContactNotifications = async (req, res) => {
     const skip = (page - 1) * limit;
     const status = req.query.status;
 
-    let query = { 
+    let query = {
       type: { $regex: /^contact_/ },
-      target: { $in: ['admin', 'both'] }
+      target: { $in: ["admin", "both"] },
     };
-    
+
     if (status) query.status = status;
 
     const [notifications, total, unreadCount] = await Promise.all([
@@ -825,10 +1043,10 @@ exports.getContactNotifications = async (req, res) => {
         .limit(limit)
         .lean(),
       Notification.countDocuments(query),
-      Notification.countDocuments({ 
-        ...query, 
-        isRead: false, 
-        status: 'new' 
+      Notification.countDocuments({
+        ...query,
+        isRead: false,
+        status: "new",
       }),
     ]);
 
@@ -888,13 +1106,13 @@ exports.markAllNotificationsAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
       { type: { $regex: /^contact_/ }, isRead: false },
-      { 
-        $set: { 
-          isRead: true, 
+      {
+        $set: {
+          isRead: true,
           status: "read",
-          readAt: new Date()
-        } 
-      }
+          readAt: new Date(),
+        },
+      },
     );
 
     res.status(200).json({

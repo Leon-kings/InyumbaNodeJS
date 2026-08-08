@@ -3,40 +3,87 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const User = require("../models/User");
+const UserActivity = require("../activity/UserActivity");
 
 // ===========================
 // EMAIL CONFIGURATION
 // ===========================
-// const createTransporter = () => {
-//   // For production, use your actual email service
-//   if (process.env.NODE_ENV === "production") {
-//     return nodemailer.createTransport({
-//       host: process.env.SMTP_HOST,
-//       port: process.env.SMTP_PORT,
-//       secure: false,
-//       auth: {
-//         user: process.env.SMTP_USER,
-//         pass: process.env.SMTP_PASS,
-//       },
-//     });
-//   }
-// };
 
 const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: Number(process.env.SMTP_PORT) === 465,
-    family: 4, // Force IPv4
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
+  const port =
+    Number(process.env.SMTP_PORT) || 587;
+
+  const transporter =
+    nodemailer.createTransport({
+      host:
+        process.env.SMTP_HOST ||
+        "smtp.gmail.com",
+
+      port,
+
+      secure: port === 465,
+
+      // Force IPv4
+      family: 4,
+
+      auth: {
+        user:
+          process.env.SMTP_USER,
+
+        pass:
+          process.env.SMTP_PASS,
+      },
+
+      // Prevent Render from hanging
+      connectionTimeout: 30000,
+
+      greetingTimeout: 30000,
+
+      socketTimeout: 30000,
+
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+  // ===========================
+  // VERIFY SMTP CONNECTION
+  // ===========================
+
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error(
+        "❌ SMTP connection verification failed:",
+        error.message
+      );
+
+      console.error(
+        "SMTP Host:",
+        process.env.SMTP_HOST ||
+          "smtp.gmail.com"
+      );
+
+      console.error(
+        "SMTP Port:",
+        port
+      );
+
+      console.error(
+        "SMTP User:",
+        process.env.SMTP_USER
+          ? "Configured"
+          : "Missing"
+      );
+    } else {
+      console.log(
+        "✅ SMTP server is ready to send emails"
+      );
+    }
   });
+
+  return transporter;
 };
+
 
 // ===========================
 // EMAIL VALIDATION
@@ -476,6 +523,7 @@ const generateVerificationCode = () => {
 // REGISTER - Create User with Email Verification
 // ===========================
 
+
 // const register = async (req, res) => {
 //   try {
 //     const { name, email, phone, password, confirmPassword } = req.body;
@@ -539,10 +587,7 @@ const generateVerificationCode = () => {
 //     // ===========================
 
 //     const existingUser = await User.findOne({
-//       $or: [
-//         { email: normalizedEmail },
-//         { phone: phone },
-//       ],
+//       $or: [{ email: normalizedEmail }, { phone: phone.trim() }],
 //     });
 
 //     if (existingUser) {
@@ -552,7 +597,7 @@ const generateVerificationCode = () => {
 //         errors.email = "An account with this email already exists";
 //       }
 
-//       if (existingUser.phone === phone) {
+//       if (existingUser.phone === phone.trim()) {
 //         errors.phone = "An account with this phone number already exists";
 //       }
 
@@ -580,18 +625,18 @@ const generateVerificationCode = () => {
 //     // ===========================
 
 //     const newUser = await User.create({
-//       name,
+//       name: name.trim(),
 //       email: normalizedEmail,
-//       phone,
+//       phone: phone.trim(),
 //       password: hashedPassword,
-//       emailVerificationCode: verificationCode,
-
-//       // Removed expiration so the account is never
-//       // automatically deleted after 24 hours.
-//       emailVerificationExpires: null,
 
 //       isEmailVerified: false,
 //       isActive: true,
+
+//       emailVerificationCode: verificationCode,
+
+//       // No expiration date
+//       emailVerificationExpires: undefined,
 //     });
 
 //     // ===========================
@@ -601,35 +646,24 @@ const generateVerificationCode = () => {
 //     let emailSent = true;
 
 //     try {
-//       const emailData = generateVerificationEmail(
-//         newUser,
-//         verificationCode
-//       );
+//       const emailData = generateVerificationEmail(newUser, verificationCode);
 
 //       await sendEmail(
 //         newUser.email,
 //         emailData.subject,
 //         emailData.html,
-//         emailData.text
+//         emailData.text,
 //       );
 
-//       console.log(
-//         `Verification email sent to ${newUser.email}`
-//       );
+//       console.log(`✅ Verification email sent to ${newUser.email}`);
 //     } catch (emailError) {
 //       emailSent = false;
 
-//       console.error(
-//         "Email sending failed:",
-//         emailError.message
-//       );
-
-//       // User remains in database.
-//       // They can request another verification email later.
+//       console.error("❌ Email sending failed:", emailError.message);
 //     }
 
 //     // ===========================
-//     // CREATE JWT TOKEN
+//     // GENERATE JWT
 //     // ===========================
 
 //     const token = jwt.sign(
@@ -641,7 +675,7 @@ const generateVerificationCode = () => {
 //       process.env.JWT_SECRET,
 //       {
 //         expiresIn: "1d",
-//       }
+//       },
 //     );
 
 //     // ===========================
@@ -652,7 +686,7 @@ const generateVerificationCode = () => {
 //       success: true,
 //       message: emailSent
 //         ? "Registration successful. Please check your email to verify your account."
-//         : "Registration successful, but we could not send the verification email. Your account has been created successfully. Please request another verification email later.",
+//         : "Registration successful, but the verification email could not be sent. You can request another verification email later.",
 //       requiresEmailVerification: true,
 //       emailSent,
 //       token,
@@ -669,13 +703,12 @@ const generateVerificationCode = () => {
 //       },
 //     });
 //   } catch (error) {
-//     console.error("REGISTER ERROR");
-//     console.error(error);
+//     console.error("REGISTER ERROR:", error);
 
 //     return res.status(500).json({
 //       success: false,
-//       message: "Something went wrong during registration",
-//       error: error.message,
+//       message: "Something went wrong during registration.",
+//       error: process.env.NODE_ENV === "development" ? error.message : undefined,
 //     });
 //   }
 // };
@@ -743,7 +776,10 @@ const register = async (req, res) => {
     // ===========================
 
     const existingUser = await User.findOne({
-      $or: [{ email: normalizedEmail }, { phone: phone.trim() }],
+      $or: [
+        { email: normalizedEmail },
+        { phone: phone.trim() },
+      ],
     });
 
     if (existingUser) {
@@ -754,7 +790,8 @@ const register = async (req, res) => {
       }
 
       if (existingUser.phone === phone.trim()) {
-        errors.phone = "An account with this phone number already exists";
+        errors.phone =
+          "An account with this phone number already exists";
       }
 
       return res.status(409).json({
@@ -796,26 +833,59 @@ const register = async (req, res) => {
     });
 
     // ===========================
+    // CREATE USER ACTIVITY
+    // ===========================
+
+    try {
+      await UserActivity.create({
+        userId: newUser._id,
+        userName: newUser.name,
+        userEmail: newUser.email,
+        action: "user_created",
+        description: `New user ${newUser.name} created an account`,
+        ipAddress:
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          null,
+        userAgent: req.headers["user-agent"] || null,
+      });
+
+      console.log(`✅ User activity created for ${newUser.email}`);
+    } catch (activityError) {
+      // Activity failure should NOT prevent successful registration
+      console.error(
+        "❌ Failed to create user activity:",
+        activityError.message
+      );
+    }
+
+    // ===========================
     // SEND VERIFICATION EMAIL
     // ===========================
 
     let emailSent = true;
 
     try {
-      const emailData = generateVerificationEmail(newUser, verificationCode);
+      const emailData = generateVerificationEmail(
+        newUser,
+        verificationCode
+      );
 
       await sendEmail(
         newUser.email,
         emailData.subject,
         emailData.html,
-        emailData.text,
+        emailData.text
       );
 
       console.log(`✅ Verification email sent to ${newUser.email}`);
     } catch (emailError) {
       emailSent = false;
 
-      console.error("❌ Email sending failed:", emailError.message);
+      console.error(
+        "❌ Email sending failed:",
+        emailError.message
+      );
     }
 
     // ===========================
@@ -831,7 +901,7 @@ const register = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
-      },
+      }
     );
 
     // ===========================
@@ -840,12 +910,15 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
+
       message: emailSent
         ? "Registration successful. Please check your email to verify your account."
         : "Registration successful, but the verification email could not be sent. You can request another verification email later.",
+
       requiresEmailVerification: true,
       emailSent,
       token,
+
       user: {
         id: newUser._id,
         name: newUser.name,
@@ -858,13 +931,17 @@ const register = async (req, res) => {
         createdAt: newUser.createdAt,
       },
     });
+
   } catch (error) {
     console.error("REGISTER ERROR:", error);
 
     return res.status(500).json({
       success: false,
       message: "Something went wrong during registration.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
