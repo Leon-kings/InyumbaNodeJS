@@ -14,37 +14,22 @@ const createTransporter = () => {
     Number(process.env.SMTP_PORT) || 587;
 
   const transporter =
-    nodemailer.createTransport({
-      host:
-        process.env.SMTP_HOST ||
-        "smtp.gmail.com",
+ transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: Number(process.env.SMTP_PORT) === 465,
 
-      port,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
 
-      secure: port === 465,
+  family: 4,
 
-      // Force IPv4
-      family: 4,
-
-      auth: {
-        user:
-          process.env.SMTP_USER,
-
-        pass:
-          process.env.SMTP_PASS,
-      },
-
-      // Prevent Render from hanging
-     connectionTimeout: 120000,
-
-      greetingTimeout: 30000,
-
-      socketTimeout: 30000,
-
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
+});
 
   // ===========================
   // VERIFY SMTP CONNECTION
