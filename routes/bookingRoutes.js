@@ -69,7 +69,8 @@ const {
   cancelBooking,
   getBookingStats,
   getBookingsByOwnerEmail,
-
+deleteNotification,
+markNotificationAsRead,
   // Notifications
   getAllNotifications,
   getNotificationsByEmail,
@@ -112,6 +113,17 @@ router.get(
 router.get(
   "/notifications/email/:email",
   getNotificationsByEmail,
+);
+// Mark notification as read
+router.put(
+  "/notifications/:id/read",
+  markNotificationAsRead,
+);
+
+// Delete notification
+router.delete(
+  "/notifications/:id",
+  deleteNotification,
 );
 
 // ============================================================
