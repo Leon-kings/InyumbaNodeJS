@@ -1131,7 +1131,7 @@ const dotenv = require("dotenv");
 const cloudinary = require("cloudinary").v2;
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-
+const Notification = require("../models/Notification");
 dotenv.config();
 
 // ===========================================
@@ -1465,6 +1465,70 @@ const getBookingById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+// ============================================================
+// GET ALL NOTIFICATIONS
+// ============================================================
+const getAllNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find()
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: notifications.length,
+      notifications,
+    });
+  } catch (error) {
+    console.error(
+      "❌ Get all notifications error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch notifications",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// GET NOTIFICATIONS BY EMAIL
+// ============================================================
+const getNotificationsByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const notifications = await Notification.find({
+      email: email.toLowerCase().trim(),
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: notifications.length,
+      notifications,
+    });
+  } catch (error) {
+    console.error(
+      "❌ Get notifications by email error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch notifications",
+      error: error.message,
     });
   }
 };
@@ -1840,5 +1904,7 @@ module.exports = {
   cancelBooking,
   getBookingStats,
   getBookingsByOwnerEmail,
+  getNotificationsByEmail,
+  getAllNotifications,
   uploadBookingScreenshot, // Export the multer middleware
 };
