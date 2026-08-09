@@ -1497,6 +1497,88 @@ const getAllNotifications = async (req, res) => {
 };
 
 // ============================================================
+// DELETE NOTIFICATION
+// ============================================================
+const deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const notification =
+      await Notification.findByIdAndDelete(id);
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification deleted successfully",
+      data: notification,
+    });
+  } catch (error) {
+    console.error(
+      "❌ Delete notification error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete notification",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// MARK NOTIFICATION AS READ
+// ============================================================
+const markNotificationAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const notification =
+      await Notification.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            isRead: true,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification marked as read",
+      data: notification,
+    });
+  } catch (error) {
+    console.error(
+      "❌ Mark notification as read error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark notification as read",
+      error: error.message,
+    });
+  }
+};
+// ============================================================
 // GET NOTIFICATIONS BY EMAIL
 // ============================================================
 const getNotificationsByEmail = async (req, res) => {
@@ -1906,5 +1988,7 @@ module.exports = {
   getBookingsByOwnerEmail,
   getNotificationsByEmail,
   getAllNotifications,
+  markNotificationAsRead,
+  deleteNotification,
   uploadBookingScreenshot, // Export the multer middleware
 };
