@@ -41,16 +41,6 @@
 
 // module.exports = router;
 
-
-
-
-
-
-
-
-
-
-
 // ============================================================
 // ROUTES / BOOKING.ROUTES.JS
 // ============================================================
@@ -69,16 +59,15 @@ const {
   cancelBooking,
   getBookingStats,
   getBookingsByOwnerEmail,
-deleteNotification,
-markNotificationAsRead,
+  deleteNotification,
+  markNotificationAsRead,
   // Notifications
   getAllNotifications,
   getNotificationsByEmail,
+  markAllNotificationsAsRead,
 } = require("../controllers/bookingController");
 
-const {
-  uploadBookingScreenshot,
-} = require("../controllers/bookingController");
+const { uploadBookingScreenshot } = require("../controllers/bookingController");
 
 // ============================================================
 // BOOKING ROUTES
@@ -94,51 +83,31 @@ router.get("/", getBookings);
 
 router.get("/stats", getBookingStats);
 
-router.get(
-  "/email/:email",
-  getBookingsByEmail,
-);
+router.get("/email/:email", getBookingsByEmail);
 
 // ============================================================
 // NOTIFICATION ROUTES
 // ============================================================
 
 // Get all notifications
-router.get(
-  "/notifications",
-  getAllNotifications,
-);
+router.get("/notifications", getAllNotifications);
 
 // Get notifications by email
-router.get(
-  "/notifications/email/:email",
-  getNotificationsByEmail,
-);
+router.get("/notifications/email/:email", getNotificationsByEmail);
 // Mark notification as read
-router.put(
-  "/notifications/:id/read",
-  markNotificationAsRead,
-);
+router.put("/notifications/:id/read", markNotificationAsRead);
+router.put("/:id/mark-all-read", markAllNotificationsAsRead);
 
 // Delete notification
-router.delete(
-  "/notifications/:id",
-  deleteNotification,
-);
+router.delete("/notifications/:id", deleteNotification);
 
 // ============================================================
 // EXISTING BOOKING ROUTES
 // ============================================================
 
-router.get(
-  "/:email",
-  getBookingsByOwnerEmail,
-);
+router.get("/:email", getBookingsByOwnerEmail);
 
-router.get(
-  "/:id",
-  getBookingById,
-);
+router.get("/:id", getBookingById);
 
 // Update booking
 router.put(
@@ -147,24 +116,12 @@ router.put(
   updateBooking,
 );
 
-router.put(
-  "/:id/status",
-  updateBookingStatus,
-);
+router.put("/:id/status", updateBookingStatus);
 
-router.put(
-  "/:id/verify-payment",
-  verifyPayment,
-);
+router.put("/:id/verify-payment", verifyPayment);
 
-router.put(
-  "/:id/cancel",
-  cancelBooking,
-);
+router.put("/:id/cancel", cancelBooking);
 
-router.delete(
-  "/:id",
-  deleteBooking,
-);
+router.delete("/:id", deleteBooking);
 
 module.exports = router;
