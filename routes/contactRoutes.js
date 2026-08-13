@@ -99,7 +99,7 @@ router.get("/notifications/unread-count", async (req, res) => {
 // ===========================
 
 // Get user notifications by email
-router.get("/user/notifications/:email", async (req, res) => {
+router.get("/notifications/:email", async (req, res) => {
   try {
     const Notification = require("../models/Notification");
 
@@ -159,7 +159,7 @@ router.get("/user/notifications/:email", async (req, res) => {
 // MARK USER NOTIFICATION AS READ
 // ===========================
 
-router.put("/user/notifications/:id/read", async (req, res) => {
+router.put("/notifications/:id/read", async (req, res) => {
   try {
     const Notification = require("../models/Notification");
 
@@ -199,7 +199,7 @@ router.put("/user/notifications/:id/read", async (req, res) => {
 // DELETE USER NOTIFICATION
 // ===========================
 
-router.delete("/user/notifications/:id", async (req, res) => {
+router.delete("/notifications/:id", async (req, res) => {
   try {
     const Notification = require("../models/Notification");
 
@@ -235,7 +235,7 @@ router.delete("/user/notifications/:id", async (req, res) => {
 // GET USER UNREAD COUNT BY EMAIL
 // ===========================
 
-router.get("/user/notifications/:email/unread-count", async (req, res) => {
+router.get("/notifications/:email/unread-count", async (req, res) => {
   try {
     const Notification = require("../models/Notification");
 
