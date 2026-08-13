@@ -2575,7 +2575,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const UserActivity = require("../activity/UserActivity");
 const Notification = require("../models/Notification");

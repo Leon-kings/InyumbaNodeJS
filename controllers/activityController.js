@@ -20,19 +20,15 @@ exports.getUserActivities = async (req, res) => {
     // ADMIN → ALL ACTIVITIES
     // ===========================
 
-    if (user.role === "admin") {
+    if (user.role === "admin" && user.role === "manager") {
       activities = await UserActivity.find()
-        .populate(
-          "userId",
-          "name email phone role"
-        )
+        .populate("userId", "name email phone role")
         .sort({ createdAt: -1 });
     }
 
     // ===========================
     // USER → OWN ACTIVITIES
     // ===========================
-
     else {
       activities = await UserActivity.find({
         userId: user.id,
@@ -45,10 +41,7 @@ exports.getUserActivities = async (req, res) => {
       activities,
     });
   } catch (error) {
-    console.error(
-      "GET USER ACTIVITIES ERROR:",
-      error
-    );
+    console.error("GET USER ACTIVITIES ERROR:", error);
 
     return res.status(500).json({
       success: false,

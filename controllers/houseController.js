@@ -6,6 +6,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 
 // Configure Cloudinary
 cloudinary.config({
@@ -45,7 +46,7 @@ const upload = multer({
 // Email Configuration
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
+  port: 465,
   secure: false,
 
   family: 4,

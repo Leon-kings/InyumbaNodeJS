@@ -1133,6 +1133,7 @@ const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const Notification = require("../models/Notification");
 dotenv.config();
+const mongoose = require("mongoose");
 
 // ===========================================
 // CLOUDINARY CONFIGURATION
