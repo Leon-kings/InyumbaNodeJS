@@ -30,6 +30,7 @@ router.post(
 );
 
 router.get("/", getRequests);
+router.get("/notifications", getAllNotifications);
 
 router.get("/:id", getRequestById);
 
@@ -37,7 +38,7 @@ router.put("/:id", updateRequest);
 
 router.delete("/:id", deleteRequest);
 
-router.get("/notifications", getAllNotifications);
+
 
 // ============================================================
 // MARK ONE AS READ
