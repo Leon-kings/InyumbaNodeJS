@@ -36,6 +36,9 @@ router.post("/", contactValidation, contactController.submitContact);
 // Get all contacts with pagination, filtering, search
 router.get("/", contactController.getAllContacts);
 
+// Get all contact notifications (admin)
+router.get("/notifications", contactController.getContactNotifications);
+
 // Get contact statistics
 router.get("/statistics", contactController.getStatistics);
 
@@ -67,8 +70,7 @@ router.post("/bulk-delete", contactController.bulkDeleteContacts);
 // ADMIN ROUTES - NOTIFICATIONS
 // ===========================
 
-// Get all contact notifications (admin)
-router.get("/notifications", contactController.getContactNotifications);
+
 
 // Get unread notification count
 router.get("/notifications/unread-count", async (req, res) => {
