@@ -902,4 +902,251 @@ exports.deleteRequest = async (req, res) => {
   }
 };
 
+
+// ============================================================
+// NOTIFICATION CONTROLLER
+// ============================================================
+
+exports.getAllNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find({})
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: notifications.length,
+      data: notifications,
+    });
+  } catch (error) {
+    console.error("❌ GET ALL NOTIFICATIONS ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get notifications",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// MARK ONE NOTIFICATION AS READ
+// Requires only notification ID
+// ============================================================
+
+exports.markNotificationAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification ID",
+      });
+    }
+
+    const notification =
+      await Notification.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            isRead: true,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification marked as read",
+      data: notification,
+    });
+  } catch (error) {
+    console.error(
+      "❌ MARK NOTIFICATION AS READ ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark notification as read",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// MARK ALL NOTIFICATIONS AS READ
+// Requires only an ID
+//
+// IMPORTANT:
+// The ID is only used to verify that a notification exists.
+// After that, ALL notifications are marked as read.
+// ============================================================
+
+exports.markAllNotificationsAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification ID",
+      });
+    }
+
+    const notification = await Notification.findById(id);
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    const result = await Notification.updateMany(
+      {},
+      {
+        $set: {
+          isRead: true,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "All notifications marked as read",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error(
+      "❌ MARK ALL NOTIFICATIONS AS READ ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark all notifications as read",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// DELETE ONE NOTIFICATION
+// Requires only notification ID
+// ============================================================
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification ID",
+      });
+    }
+
+    const notification =
+      await Notification.findByIdAndDelete(id);
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification deleted successfully",
+      data: notification,
+    });
+  } catch (error) {
+    console.error(
+      "❌ DELETE NOTIFICATION ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete notification",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================================
+// BULK DELETE NOTIFICATIONS
+//
+// Body:
+// {
+//   "ids": [
+//     "notificationId1",
+//     "notificationId2",
+//     "notificationId3"
+//   ]
+// }
+// ============================================================
+
+exports.bulkDeleteNotifications = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an array of notification IDs",
+      });
+    }
+
+    // Validate every ID
+    const invalidIds = ids.filter(
+      (id) => !mongoose.Types.ObjectId.isValid(id)
+    );
+
+    if (invalidIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more notification IDs are invalid",
+        invalidIds,
+      });
+    }
+
+    const result = await Notification.deleteMany({
+      _id: {
+        $in: ids,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Notifications deleted successfully",
+      requestedCount: ids.length,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error(
+      "❌ BULK DELETE NOTIFICATIONS ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete notifications",
+      error: error.message,
+    });
+  }
+};
+
 module.exports.upload = upload;
