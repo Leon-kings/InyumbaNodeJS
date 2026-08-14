@@ -65,6 +65,7 @@ const {
   getAllNotifications,
   getNotificationsByEmail,
   markAllNotificationsAsRead,
+  bulkDeleteNotifications
 } = require("../controllers/bookingController");
 
 const { uploadBookingScreenshot } = require("../controllers/bookingController");
@@ -100,6 +101,11 @@ router.put("/notifications/:id/mark-all-read", markAllNotificationsAsRead);
 
 // Delete notification
 router.delete("/notifications/:id", deleteNotification);
+
+router.delete(
+  "/bulk",
+  bulkDeleteNotifications
+);
 
 // ============================================================
 // EXISTING BOOKING ROUTES

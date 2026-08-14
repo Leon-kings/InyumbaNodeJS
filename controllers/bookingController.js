@@ -1533,6 +1533,74 @@ const deleteNotification = async (req, res) => {
   }
 };
 
+
+// ============================================================
+// DELETE MULTIPLE NOTIFICATIONS
+// ============================================================
+
+const bulkDeleteNotifications = async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    // ===========================
+    // VALIDATION
+    // ===========================
+
+    if (!Array.isArray(id) || id.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Please provide an array of notification id",
+      });
+    }
+
+    // ===========================
+    // DELETE NOTIFICATIONS
+    // ===========================
+
+    const result =
+      await Notification.deleteMany({
+        _id: {
+          $in: id,
+        },
+      });
+
+    // ===========================
+    // NOTHING FOUND
+    // ===========================
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No notifications found",
+      });
+    }
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Notifications deleted successfully",
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error(
+      "❌ Bulk delete notifications error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to delete notifications",
+      error: error.message,
+    });
+  }
+};
+
 // ============================================================
 // MARK NOTIFICATION AS READ
 // ============================================================
@@ -2040,5 +2108,6 @@ module.exports = {
   getAllNotifications,
   markNotificationAsRead,
   deleteNotification,
+  bulkDeleteNotifications,
   uploadBookingScreenshot, // Export the multer middleware
 };
