@@ -96,7 +96,7 @@ router.get("/notifications", getAllNotifications);
 router.get("/notifications/email/:email", getNotificationsByEmail);
 // Mark notification as read
 router.put("/notifications/:id/read", markNotificationAsRead);
-router.put("/:id/mark-all-read", markAllNotificationsAsRead);
+router.put("/notifications/:id/mark-all-read", markAllNotificationsAsRead);
 
 // Delete notification
 router.delete("/notifications/:id", deleteNotification);
@@ -123,5 +123,7 @@ router.put("/:id/verify-payment", verifyPayment);
 router.put("/:id/cancel", cancelBooking);
 
 router.delete("/:id", deleteBooking);
+
+
 
 module.exports = router;

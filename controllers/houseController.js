@@ -1394,5 +1394,128 @@ exports.getHousesByEmail = async (req, res) => {
   }
 };
 
+// ============================================================
+// DELETE ONE NOTIFICATION
+// ============================================================
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ===========================
+    // VALIDATE ID
+    // ===========================
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Notification ID is required",
+      });
+    }
+
+    // ===========================
+    // FIND AND DELETE
+    // ===========================
+
+    const notification =
+      await Notification.findByIdAndDelete(id);
+
+    // ===========================
+    // NOT FOUND
+    // ===========================
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification deleted successfully",
+      notification,
+    });
+  } catch (error) {
+    console.error(
+      "Delete notification error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete notification",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
+    });
+  }
+};
+
+
+// ============================================================
+// BULK DELETE NOTIFICATIONS
+// ============================================================
+
+exports.bulkDeleteNotifications = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    // ===========================
+    // VALIDATE IDS
+    // ===========================
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Please provide an array of notification IDs",
+      });
+    }
+
+    // ===========================
+    // DELETE NOTIFICATIONS
+    // ===========================
+
+    const result =
+      await Notification.deleteMany({
+        _id: { $in: ids },
+      });
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Notifications deleted successfully",
+      deletedCount:
+        result.deletedCount,
+    });
+  } catch (error) {
+    console.error(
+      "Bulk delete notifications error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to delete notifications",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
+    });
+  }
+};
+
+
 // Export multer upload middleware
 exports.upload = upload;
