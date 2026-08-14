@@ -409,7 +409,7 @@ exports.createHouse = async (req, res) => {
 
       rating: 4,
 
-      totalReviews: 0,
+      totalReviews: 10,
 
       host: {
         name: hostObj.name || "",
