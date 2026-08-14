@@ -2344,6 +2344,495 @@ exports.getContactNotifications = async (req, res) => {
   }
 };
 
+// ============================================================
+// GET CONTACT NOTIFICATIONS
+// ============================================================
+// GET /api/notifications/contact
+// GET /api/notifications/contact?page=1&limit=20
+// GET /api/notifications/contact?status=new
+// ============================================================
+
+exports.getContactNotifications = async (req, res) => {
+  try {
+    // ===========================
+    // PAGINATION
+    // ===========================
+
+    const page = Math.max(
+      parseInt(req.query.page) || 1,
+      1
+    );
+
+    const limit = Math.min(
+      Math.max(
+        parseInt(req.query.limit) || 20,
+        1
+      ),
+      100
+    );
+
+    const skip = (page - 1) * limit;
+
+    const status = req.query.status;
+
+    // ===========================
+    // BASE QUERY
+    // ===========================
+
+    const query = {
+      type: {
+        $regex: /^contact_/,
+      },
+
+      target: {
+        $in: ["admin", "both"],
+      },
+    };
+
+    // ===========================
+    // OPTIONAL STATUS FILTER
+    // ===========================
+
+    if (status) {
+      query.status = status;
+    }
+
+    // ===========================
+    // GET DATA + COUNTS
+    // ===========================
+
+    const [
+      notifications,
+      total,
+      unreadCount,
+    ] = await Promise.all([
+      Notification.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      Notification.countDocuments(query),
+
+      Notification.countDocuments({
+        ...query,
+        isRead: false,
+        status: "new",
+      }),
+    ]);
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+      data: notifications,
+      unreadCount,
+
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Get contact notifications error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch notifications",
+    });
+  }
+};
+
+
+// ============================================================
+// MARK ONE CONTACT NOTIFICATION AS READ
+// ============================================================
+// PUT /api/notifications/contact/:id/read
+// ============================================================
+
+exports.markContactNotificationAsRead = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    // ===========================
+    // VALIDATE ID
+    // ===========================
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Notification ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid notification ID",
+      });
+    }
+
+    // ===========================
+    // FIND NOTIFICATION
+    // ===========================
+
+    const notification =
+      await Notification.findOne({
+        _id: id,
+
+        type: {
+          $regex: /^contact_/,
+        },
+
+        target: {
+          $in: ["admin", "both"],
+        },
+      });
+
+    // ===========================
+    // NOT FOUND
+    // ===========================
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    // ===========================
+    // MARK AS READ
+    // ===========================
+
+    notification.isRead = true;
+    notification.status = "read";
+    notification.readAt = new Date();
+
+    await notification.save();
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Notification marked as read",
+      data: notification,
+    });
+  } catch (error) {
+    console.error(
+      "Mark contact notification as read error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to mark notification as read",
+    });
+  }
+};
+
+
+// ============================================================
+// BULK MARK CONTACT NOTIFICATIONS AS READ
+// ============================================================
+// PUT /api/notifications/contact/read-all
+//
+// Body:
+// {
+//   "ids": ["id1", "id2", "id3"]
+// }
+//
+// If ids are omitted or empty, ALL admin contact
+// notifications will be marked as read.
+// ============================================================
+
+exports.bulkMarkContactNotificationsAsRead = async (
+  req,
+  res
+) => {
+  try {
+    const { ids } = req.body;
+
+    // ===========================
+    // BASE QUERY
+    // ===========================
+
+    const query = {
+      type: {
+        $regex: /^contact_/,
+      },
+
+      target: {
+        $in: ["admin", "both"],
+      },
+
+      isRead: false,
+    };
+
+    // ===========================
+    // IF IDS WERE PROVIDED
+    // ===========================
+
+    if (Array.isArray(ids) && ids.length > 0) {
+      const invalidIds = ids.filter(
+        (id) =>
+          !mongoose.Types.ObjectId.isValid(id)
+      );
+
+      if (invalidIds.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "One or more notification IDs are invalid",
+          invalidIds,
+        });
+      }
+
+      query._id = {
+        $in: ids,
+      };
+    }
+
+    // ===========================
+    // UPDATE
+    // ===========================
+
+    const result =
+      await Notification.updateMany(
+        query,
+        {
+          $set: {
+            isRead: true,
+            status: "read",
+            readAt: new Date(),
+          },
+        }
+      );
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+
+      message: ids?.length
+        ? "Selected notifications marked as read"
+        : "All contact notifications marked as read",
+
+      modifiedCount:
+        result.modifiedCount,
+    });
+  } catch (error) {
+    console.error(
+      "Bulk mark contact notifications as read error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to mark notifications as read",
+    });
+  }
+};
+
+
+// ============================================================
+// DELETE ONE CONTACT NOTIFICATION
+// ============================================================
+// DELETE /api/notifications/contact/:id
+// ============================================================
+
+exports.deleteContactNotification = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    // ===========================
+    // VALIDATE ID
+    // ===========================
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Notification ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid notification ID",
+      });
+    }
+
+    // ===========================
+    // DELETE
+    // ===========================
+
+    const notification =
+      await Notification.findOneAndDelete({
+        _id: id,
+
+        type: {
+          $regex: /^contact_/,
+        },
+
+        target: {
+          $in: ["admin", "both"],
+        },
+      });
+
+    // ===========================
+    // NOT FOUND
+    // ===========================
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Notification deleted successfully",
+      data: notification,
+    });
+  } catch (error) {
+    console.error(
+      "Delete contact notification error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to delete notification",
+    });
+  }
+};
+
+
+// ============================================================
+// BULK DELETE CONTACT NOTIFICATIONS
+// ============================================================
+// DELETE /api/notifications/contact/bulk
+//
+// Body:
+// {
+//   "ids": ["id1", "id2", "id3"]
+// }
+//
+// If ids are omitted or empty, ALL admin contact
+// notifications will be deleted.
+// ============================================================
+
+exports.bulkDeleteContactNotifications = async (
+  req,
+  res
+) => {
+  try {
+    const { ids } = req.body;
+
+    // ===========================
+    // BASE QUERY
+    // ===========================
+
+    const query = {
+      type: {
+        $regex: /^contact_/,
+      },
+
+      target: {
+        $in: ["admin", "both"],
+      },
+    };
+
+    // ===========================
+    // IF IDS WERE PROVIDED
+    // ===========================
+
+    if (Array.isArray(ids) && ids.length > 0) {
+      const invalidIds = ids.filter(
+        (id) =>
+          !mongoose.Types.ObjectId.isValid(id)
+      );
+
+      if (invalidIds.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "One or more notification IDs are invalid",
+          invalidIds,
+        });
+      }
+
+      query._id = {
+        $in: ids,
+      };
+    }
+
+    // ===========================
+    // DELETE
+    // ===========================
+
+    const result =
+      await Notification.deleteMany(query);
+
+    // ===========================
+    // RESPONSE
+    // ===========================
+
+    return res.status(200).json({
+      success: true,
+
+      message: ids?.length
+        ? "Selected notifications deleted successfully"
+        : "All contact notifications deleted successfully",
+
+      deletedCount:
+        result.deletedCount,
+    });
+  } catch (error) {
+    console.error(
+      "Bulk delete contact notifications error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to delete notifications",
+    });
+  }
+};
+
 // 13. Mark Notification as Read
 exports.markNotificationAsRead = async (req, res) => {
   try {

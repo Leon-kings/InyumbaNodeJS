@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const Notification = require("../models/Notification");
 const { body } = require("express-validator");
 const contactController = require("../controllers/contactController");
 
@@ -39,6 +40,35 @@ router.get("/", contactController.getAllContacts);
 // Get all contact notifications (admin)
 router.get("/notifications", contactController.getContactNotifications);
 
+// ============================================================
+// CONTACT / ADMIN NOTIFICATION ROUTES
+// ============================================================
+
+router.get(
+  "/notifications",
+  contactController.getContactNotifications
+);
+
+router.put(
+  "/notifications/:id/read",
+  contactController.markContactNotificationAsRead
+);
+
+router.put(
+  "/notifications/read-all",
+  contactController.bulkMarkContactNotificationsAsRead
+);
+
+router.delete(
+  "/notifications/bulk",
+  contactController.bulkDeleteContactNotifications
+);
+
+router.delete(
+  "/notifications/:id",
+  contactController.deleteContactNotification
+);
+
 // Get contact statistics
 router.get("/statistics", contactController.getStatistics);
 
@@ -70,48 +100,41 @@ router.post("/bulk-delete", contactController.bulkDeleteContacts);
 // ADMIN ROUTES - NOTIFICATIONS
 // ===========================
 
+// ============================================================
+// GET USER NOTIFICATIONS BY EMAIL
+// ============================================================
+// GET /api/notifications/:email
+// GET /api/notifications/:email?page=1&limit=20
+// ============================================================
 
-
-// Get unread notification count
-router.get("/notifications/unread-count", async (req, res) => {
+router.get("/:email", async (req, res) => {
   try {
-    const Notification = require("../models/Notification");
-    const count = await Notification.countDocuments({
-      type: { $regex: /^contact_/ },
-      isRead: false,
-      status: "new",
-      target: { $in: ["admin", "both"] },
-    });
+    const { email } = req.params;
 
-    res.status(200).json({
-      success: true,
-      data: { unreadCount: count },
-    });
-  } catch (error) {
-    console.error("Get unread count error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to get unread count",
-    });
-  }
-});
+    // ===========================
+    // VALIDATE EMAIL
+    // ===========================
 
-// ===========================
-// USER ROUTES - NOTIFICATIONS
-// ===========================
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
 
-// Get user notifications by email
-router.get("/notifications/:email", async (req, res) => {
-  try {
-    const Notification = require("../models/Notification");
+    // ===========================
+    // PAGINATION
+    // ===========================
 
-    const email = req.params.email.toLowerCase().trim();
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
 
-    const page = parseInt(req.query.page) || 1;
-
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
 
     const skip = (page - 1) * limit;
+
+    // ===========================
+    // QUERY
+    // ===========================
 
     const query = {
       type: {
@@ -125,6 +148,10 @@ router.get("/notifications/:email", async (req, res) => {
       "data.email": email,
     };
 
+    // ===========================
+    // GET DATA + TOTAL
+    // ===========================
+
     const [notifications, total] = await Promise.all([
       Notification.find(query)
         .sort({ createdAt: -1 })
@@ -134,6 +161,10 @@ router.get("/notifications/:email", async (req, res) => {
 
       Notification.countDocuments(query),
     ]);
+
+    // ===========================
+    // RESPONSE
+    // ===========================
 
     return res.status(200).json({
       success: true,
@@ -157,15 +188,57 @@ router.get("/notifications/:email", async (req, res) => {
   }
 });
 
-// ===========================
+// ============================================================
 // MARK USER NOTIFICATION AS READ
-// ===========================
+// ============================================================
+// PUT /api/notifications/:email/:id/read
+// ============================================================
 
-router.put("/notifications/:id/read", async (req, res) => {
+router.put("/:email/:id/read", async (req, res) => {
   try {
-    const Notification = require("../models/Notification");
+    const { email, id } = req.params;
 
-    const notification = await Notification.findById(req.params.id);
+    // ===========================
+    // VALIDATION
+    // ===========================
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Notification ID is required",
+      });
+    }
+
+    // ===========================
+    // FIND USER NOTIFICATION
+    // ===========================
+    // IMPORTANT:
+    // We check BOTH the notification ID
+    // and the user's email so one user
+    // cannot mark another user's
+    // notification as read.
+
+    const notification = await Notification.findOne({
+      _id: id,
+      "data.email": email,
+      type: {
+        $regex: /^contact_/,
+      },
+      target: {
+        $in: ["user", "both"],
+      },
+    });
+
+    // ===========================
+    // NOT FOUND
+    // ===========================
 
     if (!notification) {
       return res.status(404).json({
@@ -174,13 +247,19 @@ router.put("/notifications/:id/read", async (req, res) => {
       });
     }
 
+    // ===========================
+    // MARK AS READ
+    // ===========================
+
     notification.isRead = true;
-
     notification.status = "read";
-
     notification.readAt = new Date();
 
     await notification.save();
+
+    // ===========================
+    // RESPONSE
+    // ===========================
 
     return res.status(200).json({
       success: true,
@@ -197,51 +276,30 @@ router.put("/notifications/:id/read", async (req, res) => {
   }
 });
 
-// ===========================
-// DELETE USER NOTIFICATION
-// ===========================
+// ============================================================
+// GET USER UNREAD NOTIFICATION COUNT
+// ============================================================
+// GET /api/notifications/:email/unread-count
+// ============================================================
 
-router.delete("/notifications/:id", async (req, res) => {
+router.get("/:email/unread-count", async (req, res) => {
   try {
-    const Notification = require("../models/Notification");
+    const { email } = req.params;
 
-    const notification = await Notification.findById(req.params.id);
+    // ===========================
+    // VALIDATE EMAIL
+    // ===========================
 
-    if (!notification) {
-      return res.status(404).json({
+    if (!email) {
+      return res.status(400).json({
         success: false,
-        message: "Notification not found",
+        message: "Email is required",
       });
     }
 
-    await Notification.findByIdAndDelete(req.params.id);
-
-    return res.status(200).json({
-      success: true,
-      message: "Notification deleted successfully",
-      data: {
-        id: req.params.id,
-      },
-    });
-  } catch (error) {
-    console.error("Delete user notification error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete notification",
-    });
-  }
-});
-
-// ===========================
-// GET USER UNREAD COUNT BY EMAIL
-// ===========================
-
-router.get("/notifications/:email/unread-count", async (req, res) => {
-  try {
-    const Notification = require("../models/Notification");
-
-    const email = req.params.email.toLowerCase().trim();
+    // ===========================
+    // QUERY
+    // ===========================
 
     const query = {
       type: {
@@ -259,7 +317,15 @@ router.get("/notifications/:email/unread-count", async (req, res) => {
       "data.email": email,
     };
 
+    // ===========================
+    // COUNT
+    // ===========================
+
     const count = await Notification.countDocuments(query);
+
+    // ===========================
+    // RESPONSE
+    // ===========================
 
     return res.status(200).json({
       success: true,
@@ -272,132 +338,6 @@ router.get("/notifications/:email/unread-count", async (req, res) => {
     console.error("Get user unread count error:", error);
 
     return res.status(500).json({
-      success: false,
-      message: "Failed to get unread count",
-    });
-  }
-});
-
-// Mark notification as read
-router.put("/notifications/:id/read", contactController.markNotificationAsRead);
-
-// Mark all notifications as read
-router.put(
-  "/notifications/mark-all-read",
-  contactController.markAllNotificationsAsRead,
-);
-
-// ===========================
-// USER ROUTES - NOTIFICATIONS (for frontend display)
-// ===========================
-
-// Get user notifications (for logged-in users)
-router.get("/user/notifications", async (req, res) => {
-  try {
-    const Notification = require("../models/Notification");
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    // Get user email from query or header (in production, use JWT)
-    const userEmail = req.query.email || req.headers["x-user-email"];
-
-    let query = {
-      type: { $regex: /^contact_/ },
-      target: { $in: ["user", "both"] },
-    };
-
-    // If user email is provided, filter by it
-    if (userEmail) {
-      query["data.email"] = userEmail;
-    }
-
-    const [notifications, total] = await Promise.all([
-      Notification.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Notification.countDocuments(query),
-    ]);
-
-    res.status(200).json({
-      success: true,
-      data: notifications,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    });
-  } catch (error) {
-    console.error("Get user notifications error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch user notifications",
-    });
-  }
-});
-
-// Mark user notification as read
-router.put("/user/notifications/:id/read", async (req, res) => {
-  try {
-    const Notification = require("../models/Notification");
-    const notification = await Notification.findById(req.params.id);
-
-    if (!notification) {
-      return res.status(404).json({
-        success: false,
-        message: "Notification not found",
-      });
-    }
-
-    notification.isRead = true;
-    notification.status = "read";
-    notification.readAt = new Date();
-    await notification.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Notification marked as read",
-      data: notification,
-    });
-  } catch (error) {
-    console.error("Mark user notification as read error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to mark notification as read",
-    });
-  }
-});
-
-// Get user unread notification count
-router.get("/user/notifications/unread-count", async (req, res) => {
-  try {
-    const Notification = require("../models/Notification");
-    const userEmail = req.query.email || req.headers["x-user-email"];
-
-    let query = {
-      type: { $regex: /^contact_/ },
-      isRead: false,
-      status: "new",
-      target: { $in: ["user", "both"] },
-    };
-
-    if (userEmail) {
-      query["data.email"] = userEmail;
-    }
-
-    const count = await Notification.countDocuments(query);
-
-    res.status(200).json({
-      success: true,
-      data: { unreadCount: count },
-    });
-  } catch (error) {
-    console.error("Get user unread count error:", error);
-    res.status(500).json({
       success: false,
       message: "Failed to get unread count",
     });

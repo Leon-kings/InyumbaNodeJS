@@ -122,14 +122,14 @@ const getClientIPv4 = (req) => {
 
 exports.getUserActivities = async (req, res) => {
   try {
-    const auth = await authenticateUser(req);
+    // const auth = await authenticateUser(req);
 
-    if (!auth.success) {
-      return res.status(auth.status).json({
-        success: false,
-        message: auth.message,
-      });
-    }
+    // if (!auth.success) {
+    //   return res.status(auth.status).json({
+    //     success: false,
+    //     message: auth.message,
+    //   });
+    // }
 
     // ============================================
     // GET ALL ACTIVITIES
