@@ -136,14 +136,14 @@ const houseSchema = new mongoose.Schema(
 
     rating: {
       type: Number,
-      default: 0,
+      default: 5,
       min: 0,
       max: 5,
     },
 
     totalReviews: {
       type: Number,
-      default: 0,
+      default: 10,
       min: 0,
     },
 
@@ -172,7 +172,7 @@ const houseSchema = new mongoose.Schema(
 
       responseRate: {
         type: Number,
-        default: 0,
+        default: 100,
         min: 0,
         max: 100,
       },
