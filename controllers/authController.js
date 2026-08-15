@@ -1,26 +1,86 @@
-
 // const bcrypt = require("bcryptjs");
 // const jwt = require("jsonwebtoken");
+// const nodemailer = require("nodemailer");
 // const crypto = require("crypto");
-// const mongoose = require("mongoose");
 // const User = require("../models/User");
 // const UserActivity = require("../activity/UserActivity");
-// const Notification = require("../models/Notification");
 
-// // ======================================================
+// // ===========================
+// // EMAIL CONFIGURATION
+// // ===========================
+
+// const createTransporter = () => {
+//   const port =
+//     Number(process.env.SMTP_PORT) || 587;
+
+//   const transporter =
+//  transporter = nodemailer.createTransport({
+//   host: process.env.SMTP_HOST,
+//   port: Number(process.env.SMTP_PORT),
+//   secure: Number(process.env.SMTP_PORT) === 465,
+
+//   auth: {
+//     user: process.env.SMTP_USER,
+//     pass: process.env.SMTP_PASS,
+//   },
+
+//   family: 4,
+
+//   connectionTimeout: 30000,
+//   greetingTimeout: 30000,
+//   socketTimeout: 30000,
+// });
+
+//   // ===========================
+//   // VERIFY SMTP CONNECTION
+//   // ===========================
+
+//   transporter.verify((error, success) => {
+//     if (error) {
+//       console.error(
+//         "❌ SMTP connection verification failed:",
+//         error.message
+//       );
+
+//       console.error(
+//         "SMTP Host:",
+//         process.env.SMTP_HOST ||
+//           "smtp.gmail.com"
+//       );
+
+//       console.error(
+//         "SMTP Port:",
+//         port
+//       );
+
+//       console.error(
+//         "SMTP User:",
+//         process.env.SMTP_USER
+//           ? "Configured"
+//           : "Missing"
+//       );
+//     } else {
+//       console.log(
+//         "✅ SMTP server is ready to send emails"
+//       );
+//     }
+//   });
+
+//   return transporter;
+// };
+
+
+// // ===========================
 // // EMAIL VALIDATION
-// // ======================================================
-
+// // ===========================
 // const validateEmail = (email) => {
+//   // Basic email format validation
 //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 //   if (!emailRegex.test(email)) {
-//     return {
-//       valid: false,
-//       message: "Invalid email format",
-//     };
+//     return { valid: false, message: "Invalid email format" };
 //   }
 
+//   // Check for common disposable email domains (optional)
 //   const disposableDomains = [
 //     "tempmail.com",
 //     "temp-mail.org",
@@ -30,78 +90,848 @@
 //     "mailinator.com",
 //   ];
 
-//   const domain = email
-//     .split("@")[1]
-//     .toLowerCase();
-
+//   const domain = email.split("@")[1].toLowerCase();
 //   if (disposableDomains.includes(domain)) {
 //     return {
 //       valid: false,
-//       message:
-//         "Disposable email addresses are not allowed",
+//       message: "Disposable email addresses are not allowed",
 //     };
 //   }
 
+//   return { valid: true };
+// };
+
+// // ===========================
+// // EMAIL TEMPLATES
+// // ===========================
+// // const generateVerificationEmail = (user, verificationCode) => {
+// //   return {
+// //     subject: "Verify Your Email Address ✅",
+// //     html: `
+// //       <!DOCTYPE html>
+// //       <html>
+// //         <head>
+// //           <style>
+// //             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+// //             .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
+// //             .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+// //             .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+// //             .verification-code {
+// //               background: #f0f0f0;
+// //               padding: 20px;
+// //               border-radius: 8px;
+// //               font-size: 32px;
+// //               font-weight: bold;
+// //               text-align: center;
+// //               letter-spacing: 8px;
+// //               color: #667eea;
+// //               margin: 20px 0;
+// //               font-family: monospace;
+// //             }
+// //             .btn {
+// //               display: inline-block;
+// //               padding: 14px 35px;
+// //               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+// //               color: white;
+// //               text-decoration: none;
+// //               border-radius: 5px;
+// //               margin: 20px 0;
+// //               font-weight: bold;
+// //             }
+// //             .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+// //             .warning { background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0; }
+// //           </style>
+// //         </head>
+// //         <body>
+// //           <div class="container">
+// //             <div class="header">
+// //               <h1>Verify Your Email Address</h1>
+// //             </div>
+// //             <div class="content">
+// //               <h2>Hello ${user.name}! 👋</h2>
+// //               <p>Thank you for creating an account with us. To complete your registration, please verify your email address using the code below:</p>
+
+// //               <div class="verification-code">
+// //                 ${verificationCode}
+// //               </div>
+
+// //               <p style="text-align: center;">Enter this code on the verification page to confirm your email.</p>
+
+// //               <div class="warning">
+// //                 <strong>⚠️ Important:</strong> This verification code will expire in <strong>24 hours</strong>.
+// //               </div>
+
+// //               <p>If you didn't create an account with us, please ignore this email.</p>
+
+// //               <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+// //               <p style="font-size: 14px; color: #666;">
+// //                 <strong>Account Details:</strong><br>
+// //                 Email: ${user.email}<br>
+// //                 Created: ${new Date(user.createdAt).toLocaleString()}
+// //               </p>
+
+// //               <p>Best regards,<br><strong>The Team</strong></p>
+// //             </div>
+// //             <div class="footer">
+// //               <p>&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
+// //               <p>This is an automated message, please do not reply to this email.</p>
+// //             </div>
+// //           </div>
+// //         </body>
+// //       </html>
+// //     `,
+// //     text: `
+// //       Verify Your Email Address ✅
+
+// //       Hello ${user.name}! 👋
+
+// //       Thank you for creating an account with us. To complete your registration, please verify your email address using the code below:
+
+// //       Verification Code: ${verificationCode}
+
+// //       Enter this code on the verification page to confirm your email.
+
+// //       ⚠️ Important: This verification code will expire in 24 hours.
+
+// //       If you didn't create an account with us, please ignore this email.
+
+// //       Account Details:
+// //       Email: ${user.email}
+// //       Created: ${new Date(user.createdAt).toLocaleString()}
+
+// //       Best regards,
+// //       The Team
+// //     `,
+// //   };
+// // };
+
+// const generateVerificationEmail = (user, verificationCode) => {
+//   const verificationUrl =
+//     "https://inyumba-studentportal.vercel.app/verification/email/status";
+
 //   return {
-//     valid: true,
+//     subject: "Verify Your Email Address ✅",
+//     html: `
+// <!DOCTYPE html>
+// <html>
+// <head>
+//   <meta charset="UTF-8">
+//   <title>Verify Your Email</title>
+//   <style>
+//     body {
+//       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+//       line-height: 1.6;
+//       color: #333;
+//       margin: 0;
+//       padding: 0;
+//     }
+
+//     .container {
+//       max-width: 600px;
+//       margin: 0 auto;
+//       padding: 20px;
+//       background: #f4f4f4;
+//     }
+
+//     .header {
+//       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+//       color: white;
+//       padding: 30px;
+//       text-align: center;
+//       border-radius: 10px 10px 0 0;
+//     }
+
+//     .content {
+//       background: white;
+//       padding: 30px;
+//       border-radius: 0 0 10px 10px;
+//       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+//     }
+
+//     .verification-code {
+//       background: #f0f0f0;
+//       padding: 20px;
+//       border-radius: 8px;
+//       font-size: 32px;
+//       font-weight: bold;
+//       text-align: center;
+//       letter-spacing: 8px;
+//       color: #667eea;
+//       margin: 20px 0;
+//       font-family: monospace;
+//     }
+
+//     .btn {
+//       display: inline-block;
+//       padding: 14px 35px;
+//       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+//       color: #ffffff !important;
+//       text-decoration: none;
+//       border-radius: 5px;
+//       margin: 20px 0;
+//       font-weight: bold;
+//     }
+
+//     .footer {
+//       text-align: center;
+//       padding: 20px;
+//       color: #666;
+//       font-size: 12px;
+//     }
+
+//     .warning {
+//       background: #fff3cd;
+//       padding: 15px;
+//       border-radius: 5px;
+//       border-left: 4px solid #ffc107;
+//       margin: 20px 0;
+//     }
+//   </style>
+// </head>
+
+// <body>
+
+// <div class="container">
+
+//   <div class="header">
+//     <h1>Verify Your Email Address</h1>
+//   </div>
+
+//   <div class="content">
+
+//     <p>Hello <strong>${user.name}</strong>! 👋</p>
+
+//     <p>
+//       Thank you for creating an account with us.
+//       To complete your registration, please verify your email address using the code below:
+//     </p>
+
+//     <div class="verification-code">
+//       ${verificationCode}
+//     </div>
+
+//     <p style="text-align:center;">
+//       Enter this verification code on the verification page.
+//     </p>
+
+//     <div style="text-align:center;">
+//       <a href="${verificationUrl}" class="btn">
+//         Verify Email
+//       </a>
+//     </div>
+
+//     <div class="warning">
+//       <strong>ℹ️ Note:</strong><br>
+//       Click the button above to open the verification page, then enter the verification code shown in this email.
+//     </div>
+
+//     <p>
+//       Verification Page:<br>
+//       <a href="${verificationUrl}">
+//         ${verificationUrl}
+//       </a>
+//     </p>
+
+//     <p>
+//       If you didn't create an account with us, please ignore this email.
+//     </p>
+
+//     <hr style="margin:30px 0;border:none;border-top:1px solid #eee;">
+
+//     <p style="font-size:14px;color:#666;">
+//       <strong>Account Details:</strong><br>
+//       Email: ${user.email}<br>
+//       Created: ${new Date(user.createdAt).toLocaleString()}
+//     </p>
+
+//     <p>
+//       Best regards,<br>
+//       <strong>The Team</strong>
+//     </p>
+
+//   </div>
+
+//   <div class="footer">
+//     <p>&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
+//     <p>This is an automated message, please do not reply to this email.</p>
+//   </div>
+
+// </div>
+
+// </body>
+// </html>
+// `,
+//     text: `
+// Verify Your Email Address ✅
+
+// Hello ${user.name}! 👋
+
+// Thank you for creating an account with us.
+
+// Your verification code is:
+
+// ${verificationCode}
+
+// Open the verification page below and enter the code:
+
+// ${verificationUrl}
+
+// Account Details:
+// Email: ${user.email}
+// Created: ${new Date(user.createdAt).toLocaleString()}
+
+// If you didn't create this account, please ignore this email.
+
+// Best regards,
+// The Team
+// `,
 //   };
 // };
 
-
-// // ======================================================
-// // GENERATE VERIFICATION CODE
-// // ======================================================
-
-// const generateVerificationCode = () => {
-//   return crypto
-//     .randomBytes(3)
-//     .toString("hex")
-//     .toUpperCase();
+// const generateWelcomeEmail = (user) => {
+//   return {
+//     subject: "Welcome to Our Platform! 🎉",
+//     html: `
+//       <!DOCTYPE html>
+//       <html>
+//         <head>
+//           <style>
+//             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+//             .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
+//             .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+//             .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+//             .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+//           </style>
+//         </head>
+//         <body>
+//           <div class="container">
+//             <div class="header">
+//               <h1>Welcome Aboard! 🎉</h1>
+//             </div>
+//             <div class="content">
+//               <h2>Hello ${user.name}!</h2>
+//               <p>Your email has been successfully verified and your account is now active!</p>
+              
+//               <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+//                 <h3>Account Details:</h3>
+//                 <p><strong>Name:</strong> ${user.name}</p>
+//                 <p><strong>Email:</strong> ${user.email}</p>
+//                 <p><strong>Phone:</strong> ${user.phone}</p>
+//                 <p><strong>Account Type:</strong> ${user.role}</p>
+//                 <p><strong>Joined:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
+//               </div>
+              
+//               <p>You now have full access to all features of our platform.</p>
+              
+//               <p>If you have any questions, feel free to contact our support team.</p>
+//               <p>Best regards,<br><strong>The Team</strong></p>
+//             </div>
+//             <div class="footer">
+//               <p>&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
+//             </div>
+//           </div>
+//         </body>
+//       </html>
+//     `,
+//     text: `
+//       Welcome Aboard! 🎉
+      
+//       Hello ${user.name}!
+      
+//       Your email has been successfully verified and your account is now active!
+      
+//       Account Details:
+//       Name: ${user.name}
+//       Email: ${user.email}
+//       Phone: ${user.phone}
+//       Account Type: ${user.role}
+//       Joined: ${new Date(user.createdAt).toLocaleString()}
+      
+//       You now have full access to all features of our platform.
+      
+//       Best regards,
+//       The Team
+//     `,
+//   };
 // };
 
-
-// // ======================================================
-// // CREATE NOTIFICATION
-// // ======================================================
-
-// const createNotification = async ({
-//   userId,
-//   userName,
-//   email,
-//   title,
-//   message,
-//   type,
-// }) => {
+// // ===========================
+// // SEND EMAIL FUNCTION
+// // ===========================
+// const sendEmail = async (to, subject, html, text) => {
 //   try {
-//     const notification =
-//       await Notification.create({
-//         userId,
-//         userName,
-//         email: email
-//           .toLowerCase()
+//     // Validate email before sending
+//     const emailValidation = validateEmail(to);
+//     if (!emailValidation.valid) {
+//       throw new Error(`Invalid email: ${emailValidation.message}`);
+//     }
+
+//     const transporter = createTransporter();
+
+//     const mailOptions = {
+//       from: `"INYUMBA" <${process.env.EMAIL_FROM || "noreply@yourplatform.com"}>`,
+//       to,
+//       subject,
+//       html,
+//       text:
+//         text ||
+//         html
+//           .replace(/<[^>]*>/g, "")
+//           .replace(/\s+/g, " ")
 //           .trim(),
-//         title,
-//         message,
-//         type,
-//         isRead: false,
-//       });
+//     };
 
-//     console.log(
-//       `✅ Notification created for ${email}: ${title}`
-//     );
+//     const info = await transporter.sendMail(mailOptions);
+//     console.log(`Email sent: ${info.messageId}`);
 
-//     return notification;
+//     // If using ethereal, log the preview URL
+//     if (process.env.NODE_ENV !== "production" && info.messageId) {
+//       console.log(`📧 Email preview: ${nodemailer.getTestMessageUrl(info)}`);
+//     }
+
+//     return { success: true, messageId: info.messageId };
 //   } catch (error) {
-//     console.error(
-//       `❌ Failed to create notification for ${email}:`,
-//       error.message
-//     );
-
-//     // Notification failure must not
-//     // stop the main operation.
-//     return null;
+//     console.error("Email sending failed:", error);
+//     return { success: false, error: error.message };
 //   }
 // };
+
+// // ===========================
+// // GENERATE VERIFICATION CODE
+// // ===========================
+// const generateVerificationCode = () => {
+//   return crypto.randomBytes(3).toString("hex").toUpperCase();
+// };
+
+// // ===========================
+// // REGISTER - Create User with Email Verification
+// // ===========================
+
+
+// // const register = async (req, res) => {
+// //   try {
+// //     const { name, email, phone, password, confirmPassword } = req.body;
+
+// //     // ===========================
+// //     // VALIDATE REQUIRED FIELDS
+// //     // ===========================
+
+// //     if (!name || !email || !phone || !password || !confirmPassword) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         message: "All fields are required",
+// //       });
+// //     }
+
+// //     // ===========================
+// //     // PASSWORD CONFIRMATION
+// //     // ===========================
+
+// //     if (password !== confirmPassword) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         errors: {
+// //           confirmPassword: "Passwords do not match",
+// //         },
+// //       });
+// //     }
+
+// //     // ===========================
+// //     // PASSWORD LENGTH
+// //     // ===========================
+
+// //     if (password.length < 8) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         errors: {
+// //           password: "Password must be at least 8 characters",
+// //         },
+// //       });
+// //     }
+
+// //     // ===========================
+// //     // EMAIL VALIDATION
+// //     // ===========================
+
+// //     const emailValidation = validateEmail(email);
+
+// //     if (!emailValidation.valid) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         errors: {
+// //           email: emailValidation.message,
+// //         },
+// //       });
+// //     }
+
+// //     const normalizedEmail = email.toLowerCase().trim();
+
+// //     // ===========================
+// //     // CHECK EXISTING USER
+// //     // ===========================
+
+// //     const existingUser = await User.findOne({
+// //       $or: [{ email: normalizedEmail }, { phone: phone.trim() }],
+// //     });
+
+// //     if (existingUser) {
+// //       const errors = {};
+
+// //       if (existingUser.email === normalizedEmail) {
+// //         errors.email = "An account with this email already exists";
+// //       }
+
+// //       if (existingUser.phone === phone.trim()) {
+// //         errors.phone = "An account with this phone number already exists";
+// //       }
+
+// //       return res.status(409).json({
+// //         success: false,
+// //         errors,
+// //       });
+// //     }
+
+// //     // ===========================
+// //     // HASH PASSWORD
+// //     // ===========================
+
+// //     const salt = await bcrypt.genSalt(10);
+// //     const hashedPassword = await bcrypt.hash(password, salt);
+
+// //     // ===========================
+// //     // GENERATE VERIFICATION CODE
+// //     // ===========================
+
+// //     const verificationCode = generateVerificationCode();
+
+// //     // ===========================
+// //     // CREATE USER
+// //     // ===========================
+
+// //     const newUser = await User.create({
+// //       name: name.trim(),
+// //       email: normalizedEmail,
+// //       phone: phone.trim(),
+// //       password: hashedPassword,
+
+// //       isEmailVerified: false,
+// //       isActive: true,
+
+// //       emailVerificationCode: verificationCode,
+
+// //       // No expiration date
+// //       emailVerificationExpires: undefined,
+// //     });
+
+// //     // ===========================
+// //     // SEND VERIFICATION EMAIL
+// //     // ===========================
+
+// //     let emailSent = true;
+
+// //     try {
+// //       const emailData = generateVerificationEmail(newUser, verificationCode);
+
+// //       await sendEmail(
+// //         newUser.email,
+// //         emailData.subject,
+// //         emailData.html,
+// //         emailData.text,
+// //       );
+
+// //       console.log(`✅ Verification email sent to ${newUser.email}`);
+// //     } catch (emailError) {
+// //       emailSent = false;
+
+// //       console.error("❌ Email sending failed:", emailError.message);
+// //     }
+
+// //     // ===========================
+// //     // GENERATE JWT
+// //     // ===========================
+
+// //     const token = jwt.sign(
+// //       {
+// //         id: newUser._id,
+// //         email: newUser.email,
+// //         role: newUser.role,
+// //       },
+// //       process.env.JWT_SECRET,
+// //       {
+// //         expiresIn: "1d",
+// //       },
+// //     );
+
+// //     // ===========================
+// //     // RESPONSE
+// //     // ===========================
+
+// //     return res.status(201).json({
+// //       success: true,
+// //       message: emailSent
+// //         ? "Registration successful. Please check your email to verify your account."
+// //         : "Registration successful, but the verification email could not be sent. You can request another verification email later.",
+// //       requiresEmailVerification: true,
+// //       emailSent,
+// //       token,
+// //       user: {
+// //         id: newUser._id,
+// //         name: newUser.name,
+// //         email: newUser.email,
+// //         phone: newUser.phone,
+// //         role: newUser.role,
+// //         isEmailVerified: newUser.isEmailVerified,
+// //         isActive: newUser.isActive,
+// //         statistics: newUser.statistics,
+// //         createdAt: newUser.createdAt,
+// //       },
+// //     });
+// //   } catch (error) {
+// //     console.error("REGISTER ERROR:", error);
+
+// //     return res.status(500).json({
+// //       success: false,
+// //       message: "Something went wrong during registration.",
+// //       error: process.env.NODE_ENV === "development" ? error.message : undefined,
+// //     });
+// //   }
+// // };
+
+// // const register = async (req, res) => {
+// //   try {
+// //     const { name, email, phone, password, confirmPassword } = req.body;
+
+// //     // ===========================
+// //     // VALIDATE REQUIRED FIELDS
+// //     // ===========================
+
+// //     if (!name || !email || !phone || !password || !confirmPassword) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         message: "All fields are required",
+// //       });
+// //     }
+
+// //     // ===========================
+// //     // PASSWORD CONFIRMATION
+// //     // ===========================
+
+// //     if (password !== confirmPassword) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         errors: {
+// //           confirmPassword: "Passwords do not match",
+// //         },
+// //       });
+// //     }
+
+// //     // ===========================
+// //     // PASSWORD LENGTH
+// //     // ===========================
+
+// //     if (password.length < 8) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         errors: {
+// //           password: "Password must be at least 8 characters",
+// //         },
+// //       });
+// //     }
+
+// //     // ===========================
+// //     // EMAIL VALIDATION
+// //     // ===========================
+
+// //     const emailValidation = validateEmail(email);
+
+// //     if (!emailValidation.valid) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         errors: {
+// //           email: emailValidation.message,
+// //         },
+// //       });
+// //     }
+
+// //     const normalizedEmail = email.toLowerCase().trim();
+
+// //     // ===========================
+// //     // CHECK EXISTING USER
+// //     // ===========================
+
+// //     const existingUser = await User.findOne({
+// //       $or: [
+// //         { email: normalizedEmail },
+// //         { phone: phone.trim() },
+// //       ],
+// //     });
+
+// //     if (existingUser) {
+// //       const errors = {};
+
+// //       if (existingUser.email === normalizedEmail) {
+// //         errors.email = "An account with this email already exists";
+// //       }
+
+// //       if (existingUser.phone === phone.trim()) {
+// //         errors.phone =
+// //           "An account with this phone number already exists";
+// //       }
+
+// //       return res.status(409).json({
+// //         success: false,
+// //         errors,
+// //       });
+// //     }
+
+// //     // ===========================
+// //     // HASH PASSWORD
+// //     // ===========================
+
+// //     const salt = await bcrypt.genSalt(10);
+// //     const hashedPassword = await bcrypt.hash(password, salt);
+
+// //     // ===========================
+// //     // GENERATE VERIFICATION CODE
+// //     // ===========================
+
+// //     const verificationCode = generateVerificationCode();
+
+// //     // ===========================
+// //     // CREATE USER
+// //     // ===========================
+
+// //     const newUser = await User.create({
+// //       name: name.trim(),
+// //       email: normalizedEmail,
+// //       phone: phone.trim(),
+// //       password: hashedPassword,
+
+// //       isEmailVerified: false,
+// //       isActive: true,
+
+// //       emailVerificationCode: verificationCode,
+
+// //       // No expiration date
+// //       emailVerificationExpires: undefined,
+// //     });
+
+// //     // ===========================
+// //     // CREATE USER ACTIVITY
+// //     // ===========================
+
+// //     try {
+// //       await UserActivity.create({
+// //         userId: newUser._id,
+// //         userName: newUser.name,
+// //         userEmail: newUser.email,
+// //         action: "user_created",
+// //         description: `New user ${newUser.name} created an account`,
+// //         ipAddress:
+// //           req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+// //           req.socket.remoteAddress ||
+// //           null,
+// //         userAgent: req.headers["user-agent"] || null,
+// //       });
+
+// //       console.log(`✅ User activity created for ${newUser.email}`);
+// //     } catch (activityError) {
+// //       // Activity failure should NOT prevent successful registration
+// //       console.error(
+// //         "❌ Failed to create user activity:",
+// //         activityError.message
+// //       );
+// //     }
+
+// //     // ===========================
+// //     // SEND VERIFICATION EMAIL
+// //     // ===========================
+
+// //     let emailSent = true;
+
+// //     try {
+// //       const emailData = generateVerificationEmail(
+// //         newUser,
+// //         verificationCode
+// //       );
+
+// //       await sendEmail(
+// //         newUser.email,
+// //         emailData.subject,
+// //         emailData.html,
+// //         emailData.text
+// //       );
+
+// //       console.log(`✅ Verification email sent to ${newUser.email}`);
+// //     } catch (emailError) {
+// //       emailSent = false;
+
+// //       console.error(
+// //         "❌ Email sending failed:",
+// //         emailError.message
+// //       );
+// //     }
+
+// //     // ===========================
+// //     // GENERATE JWT
+// //     // ===========================
+
+// //     const token = jwt.sign(
+// //       {
+// //         id: newUser._id,
+// //         email: newUser.email,
+// //         role: newUser.role,
+// //       },
+// //       process.env.JWT_SECRET,
+// //       {
+// //         expiresIn: "1d",
+// //       }
+// //     );
+
+// //     // ===========================
+// //     // RESPONSE
+// //     // ===========================
+
+// //     return res.status(201).json({
+// //       success: true,
+
+// //       message: emailSent
+// //         ? "Registration successful. Please check your email to verify your account."
+// //         : "Registration successful, but the verification email could not be sent. You can request another verification email later.",
+
+// //       requiresEmailVerification: true,
+// //       emailSent,
+// //       token,
+
+// //       user: {
+// //         id: newUser._id,
+// //         name: newUser.name,
+// //         email: newUser.email,
+// //         phone: newUser.phone,
+// //         role: newUser.role,
+// //         isEmailVerified: newUser.isEmailVerified,
+// //         isActive: newUser.isActive,
+// //         statistics: newUser.statistics,
+// //         createdAt: newUser.createdAt,
+// //       },
+// //     });
+
+// //   } catch (error) {
+// //     console.error("REGISTER ERROR:", error);
+
+// //     return res.status(500).json({
+// //       success: false,
+// //       message: "Something went wrong during registration.",
+// //       error:
+// //         process.env.NODE_ENV === "development"
+// //           ? error.message
+// //           : undefined,
+// //     });
+// //   }
+// // };
+
+
 
 
 // // ======================================================
@@ -143,8 +973,7 @@
 //       return res.status(400).json({
 //         success: false,
 //         errors: {
-//           confirmPassword:
-//             "Passwords do not match",
+//           confirmPassword: "Passwords do not match",
 //         },
 //       });
 //     }
@@ -157,8 +986,7 @@
 //       return res.status(400).json({
 //         success: false,
 //         errors: {
-//           password:
-//             "Password must be at least 8 characters",
+//           password: "Password must be at least 8 characters",
 //         },
 //       });
 //     }
@@ -167,56 +995,44 @@
 //     // EMAIL VALIDATION
 //     // ===========================
 
-//     const emailValidation =
-//       validateEmail(email);
+//     const emailValidation = validateEmail(email);
 
 //     if (!emailValidation.valid) {
 //       return res.status(400).json({
 //         success: false,
 //         errors: {
-//           email:
-//             emailValidation.message,
+//           email: emailValidation.message,
 //         },
 //       });
 //     }
 
-//     const normalizedEmail =
-//       email.toLowerCase().trim();
-
-//     const normalizedPhone =
-//       phone.trim();
+//     const normalizedEmail = email.toLowerCase().trim();
+//     const normalizedPhone = phone.trim();
 
 //     // ===========================
 //     // CHECK EXISTING USER
 //     // ===========================
 
-//     const existingUser =
-//       await User.findOne({
-//         $or: [
-//           {
-//             email: normalizedEmail,
-//           },
-//           {
-//             phone: normalizedPhone,
-//           },
-//         ],
-//       });
+//     const existingUser = await User.findOne({
+//       $or: [
+//         {
+//           email: normalizedEmail,
+//         },
+//         {
+//           phone: normalizedPhone,
+//         },
+//       ],
+//     });
 
 //     if (existingUser) {
 //       const errors = {};
 
-//       if (
-//         existingUser.email ===
-//         normalizedEmail
-//       ) {
+//       if (existingUser.email === normalizedEmail) {
 //         errors.email =
 //           "An account with this email already exists";
 //       }
 
-//       if (
-//         existingUser.phone ===
-//         normalizedPhone
-//       ) {
+//       if (existingUser.phone === normalizedPhone) {
 //         errors.phone =
 //           "An account with this phone number already exists";
 //       }
@@ -231,14 +1047,12 @@
 //     // HASH PASSWORD
 //     // ===========================
 
-//     const salt =
-//       await bcrypt.genSalt(10);
+//     const salt = await bcrypt.genSalt(10);
 
-//     const hashedPassword =
-//       await bcrypt.hash(
-//         password,
-//         salt
-//       );
+//     const hashedPassword = await bcrypt.hash(
+//       password,
+//       salt
+//     );
 
 //     // ===========================
 //     // GENERATE VERIFICATION CODE
@@ -251,64 +1065,59 @@
 //     // CREATE USER
 //     // ===========================
 
-//     const newUser =
-//       await User.create({
-//         name: name.trim(),
-//         email: normalizedEmail,
-//         phone: normalizedPhone,
-//         password: hashedPassword,
+//     const newUser = await User.create({
+//       name: name.trim(),
+//       email: normalizedEmail,
+//       phone: normalizedPhone,
+//       password: hashedPassword,
 
-//         isEmailVerified: false,
-//         isActive: true,
+//       isEmailVerified: false,
+//       isActive: true,
 
-//         emailVerificationCode:
-//           verificationCode,
+//       emailVerificationCode:
+//         verificationCode,
 
-//         // No expiration date
-//         emailVerificationExpires:
-//           undefined,
-//       });
+//       // No expiration date
+//       emailVerificationExpires: undefined,
+//     });
 
 //     console.log(
 //       `✅ User created: ${newUser.email}`
 //     );
 
 //     // ======================================================
-//     // ACCOUNT CREATED NOTIFICATION
+//     // CREATE NOTIFICATION FOR THE NEW USER
 //     // ======================================================
 
-//     await createNotification({
-//       userId: newUser._id,
-//       userName: newUser.name,
-//       email: newUser.email,
+//     try {
+//       await Notification.create({
+//         userId: newUser._id,
+//         userName: newUser.name,
+//         email: newUser.email,
 
-//       title: "Account Created",
+//         title: "Account Created",
 
-//       message:
-//         `Welcome ${newUser.name}! Your account has been created successfully.`,
+//         message: `Welcome ${newUser.name}! Your account has been created successfully.`,
 
-//       type: "user_created",
-//     });
+//         type: "user_created",
 
-//     // ======================================================
-//     // VERIFICATION CODE NOTIFICATION
-//     // ======================================================
+//         isRead: false,
+//       });
 
-//     await createNotification({
-//       userId: newUser._id,
-//       userName: newUser.name,
-//       email: newUser.email,
+//       console.log(
+//         `✅ Registration notification created for ${newUser.email}`
+//       );
+//     } catch (notificationError) {
+//       // Notification failure should NOT stop registration
 
-//       title: "Email Verification Code",
-
-//       message:
-//         `Your email verification code is: ${verificationCode}`,
-
-//       type: "email_verification",
-//     });
+//       console.error(
+//         "❌ Failed to create registration notification:",
+//         notificationError.message
+//       );
+//     }
 
 //     // ======================================================
-//     // USER ACTIVITY
+//     // CREATE USER ACTIVITY
 //     // ======================================================
 
 //     try {
@@ -319,13 +1128,10 @@
 
 //         action: "user_created",
 
-//         description:
-//           `New user ${newUser.name} created an account`,
+//         description: `New user ${newUser.name} created an account`,
 
 //         ipAddress:
-//           req.headers[
-//             "x-forwarded-for"
-//           ]
+//           req.headers["x-forwarded-for"]
 //             ?.split(",")[0]
 //             ?.trim() ||
 //           req.socket.remoteAddress ||
@@ -340,9 +1146,43 @@
 //         `✅ User activity created for ${newUser.email}`
 //       );
 //     } catch (activityError) {
+//       // Activity failure should NOT stop registration
+
 //       console.error(
 //         "❌ Failed to create user activity:",
 //         activityError.message
+//       );
+//     }
+
+//     // ======================================================
+//     // SEND VERIFICATION EMAIL
+//     // ======================================================
+
+//     let emailSent = true;
+
+//     try {
+//       const emailData =
+//         generateVerificationEmail(
+//           newUser,
+//           verificationCode
+//         );
+
+//       await sendEmail(
+//         newUser.email,
+//         emailData.subject,
+//         emailData.html,
+//         emailData.text
+//       );
+
+//       console.log(
+//         `✅ Verification email sent to ${newUser.email}`
+//       );
+//     } catch (emailError) {
+//       emailSent = false;
+
+//       console.error(
+//         "❌ Email sending failed:",
+//         emailError.message
 //       );
 //     }
 
@@ -371,12 +1211,13 @@
 //     return res.status(201).json({
 //       success: true,
 
-//       message:
-//         "Registration successful. Please check your notifications for your verification code.",
+//       message: emailSent
+//         ? "Registration successful. Please check your email to verify your account."
+//         : "Registration successful, but the verification email could not be sent. You can request another verification email later.",
 
 //       requiresEmailVerification: true,
 
-//       emailSent: false,
+//       emailSent,
 
 //       token,
 
@@ -386,18 +1227,11 @@
 //         email: newUser.email,
 //         phone: newUser.phone,
 //         role: newUser.role,
-
 //         isEmailVerified:
 //           newUser.isEmailVerified,
-
-//         isActive:
-//           newUser.isActive,
-
-//         statistics:
-//           newUser.statistics,
-
-//         createdAt:
-//           newUser.createdAt,
+//         isActive: newUser.isActive,
+//         statistics: newUser.statistics,
+//         createdAt: newUser.createdAt,
 //       },
 //     });
 //   } catch (error) {
@@ -413,8 +1247,7 @@
 //         "Something went wrong during registration.",
 
 //       error:
-//         process.env.NODE_ENV ===
-//         "development"
+//         process.env.NODE_ENV === "development"
 //           ? error.message
 //           : undefined,
 //     });
@@ -426,2099 +1259,1284 @@
 // // GET ALL NOTIFICATIONS
 // // ======================================================
 
-// const getAllNotifications =
-//   async (req, res) => {
-//     try {
-//       const notifications =
-//         await Notification.find()
-//           .sort({
-//             createdAt: -1,
-//           });
+// const getAllNotifications = async (
+//   req,
+//   res
+// ) => {
+//   try {
+//     const notifications =
+//       await Notification.find()
+//         .sort({
+//           createdAt: -1,
+//         });
 
-//       return res.status(200).json({
-//         success: true,
+//     return res.status(200).json({
+//       success: true,
+//       count: notifications.length,
+//       notifications,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "GET ALL NOTIFICATIONS ERROR:",
+//       error
+//     );
 
-//         count:
-//           notifications.length,
-
-//         notifications,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "GET ALL NOTIFICATIONS ERROR:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Failed to fetch notifications",
-
-//         error: error.message,
-//       });
-//     }
-//   };
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Failed to fetch notifications",
+//       error: error.message,
+//     });
+//   }
+// };
 
 
 // // ======================================================
 // // GET NOTIFICATIONS BY EMAIL
 // // ======================================================
 
-// const getNotificationsByEmail =
-//   async (req, res) => {
-//     try {
-//       const email =
-//         req.params.email
-//           ?.toLowerCase()
-//           .trim();
+// const getNotificationsByEmail = async (
+//   req,
+//   res
+// ) => {
+//   try {
+//     const email =
+//       req.params.email
+//         ?.toLowerCase()
+//         .trim();
 
-//       if (!email) {
-//         return res.status(400).json({
-//           success: false,
-//           message:
-//             "Email is required",
-//         });
-//       }
-
-//       const notifications =
-//         await Notification.find({
-//           email,
-//         }).sort({
-//           createdAt: -1,
-//         });
-
-//       return res.status(200).json({
-//         success: true,
-
-//         count:
-//           notifications.length,
-
-//         email,
-
-//         notifications,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "GET NOTIFICATIONS BY EMAIL ERROR:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     if (!email) {
+//       return res.status(400).json({
 //         success: false,
-
-//         message:
-//           "Failed to fetch notifications",
-
-//         error: error.message,
+//         message: "Email is required",
 //       });
 //     }
-//   };
 
-
-// // ======================================================
-// // VERIFY EMAIL
-// // ======================================================
-
-// const verifyEmail =
-//   async (req, res) => {
-//     try {
-//       let {
-//         email,
-//         code,
-//       } = req.body;
-
-//       if (!email || !code) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Email and verification code are required",
-//         });
-//       }
-
-//       email =
-//         email.toLowerCase().trim();
-
-//       code =
-//         code.trim().toUpperCase();
-
-//       const user =
-//         await User.findOne({
-//           email,
-//           emailVerificationCode:
-//             code,
-//         }).select(
-//           "+emailVerificationCode +emailVerificationExpires"
-//         );
-
-//       if (!user) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Invalid verification code",
-//         });
-//       }
-
-//       if (user.isEmailVerified) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Email already verified",
-//         });
-//       }
-
-//       // ===========================
-//       // VERIFY USER
-//       // ===========================
-
-//       user.isEmailVerified = true;
-
-//       user.emailVerificationCode =
-//         undefined;
-
-//       user.emailVerificationExpires =
-//         undefined;
-
-//       user.isActive = true;
-
-//       await user.save();
-
-//       // ======================================================
-//       // CREATE VERIFICATION SUCCESS NOTIFICATION
-//       // ======================================================
-
-//       await createNotification({
-//         userId: user._id,
-//         userName: user.name,
-//         email: user.email,
-
-//         title: "Email Verified",
-
-//         message:
-//           "Your email has been successfully verified. Your account is now active.",
-
-//         type: "email_verified",
+//     const notifications =
+//       await Notification.find({
+//         email: email,
+//       }).sort({
+//         createdAt: -1,
 //       });
 
-//       // ======================================================
-//       // USER ACTIVITY
-//       // ======================================================
+//     return res.status(200).json({
+//       success: true,
+//       count: notifications.length,
+//       email,
+//       notifications,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "GET NOTIFICATIONS BY EMAIL ERROR:",
+//       error
+//     );
 
-//       try {
-//         await UserActivity.create({
-//           userId: user._id,
-//           userName: user.name,
-//           userEmail: user.email,
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Failed to fetch notifications",
+//       error: error.message,
+//     });
+//   }
+// };
 
-//           action: "email_verified",
 
-//           description:
-//             `User ${user.name} verified their email address`,
 
-//           ipAddress:
-//             req.headers[
-//               "x-forwarded-for"
-//             ]
-//               ?.split(",")[0]
-//               ?.trim() ||
-//             req.socket.remoteAddress ||
-//             null,
+// // ===========================
+// // VERIFY EMAIL - Using Code
+// // ===========================
+// // const verifyEmail = async (req, res) => {
+// //   try {
+// //     const { email, code } = req.body;
 
-//           userAgent:
-//             req.headers["user-agent"] ||
-//             null,
-//         });
-//       } catch (activityError) {
-//         console.error(
-//           "❌ Failed to create verification activity:",
-//           activityError.message
-//         );
-//       }
+// //     if (!email || !code) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         message: "Email and verification code are required",
+// //       });
+// //     }
 
-//       return res.status(200).json({
-//         success: true,
+// //     // Find user with matching email and verification code
+// //     const user = await User.findOne({
+// //       email,
+// //       emailVerificationCode: code,
+// //       emailVerificationExpires: { $gt: Date.now() },
+// //     });
 
-//         message:
-//           "Email verified successfully!",
+// //     if (!user) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         message: "Invalid or expired verification code",
+// //       });
+// //     }
 
-//         user: {
-//           id: user._id,
-//           name: user.name,
-//           email: user.email,
-//           phone: user.phone,
-//           role: user.role,
+// //     if (user.isEmailVerified) {
+// //       return res.status(400).json({
+// //         success: false,
+// //         message: "Email already verified",
+// //       });
+// //     }
 
-//           isEmailVerified: true,
-//           isActive: true,
-//         },
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Verify email error:",
-//         error
-//       );
+// //     // Mark email as verified
+// //     user.isEmailVerified = true;
+// //     user.emailVerificationCode = undefined;
+// //     user.emailVerificationExpires = undefined;
+// //     user.isActive = true; // Activate account
+// //     await user.save();
 
-//       return res.status(500).json({
+// //     // Send welcome email
+// //     const welcomeEmail = generateWelcomeEmail(user);
+// //     await sendEmail(
+// //       user.email,
+// //       welcomeEmail.subject,
+// //       welcomeEmail.html,
+// //       welcomeEmail.text,
+// //     );
+
+// //     return res.status(200).json({
+// //       success: true,
+// //       message: "Email verified successfully! Welcome aboard! 🎉",
+// //       user: {
+// //         id: user._id,
+// //         name: user.name,
+// //         email: user.email,
+// //         phone: user.phone,
+// //         role: user.role,
+// //         isEmailVerified: true,
+// //         isActive: true,
+// //       },
+// //     });
+// //   } catch (error) {
+// //     console.error("Verify email error:", error);
+// //     return res.status(500).json({
+// //       success: false,
+// //       message: "Something went wrong while verifying email",
+// //     });
+// //   }
+// // };
+
+// const verifyEmail = async (req, res) => {
+//   try {
+//     let { email, code } = req.body;
+
+//     if (!email || !code) {
+//       return res.status(400).json({
 //         success: false,
-
-//         message:
-//           "Something went wrong while verifying email",
+//         message: "Email and verification code are required",
 //       });
 //     }
-//   };
 
+//     email = email.toLowerCase().trim();
+//     code = code.trim().toUpperCase();
 
-// // ======================================================
+//     const user = await User.findOne({
+//       email,
+//       emailVerificationCode: code,
+//     }).select("+emailVerificationCode +emailVerificationExpires");
+
+//     if (!user) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid verification code",
+//       });
+//     }
+
+//     if (user.isEmailVerified) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email already verified",
+//       });
+//     }
+
+//     user.isEmailVerified = true;
+//     user.emailVerificationCode = undefined;
+//     user.emailVerificationExpires = undefined;
+//     user.isActive = true;
+
+//     await user.save();
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Email verified successfully!",
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//     });
+//   }
+// };
+
+// // ===========================
 // // RESEND VERIFICATION CODE
-// // ======================================================
+// // ===========================
+// const resendVerificationCode = async (req, res) => {
+//   try {
+//     const { email } = req.body;
 
-// const resendVerificationCode =
-//   async (req, res) => {
-//     try {
-//       const { email } =
-//         req.body;
-
-//       if (!email) {
-//         return res.status(400).json({
-//           success: false,
-//           message:
-//             "Email is required",
-//         });
-//       }
-
-//       const normalizedEmail =
-//         email.toLowerCase().trim();
-
-//       // ===========================
-//       // VALIDATE EMAIL
-//       // ===========================
-
-//       const emailValidation =
-//         validateEmail(
-//           normalizedEmail
-//         );
-
-//       if (!emailValidation.valid) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             emailValidation.message,
-//         });
-//       }
-
-//       // ===========================
-//       // FIND USER
-//       // ===========================
-
-//       const user =
-//         await User.findOne({
-//           email: normalizedEmail,
-//         });
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       if (user.isEmailVerified) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Email already verified",
-//         });
-//       }
-
-//       // ===========================
-//       // GENERATE NEW CODE
-//       // ===========================
-
-//       const verificationCode =
-//         generateVerificationCode();
-
-//       user.emailVerificationCode =
-//         verificationCode;
-
-//       user.emailVerificationExpires =
-//         Date.now() +
-//         24 *
-//           60 *
-//           60 *
-//           1000;
-
-//       await user.save();
-
-//       // ======================================================
-//       // CREATE NOTIFICATION
-//       // ======================================================
-
-//       await createNotification({
-//         userId: user._id,
-//         userName: user.name,
-//         email: user.email,
-
-//         title:
-//           "New Verification Code",
-
-//         message:
-//           `Your new email verification code is: ${verificationCode}`,
-
-//         type:
-//           "email_verification",
-//       });
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           "New verification code created. Check your notifications.",
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Resend verification error:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     if (!email) {
+//       return res.status(400).json({
 //         success: false,
-
-//         message:
-//           "Something went wrong while generating the verification code",
+//         message: "Email is required",
 //       });
 //     }
-//   };
 
+//     // Validate email format
+//     const emailValidation = validateEmail(email);
+//     if (!emailValidation.valid) {
+//       return res.status(400).json({
+//         success: false,
+//         message: emailValidation.message,
+//       });
+//     }
 
-// // ======================================================
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
+
+//     if (user.isEmailVerified) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email already verified",
+//       });
+//     }
+
+//     // Generate new verification code
+//     const verificationCode = generateVerificationCode();
+//     user.emailVerificationCode = verificationCode;
+//     user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+//     await user.save();
+
+//     // Send new verification email
+//     const emailData = generateVerificationEmail(user, verificationCode);
+//     await sendEmail(
+//       user.email,
+//       emailData.subject,
+//       emailData.html,
+//       emailData.text,
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "New verification code sent to your email",
+//     });
+//   } catch (error) {
+//     console.error("Resend verification error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while resending verification code",
+//     });
+//   }
+// };
+
+// // ===========================
 // // CHECK EMAIL VERIFICATION STATUS
-// // ======================================================
+// // ===========================
+// const checkEmailVerification = async (req, res) => {
+//   try {
+//     const { email } = req.query;
 
-// const checkEmailVerification =
-//   async (req, res) => {
-//     try {
-//       const { email } =
-//         req.query;
-
-//       if (!email) {
-//         return res.status(400).json({
-//           success: false,
-//           message:
-//             "Email is required",
-//         });
-//       }
-
-//       const normalizedEmail =
-//         email.toLowerCase().trim();
-
-//       const user =
-//         await User.findOne({
-//           email: normalizedEmail,
-//         });
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       return res.status(200).json({
-//         success: true,
-
-//         isEmailVerified:
-//           user.isEmailVerified,
-
-//         isActive:
-//           user.isActive,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Check verification error:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     if (!email) {
+//       return res.status(400).json({
 //         success: false,
-
-//         message:
-//           "Something went wrong",
+//         message: "Email is required",
 //       });
 //     }
-//   };
 
-
-// // ======================================================
-// // GET ALL USERS
-// // ======================================================
-
-// const getAllUsers =
-//   async (req, res) => {
-//     try {
-//       const users =
-//         await User.find()
-//           .select(
-//             "-password -confirmPassword -emailVerificationCode -emailVerificationExpires"
-//           )
-//           .sort({
-//             createdAt: -1,
-//           });
-
-//       return res.status(200).json({
-//         success: true,
-
-//         totalUsers:
-//           users.length,
-
-//         users,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Get All Users Error:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({
 //         success: false,
-
-//         message:
-//           "Failed to fetch users",
-
-//         error: error.message,
+//         message: "User not found",
 //       });
 //     }
-//   };
 
+//     return res.status(200).json({
+//       success: true,
+//       isEmailVerified: user.isEmailVerified,
+//       isActive: user.isActive,
+//     });
+//   } catch (error) {
+//     console.error("Check verification error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong",
+//     });
+//   }
+// };
 
-// // ======================================================
-// // LOGIN
-// // ======================================================
+// const getAllUsers = async (req, res) => {
+//   try {
+//     const users = await User.find()
+//       .select(
+//         "-password -confirmPassword -emailVerificationCode -emailVerificationExpires",
+//       )
+//       .sort({ createdAt: -1 });
 
-// const login =
-//   async (req, res) => {
-//     try {
-//       const {
-//         email,
-//         password,
-//       } = req.body;
+//     return res.status(200).json({
+//       success: true,
+//       totalUsers: users.length,
+//       users,
+//     });
+//   } catch (error) {
+//     console.error("Get All Users Error:", error);
 
-//       // ===========================
-//       // VALIDATE INPUT
-//       // ===========================
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch users",
+//       error: error.message,
+//     });
+//   }
+// };
 
-//       if (!email || !password) {
-//         return res.status(400).json({
-//           success: false,
+// // ===========================
+// // LOGIN - With Email Verification Check
+// // ===========================
+// const login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
 
-//           message:
-//             "Email and password are required",
-//         });
-//       }
+//     // ===========================
+//     // VALIDATE INPUT
+//     // ===========================
 
-//       const normalizedEmail =
-//         email.toLowerCase().trim();
-
-//       // ===========================
-//       // FIND USER
-//       // ===========================
-
-//       const user =
-//         await User.findOne({
-//           email: normalizedEmail,
-//         }).select(
-//           "+password"
-//         );
-
-//       if (!user) {
-//         return res.status(401).json({
-//           success: false,
-
-//           message:
-//             "Invalid email or password",
-//         });
-//       }
-
-//       // ===========================
-//       // CHECK PASSWORD
-//       // ===========================
-
-//       const isPasswordValid =
-//         await bcrypt.compare(
-//           password,
-//           user.password
-//         );
-
-//       if (!isPasswordValid) {
-//         return res.status(401).json({
-//           success: false,
-
-//           message:
-//             "Invalid email or password",
-//         });
-//       }
-
-//       // ===========================
-//       // UPDATE LAST LOGIN
-//       // ===========================
-
-//       user.lastLogin =
-//         new Date();
-
-//       await user.save();
-
-//       // ======================================================
-//       // CREATE LOGIN ACTIVITY
-//       // ======================================================
-
-//       try {
-//         await UserActivity.create({
-//           userId: user._id,
-//           userName: user.name,
-//           userEmail: user.email,
-
-//           action: "user_login",
-
-//           description:
-//             `User ${user.name} logged into their account`,
-
-//           ipAddress:
-//             req.headers[
-//               "x-forwarded-for"
-//             ]
-//               ?.split(",")[0]
-//               ?.trim() ||
-//             req.socket.remoteAddress ||
-//             null,
-
-//           userAgent:
-//             req.headers["user-agent"] ||
-//             null,
-//         });
-//       } catch (activityError) {
-//         console.error(
-//           "❌ Failed to create login activity:",
-//           activityError.message
-//         );
-//       }
-
-//       // ===========================
-//       // CREATE JWT
-//       // ===========================
-
-//       const token =
-//         jwt.sign(
-//           {
-//             id: user._id,
-//             email: user.email,
-//             role: user.role,
-//           },
-
-//           process.env.JWT_SECRET,
-
-//           {
-//             expiresIn: "7d",
-//           }
-//         );
-
-//       // ===========================
-//       // SAVE COOKIE
-//       // ===========================
-
-//       res.cookie(
-//         "token",
-//         token,
-//         {
-//           httpOnly: true,
-//           secure:
-//             process.env.NODE_ENV ===
-//             "production",
-//           sameSite: "strict",
-
-//           maxAge:
-//             7 *
-//             24 *
-//             60 *
-//             60 *
-//             1000,
-//         }
-//       );
-
-//       // ===========================
-//       // RESPONSE
-//       // ===========================
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           "Login successful",
-
-//         token,
-
-//         user: {
-//           id: user._id,
-//           name: user.name,
-//           email: user.email,
-//           phone: user.phone,
-//           role: user.role,
-
-//           isEmailVerified:
-//             user.isEmailVerified,
-
-//           isActive:
-//             user.isActive,
-
-//           lastLogin:
-//             user.lastLogin,
-
-//           statistics:
-//             user.statistics,
-
-//           createdAt:
-//             user.createdAt,
-//         },
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Login error:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     if (!email || !password) {
+//       return res.status(400).json({
 //         success: false,
-
-//         message:
-//           "Something went wrong during login",
-
-//         error: error.message,
+//         message: "Email and password are required",
 //       });
 //     }
-//   };
 
+//     const normalizedEmail = email.toLowerCase().trim();
 
-// // ======================================================
+//     // ===========================
+//     // FIND USER WITH PASSWORD
+//     // ===========================
+
+//     const user = await User.findOne({
+//       email: normalizedEmail,
+//     }).select("+password");
+
+//     if (!user) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Invalid email or password",
+//       });
+//     }
+
+//     // ===========================
+//     // CHECK PASSWORD
+//     // ===========================
+
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+
+//     if (!isPasswordValid) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Invalid email or password",
+//       });
+//     }
+
+//     // ===========================
+//     // UPDATE LAST LOGIN
+//     // ===========================
+
+//     user.lastLogin = new Date();
+
+//     await user.save();
+
+//     // ===========================
+//     // CREATE JWT TOKEN
+//     // ===========================
+
+//     const token = jwt.sign(
+//       {
+//         id: user._id,
+//         email: user.email,
+//         role: user.role,
+//       },
+//       process.env.JWT_SECRET,
+//       {
+//         expiresIn: "7d",
+//       },
+//     );
+
+//     // ===========================
+//     // SAVE COOKIE
+//     // ===========================
+
+//     res.cookie("token", token, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "strict",
+//       maxAge: 7 * 24 * 60 * 60 * 1000,
+//     });
+
+//     // ===========================
+//     // RESPONSE
+//     // ===========================
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Login successful",
+//       token,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         phone: user.phone,
+//         role: user.role,
+//         isEmailVerified: user.isEmailVerified,
+//         isActive: user.isActive,
+//         lastLogin: user.lastLogin,
+//         statistics: user.statistics,
+//         createdAt: user.createdAt,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Login error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong during login",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ===========================
 // // LOGOUT
-// // ======================================================
+// // ===========================
+// const logout = async (req, res) => {
+//   try {
+//     res.clearCookie("token", {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "strict",
+//     });
 
-// const logout =
-//   async (req, res) => {
-//     try {
-//       res.clearCookie(
-//         "token",
-//         {
-//           httpOnly: true,
+//     return res.status(200).json({
+//       success: true,
+//       message: "Logged out successfully",
+//     });
+//   } catch (error) {
+//     console.error("Logout error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong during logout",
+//     });
+//   }
+// };
 
-//           secure:
-//             process.env.NODE_ENV ===
-//             "production",
+// // ===========================
+// // FORGOT PASSWORD
+// // ===========================
+// const forgotPassword = async (req, res) => {
+//   try {
+//     const { email } = req.body;
 
-//           sameSite: "strict",
-//         }
-//       );
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           "Logged out successfully",
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Logout error:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     if (!email) {
+//       return res.status(400).json({
 //         success: false,
-
-//         message:
-//           "Something went wrong during logout",
+//         message: "Email is required",
 //       });
 //     }
-//   };
+
+//     // Validate email format
+//     const emailValidation = validateEmail(email);
+//     if (!emailValidation.valid) {
+//       return res.status(400).json({
+//         success: false,
+//         message: emailValidation.message,
+//       });
+//     }
+
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No account found with this email address",
+//       });
+//     }
+
+//     if (!user.isEmailVerified) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "Please verify your email first",
+//       });
+//     }
+
+//     // Generate reset token
+//     const resetToken = jwt.sign(
+//       { id: user._id },
+//       process.env.JWT_SECRET + user.password,
+//       { expiresIn: "1h" },
+//     );
+
+//     // Save reset token to user
+//     user.resetPasswordToken = resetToken;
+//     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+//     await user.save();
+
+//     // Send reset email with code
+//     const resetCode = crypto.randomBytes(4).toString("hex").toUpperCase();
+//     const resetHtml = `
+//       <!DOCTYPE html>
+//       <html>
+//         <head>
+//           <style>
+//             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+//             .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
+//             .header { background: #f44336; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+//             .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+//             .reset-code {
+//               background: #f0f0f0;
+//               padding: 20px;
+//               border-radius: 8px;
+//               font-size: 28px;
+//               font-weight: bold;
+//               text-align: center;
+//               letter-spacing: 6px;
+//               color: #f44336;
+//               margin: 20px 0;
+//               font-family: monospace;
+//             }
+//           </style>
+//         </head>
+//         <body>
+//           <div class="container">
+//             <div class="header">
+//               <h1>Reset Your Password</h1>
+//             </div>
+//             <div class="content">
+//               <p>Hello ${user.name},</p>
+//               <p>We received a request to reset your password. Use the code below to reset it:</p>
+//               <div class="reset-code">${resetCode}</div>
+//               <p>This code will expire in <strong>1 hour</strong>.</p>
+//               <p>If you didn't request this, please ignore this email.</p>
+//               <p>Best regards,<br><strong>The Team</strong></p>
+//             </div>
+//           </div>
+//         </body>
+//       </html>
+//     `;
+
+//     await sendEmail(user.email, "Password Reset Request", resetHtml);
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Password reset code sent to your email",
+//     });
+//   } catch (error) {
+//     console.error("Forgot password error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while sending reset email",
+//     });
+//   }
+// };
+
+// // ===========================
+// // RESET PASSWORD
+// // ===========================
+// const resetPassword = async (req, res) => {
+//   try {
+//     const { token, newPassword, confirmPassword } = req.body;
+
+//     if (!token || !newPassword || !confirmPassword) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Token, new password, and confirm password are required",
+//       });
+//     }
+
+//     if (newPassword !== confirmPassword) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Passwords do not match",
+//       });
+//     }
+
+//     // Find user with valid reset token
+//     const user = await User.findOne({
+//       resetPasswordToken: token,
+//       resetPasswordExpires: { $gt: Date.now() },
+//     });
+
+//     if (!user) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid or expired reset token",
+//       });
+//     }
+
+//     // Hash new password
+//     const salt = await bcrypt.genSalt(10);
+//     const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+//     // Update user
+//     user.password = hashedPassword;
+//     user.resetPasswordToken = undefined;
+//     user.resetPasswordExpires = undefined;
+//     await user.save();
+
+//     // Send confirmation email
+//     const confirmationHtml = `
+//       <!DOCTYPE html>
+//       <html>
+//         <head>
+//           <style>
+//             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+//             .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
+//             .header { background: #4CAF50; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+//             .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+//           </style>
+//         </head>
+//         <body>
+//           <div class="container">
+//             <div class="header">
+//               <h1>Password Reset Successful</h1>
+//             </div>
+//             <div class="content">
+//               <p>Hello ${user.name},</p>
+//               <p>Your password has been successfully reset.</p>
+//               <p>If you didn't perform this action, please contact our support team immediately.</p>
+//               <p>Best regards,<br><strong>The Team</strong></p>
+//             </div>
+//           </div>
+//         </body>
+//       </html>
+//     `;
+
+//     await sendEmail(user.email, "Password Reset Successful", confirmationHtml);
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Password reset successfully",
+//     });
+//   } catch (error) {
+//     console.error("Reset password error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while resetting password",
+//     });
+//   }
+// };
+
+// // ===========================
+// // GET CURRENT USER
+// // ===========================
+// const getCurrentUser = async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.id).select("-password");
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         phone: user.phone,
+//         role: user.role,
+//         isEmailVerified: user.isEmailVerified,
+//         isActive: user.isActive,
+//         lastLogin: user.lastLogin,
+//         statistics: user.statistics,
+//         createdAt: user.createdAt,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Get current user error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while fetching user profile",
+//     });
+//   }
+// };
 
 
-// // ======================================================
-// // FORGOT PASSWORD
-// // ======================================================
 
-// const forgotPassword =
-//   async (req, res) => {
-//     try {
-//       const { email } =
-//         req.body;
+// // ===========================
+// // GET USER BY EMAIL
+// // GET /users/:email
+// // ===========================
+// const getUserByEmail = async (req, res) => {
+//   try {
+//     const { email } = req.params;
 
-//       if (!email) {
-//         return res.status(400).json({
-//           success: false,
+//     if (!email) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email is required",
+//       });
+//     }
 
-//           message:
-//             "Email is required",
-//         });
-//       }
+//     const user = await User.findOne({
+//       email: email.trim().toLowerCase(),
+//     }).select("-password");
 
-//       const normalizedEmail =
-//         email.toLowerCase().trim();
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
 
-//       // ===========================
-//       // VALIDATE EMAIL
-//       // ===========================
+//     return res.status(200).json({
+//       success: true,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         phone: user.phone,
+//         role: user.role,
+//         isEmailVerified: user.isEmailVerified,
+//         isActive: user.isActive,
+//         lastLogin: user.lastLogin,
+//         statistics: user.statistics,
+//         createdAt: user.createdAt,
+//         updatedAt: user.updatedAt,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Get user by email error:", error);
 
-//       const emailValidation =
-//         validateEmail(
-//           normalizedEmail
-//         );
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while fetching user profile",
+//       error:
+//         process.env.NODE_ENV === "development"
+//           ? error.message
+//           : undefined,
+//     });
+//   }
+// };
 
+
+
+// // ===========================
+// // UPDATE CURRENT USER
+// // ===========================
+// const updateCurrentUser = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const { name, email, phone, password, statistics } = req.body;
+
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
+
+//     // If email is being changed, validate it
+//     if (email && email !== user.email) {
+//       const emailValidation = validateEmail(email);
 //       if (!emailValidation.valid) {
 //         return res.status(400).json({
 //           success: false,
-
-//           message:
-//             emailValidation.message,
+//           message: emailValidation.message,
 //         });
 //       }
 
-//       // ===========================
-//       // FIND USER
-//       // ===========================
-
-//       const user =
-//         await User.findOne({
-//           email: normalizedEmail,
-//         });
-
-//       if (!user) {
-//         return res.status(404).json({
+//       // Check if email already exists
+//       const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+//       if (existingUser) {
+//         return res.status(409).json({
 //           success: false,
-
-//           message:
-//             "No account found with this email address",
+//           message: "Email already in use by another account",
 //         });
 //       }
 
-//       if (!user.isEmailVerified) {
-//         return res.status(403).json({
-//           success: false,
+//       // If email changed, require re-verification
+//       const verificationCode = generateVerificationCode();
+//       user.email = email;
+//       user.isEmailVerified = false;
+//       user.emailVerificationCode = verificationCode;
+//       user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
 
-//           message:
-//             "Please verify your email first",
-//         });
-//       }
-
-//       // ===========================
-//       // GENERATE RESET TOKEN
-//       // ===========================
-
-//       const resetToken =
-//         jwt.sign(
-//           {
-//             id: user._id,
-//           },
-
-//           process.env.JWT_SECRET +
-//             user.password,
-
-//           {
-//             expiresIn: "1h",
-//           }
-//         );
-
-//       // ===========================
-//       // SAVE RESET TOKEN
-//       // ===========================
-
-//       user.resetPasswordToken =
-//         resetToken;
-
-//       user.resetPasswordExpires =
-//         Date.now() +
-//         3600000;
-
-//       await user.save();
-
-//       // ===========================
-//       // CREATE RESET CODE
-//       // ===========================
-
-//       const resetCode =
-//         crypto
-//           .randomBytes(4)
-//           .toString("hex")
-//           .toUpperCase();
-
-//       // ======================================================
-//       // CREATE PASSWORD RESET NOTIFICATION
-//       // ======================================================
-
-//       await createNotification({
-//         userId: user._id,
-//         userName: user.name,
-//         email: user.email,
-
-//         title:
-//           "Password Reset Request",
-
-//         message:
-//           `Your password reset code is: ${resetCode}. Your reset request is valid for 1 hour.`,
-
-//         type:
-//           "password_reset",
-//       });
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           "Password reset request created. Check your notifications for the reset code.",
-
-//         // Keep token available to the
-//         // existing frontend reset flow.
-//         token: resetToken,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Forgot password error:",
-//         error
+//       // Send new verification email
+//       const emailData = generateVerificationEmail(user, verificationCode);
+//       await sendEmail(
+//         user.email,
+//         emailData.subject,
+//         emailData.html,
+//         emailData.text,
 //       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Something went wrong while creating the password reset request",
-//       });
 //     }
-//   };
 
+//     // Update other fields
+//     if (name) user.name = name;
+//     if (phone) user.phone = phone;
 
-// // ======================================================
-// // RESET PASSWORD
-// // ======================================================
-
-// const resetPassword =
-//   async (req, res) => {
-//     try {
-//       const {
-//         token,
-//         newPassword,
-//         confirmPassword,
-//       } = req.body;
-
-//       if (
-//         !token ||
-//         !newPassword ||
-//         !confirmPassword
-//       ) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Token, new password, and confirm password are required",
-//         });
-//       }
-
-//       if (
-//         newPassword !==
-//         confirmPassword
-//       ) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Passwords do not match",
-//         });
-//       }
-
-//       if (newPassword.length < 8) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Password must be at least 8 characters",
-//         });
-//       }
-
-//       // ===========================
-//       // FIND USER
-//       // ===========================
-
-//       const user =
-//         await User.findOne({
-//           resetPasswordToken:
-//             token,
-
-//           resetPasswordExpires: {
-//             $gt: Date.now(),
-//           },
-//         });
-
-//       if (!user) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Invalid or expired reset token",
-//         });
-//       }
-
-//       // ===========================
-//       // HASH NEW PASSWORD
-//       // ===========================
-
-//       const salt =
-//         await bcrypt.genSalt(10);
-
-//       const hashedPassword =
-//         await bcrypt.hash(
-//           newPassword,
-//           salt
-//         );
-
-//       // ===========================
-//       // UPDATE USER
-//       // ===========================
-
-//       user.password =
-//         hashedPassword;
-
-//       user.resetPasswordToken =
-//         undefined;
-
-//       user.resetPasswordExpires =
-//         undefined;
-
-//       await user.save();
-
-//       // ======================================================
-//       // PASSWORD RESET SUCCESS NOTIFICATION
-//       // ======================================================
-
-//       await createNotification({
-//         userId: user._id,
-//         userName: user.name,
-//         email: user.email,
-
-//         title:
-//           "Password Reset Successful",
-
-//         message:
-//           "Your password has been successfully reset.",
-
-//         type:
-//           "password_reset_success",
-//       });
-
-//       // ======================================================
-//       // USER ACTIVITY
-//       // ======================================================
-
-//       try {
-//         await UserActivity.create({
-//           userId: user._id,
-//           userName: user.name,
-//           userEmail: user.email,
-
-//           action:
-//             "password_reset",
-
-//           description:
-//             `User ${user.name} successfully reset their password`,
-
-//           ipAddress:
-//             req.headers[
-//               "x-forwarded-for"
-//             ]
-//               ?.split(",")[0]
-//               ?.trim() ||
-//             req.socket.remoteAddress ||
-//             null,
-
-//           userAgent:
-//             req.headers["user-agent"] ||
-//             null,
-//         });
-//       } catch (activityError) {
-//         console.error(
-//           "❌ Failed to create password reset activity:",
-//           activityError.message
-//         );
-//       }
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           "Password reset successfully",
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Reset password error:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Something went wrong while resetting password",
-//       });
+//     if (password) {
+//       const salt = await bcrypt.genSalt(10);
+//       user.password = await bcrypt.hash(password, salt);
 //     }
-//   };
 
-
-// // ======================================================
-// // GET CURRENT USER
-// // ======================================================
-
-// const getCurrentUser =
-//   async (req, res) => {
-//     try {
-//       const user =
-//         await User.findById(
-//           req.user.id
-//         ).select(
-//           "-password"
-//         );
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       return res.status(200).json({
-//         success: true,
-
-//         user: {
-//           id: user._id,
-//           name: user.name,
-//           email: user.email,
-//           phone: user.phone,
-//           role: user.role,
-
-//           isEmailVerified:
-//             user.isEmailVerified,
-
-//           isActive:
-//             user.isActive,
-
-//           lastLogin:
-//             user.lastLogin,
-
-//           statistics:
-//             user.statistics,
-
-//           createdAt:
-//             user.createdAt,
-//         },
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Get current user error:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Something went wrong while fetching user profile",
-//       });
+//     if (statistics) {
+//       user.statistics = { ...user.statistics, ...statistics };
 //     }
-//   };
 
-
-// // ======================================================
-// // GET USER BY EMAIL
-// // ======================================================
-
-// const getUserByEmail =
-//   async (req, res) => {
-//     try {
-//       const { email } =
-//         req.params;
-
-//       if (!email) {
-//         return res.status(400).json({
-//           success: false,
-
-//           message:
-//             "Email is required",
-//         });
-//       }
-
-//       const user =
-//         await User.findOne({
-//           email: email
-//             .trim()
-//             .toLowerCase(),
-//         }).select(
-//           "-password"
-//         );
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       return res.status(200).json({
-//         success: true,
-
-//         user: {
-//           id: user._id,
-//           name: user.name,
-//           email: user.email,
-//           phone: user.phone,
-//           role: user.role,
-
-//           isEmailVerified:
-//             user.isEmailVerified,
-
-//           isActive:
-//             user.isActive,
-
-//           lastLogin:
-//             user.lastLogin,
-
-//           statistics:
-//             user.statistics,
-
-//           createdAt:
-//             user.createdAt,
-
-//           updatedAt:
-//             user.updatedAt,
-//         },
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Get user by email error:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Something went wrong while fetching user profile",
-
-//         error:
-//           process.env.NODE_ENV ===
-//           "development"
-//             ? error.message
-//             : undefined,
-//       });
-//     }
-//   };
-
-
-// // ======================================================
-// // UPDATE CURRENT USER
-// // ======================================================
-
-// const updateCurrentUser =
-//   async (req, res) => {
-//     try {
-//       const userId =
-//         req.user.id;
-
-//       const {
-//         name,
-//         email,
-//         phone,
-//         password,
-//         statistics,
-//       } = req.body;
-
-//       const user =
-//         await User.findById(
-//           userId
-//         );
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       // ======================================================
-//       // EMAIL CHANGE
-//       // ======================================================
-
-//       if (
-//         email &&
-//         email.toLowerCase().trim() !==
-//           user.email.toLowerCase().trim()
-//       ) {
-//         const normalizedEmail =
-//           email
-//             .toLowerCase()
-//             .trim();
-
-//         const emailValidation =
-//           validateEmail(
-//             normalizedEmail
-//           );
-
-//         if (!emailValidation.valid) {
-//           return res.status(400).json({
-//             success: false,
-
-//             message:
-//               emailValidation.message,
-//           });
-//         }
-
-//         // ===========================
-//         // CHECK EMAIL
-//         // ===========================
-
-//         const existingUser =
-//           await User.findOne({
-//             email: normalizedEmail,
-
-//             _id: {
-//               $ne: userId,
-//             },
-//           });
-
-//         if (existingUser) {
-//           return res.status(409).json({
-//             success: false,
-
-//             message:
-//               "Email already in use by another account",
-//           });
-//         }
-
-//         // ===========================
-//         // NEW VERIFICATION CODE
-//         // ===========================
-
-//         const verificationCode =
-//           generateVerificationCode();
-
-//         user.email =
-//           normalizedEmail;
-
-//         user.isEmailVerified =
-//           false;
-
-//         user.emailVerificationCode =
-//           verificationCode;
-
-//         user.emailVerificationExpires =
-//           Date.now() +
-//           24 *
-//             60 *
-//             60 *
-//             1000;
-
-//         // ======================================================
-//         // CREATE NOTIFICATION
-//         // ======================================================
-
-//         await createNotification({
-//           userId: user._id,
-//           userName: user.name,
-//           email: normalizedEmail,
-
-//           title:
-//             "Email Verification Required",
-
-//           message:
-//             `Your email address was changed. Your new verification code is: ${verificationCode}`,
-
-//           type:
-//             "email_verification",
-//         });
-//       }
-
-//       // ===========================
-//       // UPDATE OTHER FIELDS
-//       // ===========================
-
-//       if (name) {
-//         user.name =
-//           name.trim();
-//       }
-
-//       if (phone) {
-//         user.phone =
-//           phone.trim();
-//       }
-
-//       if (password) {
-//         const salt =
-//           await bcrypt.genSalt(10);
-
-//         user.password =
-//           await bcrypt.hash(
-//             password,
-//             salt
-//           );
-//       }
-
-//       if (statistics) {
-//         user.statistics = {
-//           ...user.statistics,
-//           ...statistics,
-//         };
-//       }
-
-//       await user.save();
-
-//       const updatedUser =
-//         user.toObject();
-
-//       delete updatedUser.password;
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           email &&
-//           !updatedUser.isEmailVerified
-//             ? "Profile updated. Please verify your new email address from your notifications."
-//             : "Profile updated successfully",
-
-//         user: updatedUser,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Update current user error:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Something went wrong while updating profile",
-//       });
-//     }
-//   };
-
-
-// // ======================================================
-// // GET USERS
-// // ======================================================
-
-// const getUsers =
-//   async (req, res) => {
-//     try {
-//       const users =
-//         await User.find()
-//           .select(
-//             "-password -emailVerificationCode"
-//           )
-//           .sort({
-//             createdAt: -1,
-//           });
-
-//       return res.status(200).json({
-//         success: true,
-
-//         count:
-//           users.length,
-
-//         users,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Get users error:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Something went wrong while fetching users",
-//       });
-//     }
-//   };
-
-
-// // ======================================================
+//     await user.save();
+
+//     const updatedUser = user.toObject();
+//     delete updatedUser.password;
+
+//     return res.status(200).json({
+//       success: true,
+//       message:
+//         email && !updatedUser.isEmailVerified
+//           ? "Profile updated. Please verify your new email address."
+//           : "Profile updated successfully",
+//       user: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error("Update current user error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while updating profile",
+//     });
+//   }
+// };
+
+// // ===========================
+// // GET ALL USERS
+// // ===========================
+// const getUsers = async (req, res) => {
+//   try {
+//     const users = await User.find()
+//       .select("-password -emailVerificationCode")
+//       .sort({ createdAt: -1 });
+
+//     return res.status(200).json({
+//       success: true,
+//       count: users.length,
+//       users,
+//     });
+//   } catch (error) {
+//     console.error("Get users error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while fetching users",
+//     });
+//   }
+// };
+
+// // ===========================
 // // GET SINGLE USER
-// // ======================================================
+// // ===========================
+// const getUser = async (req, res) => {
+//   try {
+//     const { id } = req.params;
 
-// const getUser =
-//   async (req, res) => {
-//     try {
-//       const { id } =
-//         req.params;
+//     const user = await User.findById(id).select(
+//       "-password -emailVerificationCode",
+//     );
 
-//       const user =
-//         await User.findById(
-//           id
-//         ).select(
-//           "-password -emailVerificationCode"
-//         );
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       return res.status(200).json({
-//         success: true,
-
-//         user,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Get user error:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     if (!user) {
+//       return res.status(404).json({
 //         success: false,
-
-//         message:
-//           "Something went wrong while fetching the user",
+//         message: "User not found",
 //       });
 //     }
-//   };
 
+//     return res.status(200).json({
+//       success: true,
+//       user,
+//     });
+//   } catch (error) {
+//     console.error("Get user error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while fetching the user",
+//     });
+//   }
+// };
 
-// // ======================================================
-// // UPDATE USER - ADMIN
-// // ======================================================
+// // ===========================
+// // UPDATE USER (Admin)
+// // ===========================
+// const updateUser = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { name, email, phone, password, statistics, isActive, role } =
+//       req.body;
 
-// const updateUser =
-//   async (req, res) => {
-//     try {
-//       const { id } =
-//         req.params;
-
-//       const {
-//         name,
-//         email,
-//         phone,
-//         password,
-//         statistics,
-//         isActive,
-//         role,
-//       } = req.body;
-
-//       const user =
-//         await User.findById(id);
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       // ===========================
-//       // EMAIL VALIDATION
-//       // ===========================
-
-//       if (
-//         email &&
-//         email.toLowerCase().trim() !==
-//           user.email.toLowerCase().trim()
-//       ) {
-//         const normalizedEmail =
-//           email
-//             .toLowerCase()
-//             .trim();
-
-//         const emailValidation =
-//           validateEmail(
-//             normalizedEmail
-//           );
-
-//         if (!emailValidation.valid) {
-//           return res.status(400).json({
-//             success: false,
-
-//             message:
-//               emailValidation.message,
-//           });
-//         }
-
-//         const existingUser =
-//           await User.findOne({
-//             email: normalizedEmail,
-
-//             _id: {
-//               $ne: id,
-//             },
-//           });
-
-//         if (existingUser) {
-//           return res.status(409).json({
-//             success: false,
-
-//             message:
-//               "Email already in use by another account",
-//           });
-//         }
-
-//         user.email =
-//           normalizedEmail;
-//       }
-
-//       // ===========================
-//       // UPDATE FIELDS
-//       // ===========================
-
-//       if (name) {
-//         user.name =
-//           name.trim();
-//       }
-
-//       if (phone) {
-//         user.phone =
-//           phone.trim();
-//       }
-
-//       if (
-//         isActive !==
-//         undefined
-//       ) {
-//         user.isActive =
-//           isActive;
-//       }
-
-//       if (role) {
-//         user.role =
-//           role;
-//       }
-
-//       if (password) {
-//         const salt =
-//           await bcrypt.genSalt(10);
-
-//         user.password =
-//           await bcrypt.hash(
-//             password,
-//             salt
-//           );
-//       }
-
-//       if (statistics) {
-//         user.statistics = {
-//           ...user.statistics,
-//           ...statistics,
-//         };
-//       }
-
-//       await user.save();
-
-//       const updatedUser =
-//         user.toObject();
-
-//       delete updatedUser.password;
-//       delete updatedUser.emailVerificationCode;
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           "User updated successfully",
-
-//         user:
-//           updatedUser,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Update user error:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     const user = await User.findById(id);
+//     if (!user) {
+//       return res.status(404).json({
 //         success: false,
-
-//         message:
-//           "Something went wrong while updating the user",
+//         message: "User not found",
 //       });
 //     }
-//   };
 
-
-// // ======================================================
-// // DELETE USER - ADMIN
-// // ======================================================
-
-// const deleteUser =
-//   async (req, res) => {
-//     try {
-//       const { id } =
-//         req.params;
-
-//       const protectedEmail =
-//         "akingeneyeleon@gmail.com";
-
-//       const user =
-//         await User.findById(id);
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       // ===========================
-//       // PROTECT MAIN ACCOUNT
-//       // ===========================
-
-//       if (
-//         user.email.toLowerCase() ===
-//         protectedEmail
-//       ) {
-//         return res.status(403).json({
-//           success: false,
-
-//           message:
-//             "This account cannot be deleted",
-//         });
-//       }
-
-//       // ===========================
-//       // CREATE ACTIVITY BEFORE DELETE
-//       // ===========================
-
-//       try {
-//         await UserActivity.create({
-//           userId: user._id,
-//           userName: user.name,
-//           userEmail: user.email,
-
-//           action:
-//             "user_deleted",
-
-//           description:
-//             `User ${user.name} was deleted`,
-
-//           ipAddress:
-//             req.headers[
-//               "x-forwarded-for"
-//             ]
-//               ?.split(",")[0]
-//               ?.trim() ||
-//             req.socket.remoteAddress ||
-//             null,
-
-//           userAgent:
-//             req.headers["user-agent"] ||
-//             null,
-//         });
-//       } catch (activityError) {
-//         console.error(
-//           "❌ Failed to create delete activity:",
-//           activityError.message
-//         );
-//       }
-
-//       await User.findByIdAndDelete(
-//         id
-//       );
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           "User deleted successfully",
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Delete user error:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Something went wrong while deleting the user",
-
-//         error: error.message,
-//       });
-//     }
-//   };
-
-
-// // ======================================================
-// // DELETE CURRENT USER
-// // ======================================================
-
-// const deleteCurrentUser =
-//   async (req, res) => {
-//     try {
-//       const { id } =
-//         req.params;
-
-//       const user =
-//         await User.findById(id);
-
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-
-//           message:
-//             "User not found",
-//         });
-//       }
-
-//       // ======================================================
-//       // CREATE NOTIFICATION BEFORE DELETE
-//       // ======================================================
-//       //
-//       // The notification is created before
-//       // deleting the user so the operation
-//       // itself is recorded.
-
-//       await createNotification({
-//         userId: user._id,
-//         userName: user.name,
-//         email: user.email,
-
-//         title:
-//           "Account Deleted",
-
-//         message:
-//           "Your account has been successfully deleted.",
-
-//         type:
-//           "account_deleted",
-//       });
-
-//       // ======================================================
-//       // USER ACTIVITY
-//       // ======================================================
-
-//       try {
-//         await UserActivity.create({
-//           userId: user._id,
-//           userName: user.name,
-//           userEmail: user.email,
-
-//           action:
-//             "user_deleted",
-
-//           description:
-//             `User ${user.name} deleted their account`,
-
-//           ipAddress:
-//             req.headers[
-//               "x-forwarded-for"
-//             ]
-//               ?.split(",")[0]
-//               ?.trim() ||
-//             req.socket.remoteAddress ||
-//             null,
-
-//           userAgent:
-//             req.headers["user-agent"] ||
-//             null,
-//         });
-//       } catch (activityError) {
-//         console.error(
-//           "❌ Failed to create account deletion activity:",
-//           activityError.message
-//         );
-//       }
-
-//       await User.findByIdAndDelete(
-//         id
-//       );
-
-//       return res.status(200).json({
-//         success: true,
-
-//         message:
-//           "Account deleted successfully",
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Delete current user error:",
-//         error
-//       );
-
-//       return res.status(500).json({
-//         success: false,
-
-//         message:
-//           "Something went wrong while deleting account",
-
-//         error: error.message,
-//       });
-//     }
-//   };
-
-
-// // ======================================================
-// // UPDATE STATISTICS
-// // ======================================================
-
-// const updateStatistics =
-//   async (req, res) => {
-//     try {
-//       const userId =
-//         req.user.id;
-
-//       const statistics =
-//         req.body;
-
-//       const validFields = [
-//         "totalIncome",
-//         "totalExpenses",
-//         "totalSavings",
-//         "monthlyIncome",
-//         "monthlyExpenses",
-//         "monthlyBudget",
-//         "membersCount",
-//       ];
-
-//       const updateData = {};
-
-//       for (
-//         const field of validFields
-//       ) {
-//         if (
-//           statistics[field] !==
-//           undefined
-//         ) {
-//           if (
-//             typeof statistics[field] !==
-//               "number" ||
-//             statistics[field] <
-//               0
-//           ) {
-//             return res.status(400).json({
-//               success: false,
-
-//               message:
-//                 `${field} must be a positive number`,
-//             });
-//           }
-
-//           updateData[
-//             `statistics.${field}`
-//           ] =
-//             statistics[field];
-//         }
-//       }
-
-//       if (
-//         Object.keys(updateData)
-//           .length === 0
-//       ) {
+//     // If email is being changed, validate it
+//     if (email && email !== user.email) {
+//       const emailValidation = validateEmail(email);
+//       if (!emailValidation.valid) {
 //         return res.status(400).json({
 //           success: false,
-
-//           message:
-//             "No valid statistics fields provided",
+//           message: emailValidation.message,
 //         });
 //       }
 
-//       const updatedUser =
-//         await User.findByIdAndUpdate(
-//           userId,
+//       const existingUser = await User.findOne({ email, _id: { $ne: id } });
+//       if (existingUser) {
+//         return res.status(409).json({
+//           success: false,
+//           message: "Email already in use by another account",
+//         });
+//       }
+//     }
 
-//           {
-//             $set:
-//               updateData,
-//           },
+//     // Update fields
+//     if (name) user.name = name;
+//     if (email) user.email = email;
+//     if (phone) user.phone = phone;
+//     if (isActive !== undefined) user.isActive = isActive;
+//     if (role) user.role = role;
 
-//           {
-//             new: true,
-//             runValidators: true,
-//           }
-//         ).select(
-//           "-password -emailVerificationCode"
-//         );
+//     if (password) {
+//       const salt = await bcrypt.genSalt(10);
+//       user.password = await bcrypt.hash(password, salt);
+//     }
 
-//       return res.status(200).json({
-//         success: true,
+//     if (statistics) {
+//       user.statistics = { ...user.statistics, ...statistics };
+//     }
 
-//         message:
-//           "Statistics updated successfully",
+//     await user.save();
 
-//         user:
-//           updatedUser,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "Update statistics error:",
-//         error
-//       );
+//     const updatedUser = user.toObject();
+//     delete updatedUser.password;
+//     delete updatedUser.emailVerificationCode;
 
-//       return res.status(500).json({
+//     return res.status(200).json({
+//       success: true,
+//       message: "User updated successfully",
+//       user: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error("Update user error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while updating the user",
+//     });
+//   }
+// };
+
+// // ===========================
+// // DELETE USER (Admin)
+// // ===========================
+// const deleteUser = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const protectedEmail = "akingeneyeleon@gmail.com";
+
+//     const user = await User.findById(id);
+
+//     if (!user) {
+//       return res.status(404).json({
 //         success: false,
-
-//         message:
-//           "Something went wrong while updating statistics",
+//         message: "User not found",
 //       });
 //     }
-//   };
 
+//     // ===========================
+//     // PROTECT MAIN ACCOUNT
+//     // ===========================
 
-// // ======================================================
-// // GET USER STATISTICS
-// // ======================================================
+//     if (user.email.toLowerCase() === protectedEmail) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "This account cannot be deleted",
+//       });
+//     }
 
-// const getUserStatistics =
-//   async (req, res) => {
+//     await User.findByIdAndDelete(id);
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "User deleted successfully",
+//     });
+//   } catch (error) {
+//     console.error("Delete user error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while deleting the user",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ===========================
+// // DELETE CURRENT USER
+// // ===========================
+// const deleteCurrentUser = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const user = await User.findById(id);
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
+
+//     await User.findByIdAndDelete(id);
+
+//     // Send deletion confirmation email
+//     const deletionHtml = `
+//       <!DOCTYPE html>
+//       <html>
+//         <head>
+//           <style>
+//             body {
+//               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+//               line-height: 1.6;
+//               color: #333;
+//             }
+
+//             .container {
+//               max-width: 600px;
+//               margin: 0 auto;
+//               padding: 20px;
+//               background: #f4f4f4;
+//             }
+
+//             .header {
+//               background: #f44336;
+//               color: white;
+//               padding: 30px;
+//               text-align: center;
+//               border-radius: 10px 10px 0 0;
+//             }
+
+//             .content {
+//               background: white;
+//               padding: 30px;
+//               border-radius: 0 0 10px 10px;
+//               box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+//             }
+//           </style>
+//         </head>
+
+//         <body>
+//           <div class="container">
+
+//             <div class="header">
+//               <h1>Account Deleted</h1>
+//             </div>
+
+//             <div class="content">
+
+//               <p>Hello ${user.name},</p>
+
+//               <p>
+//                 Your account has been successfully deleted.
+//               </p>
+
+//               <p>
+//                 If you did not request this deletion,
+//                 please contact our support team immediately.
+//               </p>
+
+//               <p>
+//                 We hope to see you again in the future!
+//               </p>
+
+//               <p>
+//                 Best regards,<br>
+//                 <strong>The Team</strong>
+//               </p>
+
+//             </div>
+
+//           </div>
+//         </body>
+//       </html>
+//     `;
+
 //     try {
-//       const totalUsers =
-//         await User.countDocuments();
+//       await sendEmail(user.email, "Account Deleted", deletionHtml);
+//     } catch (emailError) {
+//       console.error("Deletion email error:", emailError.message);
+//     }
 
-//       const activeUsers =
-//         await User.countDocuments({
-//           isActive: true,
-//         });
+//     return res.status(200).json({
+//       success: true,
+//       message: "Account deleted successfully",
+//     });
+//   } catch (error) {
+//     console.error("Delete current user error:", error);
 
-//       const inactiveUsers =
-//         await User.countDocuments({
-//           isActive: false,
-//         });
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while deleting account",
+//       error: error.message,
+//     });
+//   }
+// };
 
-//       const verifiedUsers =
-//         await User.countDocuments({
-//           isEmailVerified: true,
-//         });
+// // ===========================
+// // UPDATE STATISTICS
+// // ===========================
+// const updateStatistics = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const statistics = req.body;
 
-//       const unverifiedUsers =
-//         await User.countDocuments({
-//           isEmailVerified: false,
-//         });
+//     const validFields = [
+//       "totalIncome",
+//       "totalExpenses",
+//       "totalSavings",
+//       "monthlyIncome",
+//       "monthlyExpenses",
+//       "monthlyBudget",
+//       "membersCount",
+//     ];
 
-//       // ===========================
-//       // USERS BY ROLE
-//       // ===========================
+//     const updateData = {};
+//     for (const field of validFields) {
+//       if (statistics[field] !== undefined) {
+//         if (typeof statistics[field] !== "number" || statistics[field] < 0) {
+//           return res.status(400).json({
+//             success: false,
+//             message: `${field} must be a positive number`,
+//           });
+//         }
+//         updateData[`statistics.${field}`] = statistics[field];
+//       }
+//     }
 
-//       const usersByRole =
-//         await User.aggregate([
-//           {
-//             $group: {
-//               _id: "$role",
-
-//               count: {
-//                 $sum: 1,
-//               },
-//             },
-//           },
-
-//           {
-//             $project: {
-//               _id: 0,
-
-//               role: "$_id",
-
-//               count: 1,
-//             },
-//           },
-//         ]);
-
-//       // ===========================
-//       // NEW USERS LAST 30 DAYS
-//       // ===========================
-
-//       const newUsers =
-//         await User.countDocuments({
-//           createdAt: {
-//             $gte:
-//               new Date(
-//                 Date.now() -
-//                   30 *
-//                     24 *
-//                     60 *
-//                     60 *
-//                     1000
-//               ),
-//           },
-//         });
-
-//       // ===========================
-//       // RECENT USERS
-//       // ===========================
-
-//       const recentUsers =
-//         await User.find()
-//           .select("-password")
-//           .sort({
-//             createdAt: -1,
-//           })
-//           .limit(5);
-
-//       return res.status(200).json({
-//         success: true,
-
-//         statistics: {
-//           totalUsers,
-//           activeUsers,
-//           inactiveUsers,
-//           verifiedUsers,
-//           unverifiedUsers,
-
-//           newUsersLast30Days:
-//             newUsers,
-
-//           usersByRole,
-//         },
-
-//         recentUsers,
-//       });
-//     } catch (error) {
-//       console.error(
-//         "GET USER STATISTICS ERROR:",
-//         error
-//       );
-
-//       return res.status(500).json({
+//     if (Object.keys(updateData).length === 0) {
+//       return res.status(400).json({
 //         success: false,
-
-//         message:
-//           "Failed to fetch user statistics",
-
-//         error: error.message,
+//         message: "No valid statistics fields provided",
 //       });
 //     }
-//   };
 
+//     const updatedUser = await User.findByIdAndUpdate(
+//       userId,
+//       { $set: updateData },
+//       { new: true, runValidators: true },
+//     ).select("-password -emailVerificationCode");
 
-// // ======================================================
+//     return res.status(200).json({
+//       success: true,
+//       message: "Statistics updated successfully",
+//       user: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error("Update statistics error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while updating statistics",
+//     });
+//   }
+// };
+
+// const getUserStatistics = async (req, res) => {
+//   try {
+//     const totalUsers = await User.countDocuments();
+
+//     const activeUsers = await User.countDocuments({
+//       isActive: true,
+//     });
+
+//     const inactiveUsers = await User.countDocuments({
+//       isActive: false,
+//     });
+
+//     const verifiedUsers = await User.countDocuments({
+//       isEmailVerified: true,
+//     });
+
+//     const unverifiedUsers = await User.countDocuments({
+//       isEmailVerified: false,
+//     });
+
+//     // Users grouped by role
+//     const usersByRole = await User.aggregate([
+//       {
+//         $group: {
+//           _id: "$role",
+//           count: {
+//             $sum: 1,
+//           },
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           role: "$_id",
+//           count: 1,
+//         },
+//       },
+//     ]);
+
+//     // New users created in last 30 days
+//     const newUsers = await User.countDocuments({
+//       createdAt: {
+//         $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+//       },
+//     });
+
+//     // Latest registered users
+//     const recentUsers = await User.find()
+//       .select("-password")
+//       .sort({
+//         createdAt: -1,
+//       })
+//       .limit(5);
+
+//     return res.status(200).json({
+//       success: true,
+//       statistics: {
+//         totalUsers,
+//         activeUsers,
+//         inactiveUsers,
+//         verifiedUsers,
+//         unverifiedUsers,
+//         newUsersLast30Days: newUsers,
+//         usersByRole,
+//       },
+//       recentUsers,
+//     });
+//   } catch (error) {
+//     console.error("GET USER STATISTICS ERROR:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch user statistics",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ===========================
 // // EXPORT ALL CONTROLLERS
-// // ======================================================
-
+// // ===========================
 // module.exports = {
-//   // ===========================
 //   // Authentication
-//   // ===========================
-
 //   register,
 //   login,
 //   logout,
@@ -2528,10 +2546,7 @@
 //   forgotPassword,
 //   resetPassword,
 
-//   // ===========================
 //   // User Management
-//   // ===========================
-
 //   getUsers,
 //   getUser,
 //   getCurrentUser,
@@ -2543,14 +2558,13 @@
 //   deleteCurrentUser,
 //   updateStatistics,
 //   getUserStatistics,
-
-//   // ===========================
-//   // Notifications
-//   // ===========================
-
-//   getAllNotifications,
-//   getNotificationsByEmail,
 // };
+
+
+
+
+
+
 
 
 
@@ -2565,7 +2579,6 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const UserActivity = require("../activity/UserActivity");
 const Notification = require("../models/Notification");
-const { sendEmail, emailTemplates } = require("../utils/emailService");
 
 // ======================================================
 // EMAIL VALIDATION
@@ -2660,100 +2673,6 @@ const createNotification = async ({
     // Notification failure must not
     // stop the main operation.
     return null;
-  }
-};
-
-
-// ======================================================
-// SEND VERIFICATION EMAIL
-// ======================================================
-
-const sendVerificationEmail = async (user, verificationCode) => {
-  try {
-    const { subject, html } = emailTemplates.verificationCode(
-      user.name,
-      verificationCode
-    );
-
-    const result = await sendEmail({
-      to: user.email,
-      subject: subject,
-      html: html,
-    });
-
-    if (result.success) {
-      console.log(`✅ Verification email sent to ${user.email}`);
-    } else {
-      console.error(`❌ Failed to send verification email to ${user.email}:`, result.error);
-    }
-
-    return result;
-  } catch (error) {
-    console.error(`❌ Error sending verification email:`, error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-
-// ======================================================
-// SEND WELCOME EMAIL
-// ======================================================
-
-const sendWelcomeEmail = async (user, verificationCode) => {
-  try {
-    const { subject, html } = emailTemplates.welcome(
-      user.name,
-      verificationCode
-    );
-
-    const result = await sendEmail({
-      to: user.email,
-      subject: subject,
-      html: html,
-    });
-
-    if (result.success) {
-      console.log(`✅ Welcome email sent to ${user.email}`);
-    } else {
-      console.error(`❌ Failed to send welcome email to ${user.email}:`, result.error);
-    }
-
-    return result;
-  } catch (error) {
-    console.error(`❌ Error sending welcome email:`, error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-
-// ======================================================
-// SEND PASSWORD RESET EMAIL
-// ======================================================
-
-const sendPasswordResetEmail = async (user, resetCode, resetToken) => {
-  try {
-    const { subject, html } = emailTemplates.passwordReset(
-      user.name,
-      resetCode,
-      resetToken
-    );
-
-    const result = await sendEmail({
-      to: user.email,
-      subject: subject,
-      html: html,
-    });
-
-    if (result.success) {
-      console.log(`✅ Password reset email sent to ${user.email}`);
-    } else {
-      console.error(`❌ Failed to send password reset email to ${user.email}:`, result.error);
-    }
-
-    return result;
-  } catch (error) {
-    console.error(`❌ Error sending password reset email:`, error.message);
-    return { success: false, error: error.message };
   }
 };
 
@@ -2928,18 +2847,6 @@ const register = async (req, res) => {
     );
 
     // ======================================================
-    // SEND WELCOME EMAIL
-    // ======================================================
-
-    let welcomeEmailSent = false;
-    try {
-      const result = await sendWelcomeEmail(newUser, verificationCode);
-      welcomeEmailSent = result.success;
-    } catch (emailError) {
-      console.error("❌ Failed to send welcome email:", emailError.message);
-    }
-
-    // ======================================================
     // ACCOUNT CREATED NOTIFICATION
     // ======================================================
 
@@ -2951,7 +2858,7 @@ const register = async (req, res) => {
       title: "Account Created",
 
       message:
-        `Welcome ${newUser.name}! Your account has been created successfully. Check your email for verification instructions.`,
+        `Welcome ${newUser.name}! Your account has been created successfully.`,
 
       type: "user_created",
     });
@@ -2968,7 +2875,7 @@ const register = async (req, res) => {
       title: "Email Verification Code",
 
       message:
-        `Your email verification code is: ${verificationCode}. We've also sent this to your email address.`,
+        `Your email verification code is: ${verificationCode}`,
 
       type: "email_verification",
     });
@@ -3038,11 +2945,11 @@ const register = async (req, res) => {
       success: true,
 
       message:
-        `Registration successful. A verification email has been sent to ${newUser.email}. Please check your email for verification instructions.`,
+        "Registration successful. Please check your notifications for your verification code.",
 
       requiresEmailVerification: true,
 
-      emailSent: welcomeEmailSent,
+      emailSent: false,
 
       token,
 
@@ -3253,22 +3160,6 @@ const verifyEmail =
       await user.save();
 
       // ======================================================
-      // SEND VERIFICATION SUCCESS EMAIL
-      // ======================================================
-
-      try {
-        const { subject, html } = emailTemplates.emailVerified(user.name);
-        await sendEmail({
-          to: user.email,
-          subject: subject,
-          html: html,
-        });
-        console.log(`✅ Verification success email sent to ${user.email}`);
-      } catch (emailError) {
-        console.error("❌ Failed to send verification success email:", emailError.message);
-      }
-
-      // ======================================================
       // CREATE VERIFICATION SUCCESS NOTIFICATION
       // ======================================================
 
@@ -3349,88 +3240,6 @@ const verifyEmail =
         message:
           "Something went wrong while verifying email",
       });
-    }
-  };
-
-
-// ======================================================
-// VERIFY EMAIL FROM FRONTEND (GET request)
-// ======================================================
-
-const verifyEmailFromFrontend =
-  async (req, res) => {
-    try {
-      const { email, code } = req.query;
-
-      if (!email || !code) {
-        return res.redirect(`${process.env.FRONTEND_URL}/verification/email/status?error=missing_fields`);
-      }
-
-      const normalizedEmail = email.toLowerCase().trim();
-      const normalizedCode = code.trim().toUpperCase();
-
-      const user = await User.findOne({
-        email: normalizedEmail,
-        emailVerificationCode: normalizedCode,
-      });
-
-      if (!user) {
-        return res.redirect(`${process.env.FRONTEND_URL}/verification/email/status?error=invalid_code`);
-      }
-
-      if (user.isEmailVerified) {
-        return res.redirect(`${process.env.FRONTEND_URL}/verification/email/status?status=already_verified`);
-      }
-
-      // Verify user
-      user.isEmailVerified = true;
-      user.emailVerificationCode = undefined;
-      user.emailVerificationExpires = undefined;
-      user.isActive = true;
-
-      await user.save();
-
-      // Send verification success email
-      try {
-        const { subject, html } = emailTemplates.emailVerified(user.name);
-        await sendEmail({
-          to: user.email,
-          subject: subject,
-          html: html,
-        });
-      } catch (emailError) {
-        console.error("❌ Failed to send verification success email:", emailError.message);
-      }
-
-      // Create notification
-      await createNotification({
-        userId: user._id,
-        userName: user.name,
-        email: user.email,
-        title: "Email Verified",
-        message: "Your email has been successfully verified. Your account is now active.",
-        type: "email_verified",
-      });
-
-      // Create activity
-      try {
-        await UserActivity.create({
-          userId: user._id,
-          userName: user.name,
-          userEmail: user.email,
-          action: "email_verified",
-          description: `User ${user.name} verified their email address`,
-          ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
-          userAgent: req.headers["user-agent"] || null,
-        });
-      } catch (activityError) {
-        console.error("❌ Failed to create verification activity:", activityError.message);
-      }
-
-      return res.redirect(`${process.env.FRONTEND_URL}/verification/email/status?status=success`);
-    } catch (error) {
-      console.error("Verify email from frontend error:", error);
-      return res.redirect(`${process.env.FRONTEND_URL}/verification/email/status?error=server_error`);
     }
   };
 
@@ -3520,18 +3329,6 @@ const resendVerificationCode =
       await user.save();
 
       // ======================================================
-      // SEND VERIFICATION EMAIL
-      // ======================================================
-
-      let emailSent = false;
-      try {
-        const result = await sendVerificationEmail(user, verificationCode);
-        emailSent = result.success;
-      } catch (emailError) {
-        console.error("❌ Failed to send verification email:", emailError.message);
-      }
-
-      // ======================================================
       // CREATE NOTIFICATION
       // ======================================================
 
@@ -3544,7 +3341,7 @@ const resendVerificationCode =
           "New Verification Code",
 
         message:
-          `Your new email verification code is: ${verificationCode}. We've also sent this to your email.`,
+          `Your new email verification code is: ${verificationCode}`,
 
         type:
           "email_verification",
@@ -3554,11 +3351,7 @@ const resendVerificationCode =
         success: true,
 
         message:
-          emailSent 
-            ? "New verification code sent to your email. Check your inbox and notifications."
-            : "New verification code created. Check your notifications for the code.",
-
-        emailSent,
+          "New verification code created. Check your notifications.",
       });
     } catch (error) {
       console.error(
@@ -4035,18 +3828,6 @@ const forgotPassword =
           .toUpperCase();
 
       // ======================================================
-      // SEND PASSWORD RESET EMAIL
-      // ======================================================
-
-      let emailSent = false;
-      try {
-        const result = await sendPasswordResetEmail(user, resetCode, resetToken);
-        emailSent = result.success;
-      } catch (emailError) {
-        console.error("❌ Failed to send password reset email:", emailError.message);
-      }
-
-      // ======================================================
       // CREATE PASSWORD RESET NOTIFICATION
       // ======================================================
 
@@ -4059,7 +3840,7 @@ const forgotPassword =
           "Password Reset Request",
 
         message:
-          `Your password reset code is: ${resetCode}. ${emailSent ? 'We\'ve also sent this to your email.' : 'Check your notifications for the code.'} Your reset request is valid for 1 hour.`,
+          `Your password reset code is: ${resetCode}. Your reset request is valid for 1 hour.`,
 
         type:
           "password_reset",
@@ -4069,11 +3850,7 @@ const forgotPassword =
         success: true,
 
         message:
-          emailSent
-            ? "Password reset email sent to your email. Check your inbox."
-            : "Password reset request created. Check your notifications for the reset code.",
-
-        emailSent,
+          "Password reset request created. Check your notifications for the reset code.",
 
         // Keep token available to the
         // existing frontend reset flow.
@@ -4192,22 +3969,6 @@ const resetPassword =
         undefined;
 
       await user.save();
-
-      // ======================================================
-      // SEND PASSWORD RESET SUCCESS EMAIL
-      // ======================================================
-
-      try {
-        const { subject, html } = emailTemplates.passwordResetSuccess(user.name);
-        await sendEmail({
-          to: user.email,
-          subject: subject,
-          html: html,
-        });
-        console.log(`✅ Password reset success email sent to ${user.email}`);
-      } catch (emailError) {
-        console.error("❌ Failed to send password reset success email:", emailError.message);
-      }
 
       // ======================================================
       // PASSWORD RESET SUCCESS NOTIFICATION
@@ -4545,19 +4306,6 @@ const updateCurrentUser =
             1000;
 
         // ======================================================
-        // SEND VERIFICATION EMAIL
-        // ======================================================
-
-        try {
-          const result = await sendVerificationEmail(user, verificationCode);
-          if (result.success) {
-            console.log(`✅ Verification email sent to new email ${normalizedEmail}`);
-          }
-        } catch (emailError) {
-          console.error("❌ Failed to send verification email:", emailError.message);
-        }
-
-        // ======================================================
         // CREATE NOTIFICATION
         // ======================================================
 
@@ -4570,7 +4318,7 @@ const updateCurrentUser =
             "Email Verification Required",
 
           message:
-            `Your email address was changed. Your new verification code is: ${verificationCode}. We've also sent this to your new email.`,
+            `Your email address was changed. Your new verification code is: ${verificationCode}`,
 
           type:
             "email_verification",
@@ -4622,7 +4370,7 @@ const updateCurrentUser =
         message:
           email &&
           !updatedUser.isEmailVerified
-            ? "Profile updated. Please verify your new email address from your email or notifications."
+            ? "Profile updated. Please verify your new email address from your notifications."
             : "Profile updated successfully",
 
         user: updatedUser,
@@ -5018,22 +4766,6 @@ const deleteCurrentUser =
       }
 
       // ======================================================
-      // SEND ACCOUNT DELETED EMAIL
-      // ======================================================
-
-      try {
-        const { subject, html } = emailTemplates.accountDeleted(user.name);
-        await sendEmail({
-          to: user.email,
-          subject: subject,
-          html: html,
-        });
-        console.log(`✅ Account deleted email sent to ${user.email}`);
-      } catch (emailError) {
-        console.error("❌ Failed to send account deleted email:", emailError.message);
-      }
-
-      // ======================================================
       // CREATE NOTIFICATION BEFORE DELETE
       // ======================================================
       //
@@ -5364,7 +5096,6 @@ module.exports = {
   login,
   logout,
   verifyEmail,
-  verifyEmailFromFrontend,
   resendVerificationCode,
   checkEmailVerification,
   forgotPassword,
@@ -5393,3 +5124,4 @@ module.exports = {
   getAllNotifications,
   getNotificationsByEmail,
 };
+
