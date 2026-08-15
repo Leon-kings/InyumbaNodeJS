@@ -310,24 +310,27 @@ const createTransporter = () => {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT, 10) || 587,
-    secure: false, // true for 465, false for other ports
-
-    // Force IPv4 connection
-    family: 4,
-
+    secure: false,
+    
+    // Debug mode - shows more details
+    debug: true,
+    logger: true,
+    
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-
+    
     tls: {
       rejectUnauthorized: false,
+      // Add this for better compatibility
+      ciphers: 'SSLv3',
     },
-
-    // SMTP connection timeouts
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000,
+    
+    // Shorter timeouts for debugging
+    connectionTimeout: 5000,  // 5 seconds
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
   });
 };
 
@@ -375,9 +378,6 @@ const startServer = async () => {
     console.error("❌ Server startup stopped because MongoDB is unavailable.");
     process.exit(1);
   }
-
-  // Check SMTP/Email connection
-  console.log("\n📧 Checking email service connection...");
   const emailStatus = await checkEmailConnection();
 
   if (!emailStatus.connected) {
@@ -389,7 +389,7 @@ const startServer = async () => {
   const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`❤️ Health check: /health`);
-    console.log(`📊 Server status: ${emailStatus.connected ? '✅ All services ready' : '⚠️ Email service unavailable'}`);
+    // console.log(`📊 Server status: ${emailStatus.connected ? '✅ All services ready' : '⚠️ Email service unavailable'}`);
   });
 
   /* ---------------- GRACEFUL SHUTDOWN ---------------- */
