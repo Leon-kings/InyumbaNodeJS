@@ -4,6 +4,8 @@
 // const cors = require("cors");
 // const helmet = require("helmet");
 // const morgan = require("morgan");
+// const nodemailer = require('nodemailer');
+// require('dotenv').config();
 
 // dotenv.config();
 
@@ -14,7 +16,7 @@
 // const teamRoutes = require("./routes/teamRoutes");
 // const houseRoutes = require("./routes/houseRoutes");
 // const requestRoutes = require("./routes/requestRoutes");
-// const bookingRoutes = require('./routes/bookingRoutes');
+// const bookingRoutes = require("./routes/bookingRoutes");
 
 // /* ---------------- APP ---------------- */
 // const app = express();
@@ -34,26 +36,42 @@
 // app.use("/team", teamRoutes);
 // app.use("/houses", houseRoutes);
 // app.use("/requests", requestRoutes);
-// app.use('/bookings', bookingRoutes);
+// app.use("/bookings", bookingRoutes);
 
 // /* ---------------- HEALTH CHECK ---------------- */
+
 // app.get("/health", (req, res) => {
-//   res.json({
+//   const dbState = mongoose.connection.readyState;
+
+//   const dbStatus = {
+//     0: "disconnected",
+//     1: "connected",
+//     2: "connecting",
+//     3: "disconnecting",
+//   };
+
+//   res.status(200).json({
+//     success: true,
 //     status: "OK",
-//     dbState: mongoose.connection.readyState,
+//     server: "running",
+//     database: dbStatus[dbState] || "unknown",
+//     dbState,
 //     time: new Date().toISOString(),
 //   });
 // });
 
 // /* ---------------- ROOT ---------------- */
+
 // app.get("/", (req, res) => {
-//   res.json({
+//   res.status(200).json({
+//     success: true,
 //     message: "INYUMBA API is running",
 //     version: "1.0.0",
 //   });
 // });
 
 // /* ---------------- 404 ---------------- */
+
 // app.use((req, res) => {
 //   res.status(404).json({
 //     success: false,
@@ -62,23 +80,38 @@
 // });
 
 // /* ---------------- DB CONNECTION ---------------- */
+
 // const connectDB = async () => {
 //   try {
-//     await mongoose.connect(process.env.MONGO_URI);
+//     await mongoose.connect(process.env.MONGO_URI, {
+//       serverSelectionTimeoutMS: 10000,
+//     });
+
 //     console.log("✅ MongoDB connected");
+
+//     return true;
 //   } catch (error) {
 //     console.error("❌ DB connection failed:", error.message);
-//     setTimeout(connectDB, 5000); // retry
+
+//     return false;
 //   }
 // };
 
 // /* ---------------- SERVER START ---------------- */
+
 // const PORT = process.env.PORT || 5000;
 
 // const startServer = async () => {
-//   await connectDB();
-//   const server = app.listen(PORT, () => {
+//   const dbConnected = await connectDB();
+
+//   if (!dbConnected) {
+//     console.error("❌ Server startup stopped because MongoDB is unavailable.");
+//     process.exit(1);
+//   }
+
+//   const server = app.listen(PORT, "0.0.0.0", () => {
 //     console.log(`🚀 Server running on port ${PORT}`);
+//     console.log(`❤️ Health check: /health`);
 //   });
 
 //   /* ---------------- GRACEFUL SHUTDOWN ---------------- */
@@ -87,9 +120,12 @@
 //     console.log(`⚠️ ${signal} received`);
 
 //     server.close(async () => {
-//       await mongoose.connection.close();
-
-//       console.log("🔌 MongoDB disconnected");
+//       try {
+//         await mongoose.connection.close();
+//         console.log("🔌 MongoDB disconnected");
+//       } catch (error) {
+//         console.error("❌ Error closing MongoDB:", error.message);
+//       }
 
 //       process.exit(0);
 //     });
@@ -99,11 +135,69 @@
 //   process.on("SIGTERM", shutdown);
 // };
 
+// // ============================================================
+// // CREATE REUSABLE TRANSPORTER
+// // ============================================================
+// const createTransporter = () => {
+//   return nodemailer.createTransport({
+//     host: process.env.SMTP_HOST || 'smtp.gmail.com',
+//     port: parseInt(process.env.SMTP_PORT, 10) || 587,
+//     secure: false, // true for 465, false for other ports
+
+//     // Force IPv4 connection
+//     family: 4,
+
+//     auth: {
+//       user: process.env.SMTP_USER,
+//       pass: process.env.SMTP_PASS,
+//     },
+
+//     tls: {
+//       rejectUnauthorized: false,
+//     },
+
+//     // SMTP connection timeouts
+//     connectionTimeout: 15000,
+//     greetingTimeout: 15000,
+//     socketTimeout: 20000,
+//   });
+// };
+
+// // ============================================================
+// // CHECK SMTP CONNECTION
+// // ============================================================
+// const checkEmailConnection = async () => {
+//   try {
+//     const transporter = createTransporter();
+
+//     await transporter.verify();
+
+//     console.log('✅ Email service connected successfully');
+//     console.log(
+//       `📧 SMTP: ${process.env.SMTP_HOST || 'smtp.gmail.com'}:${
+//         process.env.SMTP_PORT || 587
+//       }`
+//     );
+
+//     return {
+//       connected: true,
+//       transporter,
+//     };
+//   } catch (error) {
+//     console.error(
+//       '❌ Email service connection failed:',
+//       error.message
+//     );
+
+//     return {
+//       connected: false,
+//       transporter: null,
+//       error: error.message,
+//     };
+//   }
+// };
+
 // startServer();
-
-
-
-
 
 
 
@@ -118,6 +212,8 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 dotenv.config();
 
@@ -209,11 +305,70 @@ const connectDB = async () => {
   }
 };
 
+/* ---------------- CREATE REUSABLE TRANSPORTER ---------------- */
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT, 10) || 587,
+    secure: false, // true for 465, false for other ports
+
+    // Force IPv4 connection
+    family: 4,
+
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+
+    tls: {
+      rejectUnauthorized: false,
+    },
+
+    // SMTP connection timeouts
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
+  });
+};
+
+/* ---------------- CHECK SMTP CONNECTION ---------------- */
+const checkEmailConnection = async () => {
+  try {
+    const transporter = createTransporter();
+
+    await transporter.verify();
+
+    console.log('✅ Email service connected successfully');
+    console.log(
+      `📧 SMTP: ${process.env.SMTP_HOST || 'smtp.gmail.com'}:${
+        process.env.SMTP_PORT || 587
+      }`
+    );
+
+    return {
+      connected: true,
+      transporter,
+    };
+  } catch (error) {
+    console.error(
+      '❌ Email service connection failed:',
+      error.message
+    );
+
+    return {
+      connected: false,
+      transporter: null,
+      error: error.message,
+    };
+  }
+};
+
 /* ---------------- SERVER START ---------------- */
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
+  // Connect to MongoDB
   const dbConnected = await connectDB();
 
   if (!dbConnected) {
@@ -221,15 +376,26 @@ const startServer = async () => {
     process.exit(1);
   }
 
+  // Check SMTP/Email connection
+  console.log("\n📧 Checking email service connection...");
+  const emailStatus = await checkEmailConnection();
+
+  if (!emailStatus.connected) {
+    console.warn("⚠️ Email service is not available. Email features may not work.");
+    console.warn(`   Error: ${emailStatus.error}`);
+  }
+
+  // Start the server
   const server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`❤️ Health check: /health`);
+    console.log(`📊 Server status: ${emailStatus.connected ? '✅ All services ready' : '⚠️ Email service unavailable'}`);
   });
 
   /* ---------------- GRACEFUL SHUTDOWN ---------------- */
 
   const shutdown = async (signal) => {
-    console.log(`⚠️ ${signal} received`);
+    console.log(`\n⚠️ ${signal} received`);
 
     server.close(async () => {
       try {
@@ -247,4 +413,5 @@ const startServer = async () => {
   process.on("SIGTERM", shutdown);
 };
 
+// Start the application
 startServer();
