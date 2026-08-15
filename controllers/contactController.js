@@ -1,56 +1,11 @@
+
+
+
 // const Contact = require("../models/Contact");
 // const Notification = require("../models/Notification");
-// const nodemailer = require("nodemailer");
 // const mongoose = require("mongoose");
 // const { validationResult } = require("express-validator");
 // const UserActivity = require("../activity/UserActivity");
-
-// // Email Service Configuration
-// const transporter = nodemailer.createTransport({
-//   host: process.env.SMTP_HOST,
-//   port: Number(process.env.SMTP_PORT),
-//   secure: Number(process.env.SMTP_PORT) === 465,
-
-//   auth: {
-//     user: process.env.SMTP_USER,
-//     pass: process.env.SMTP_PASS,
-//   },
-
-//   family: 4,
-
-//   connectionTimeout: 30000,
-//   greetingTimeout: 30000,
-//   socketTimeout: 30000,
-// });
-
-// transporter.verify((error, success) => {
-//   if (error) {
-//     console.error("❌ SMTP connection failed:", error.message);
-
-//     console.error("SMTP Host:", process.env.SMTP_HOST || "smtp.gmail.com");
-
-//     console.error("SMTP Port:", process.env.SMTP_PORT || 587);
-
-//     console.error(
-//       "SMTP User:",
-//       process.env.SMTP_USER ? "Configured" : "Missing",
-//     );
-//   } else {
-//     console.log("✅ SMTP server is ready to accept messages");
-//   }
-// });
-
-// // Verify SMTP connection
-// const verifySMTP = async () => {
-//   try {
-//     await transporter.verify();
-//     console.log("✅ SMTP connection verified");
-//     return true;
-//   } catch (error) {
-//     console.error("❌ SMTP connection failed:", error.message);
-//     return false;
-//   }
-// };
 
 // // ===========================
 // // NOTIFICATION FUNCTIONS
@@ -158,178 +113,6 @@
 //   }
 // };
 
-// // ===========================
-// // EMAIL FUNCTIONS
-// // ===========================
-
-// const sendEmailToAdmin = async ({ name, email, message }) => {
-//   try {
-//     const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
-
-//     const mailOptions = {
-//       from: process.env.SMTP_USER,
-//       to: adminEmail,
-//       subject: `New Contact Form Submission from ${name}`,
-//       html: `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//           <style>
-//             body { font-family: Arial, sans-serif; }
-//             .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa; border-radius: 10px; }
-//             .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; }
-//             .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; }
-//             .field { margin-bottom: 20px; }
-//             .field-label { font-weight: bold; color: #555; }
-//             .field-value { background: #f1f3f5; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea; }
-//             .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d; text-align: center; }
-//           </style>
-//         </head>
-//         <body>
-//           <div class="container">
-//             <div class="header">
-//               <h2 style="margin: 0;">📧 New Contact Form Submission</h2>
-//             </div>
-//             <div class="content">
-//               <div class="field">
-//                 <div class="field-label">👤 Name</div>
-//                 <div class="field-value">${name}</div>
-//               </div>
-//               <div class="field">
-//                 <div class="field-label">📧 Email</div>
-//                 <div class="field-value"><a href="mailto:${email}">${email}</a></div>
-//               </div>
-//               <div class="field">
-//                 <div class="field-label">💬 Message</div>
-//                 <div class="field-value">${message.replace(/\n/g, "<br>")}</div>
-//               </div>
-//               <div class="field">
-//                 <div class="field-label">📅 Submitted</div>
-//                 <div class="field-value">${new Date().toLocaleString()}</div>
-//               </div>
-//             </div>
-//             <div class="footer">
-//               <p>This email was sent from the contact form on your website.</p>
-//             </div>
-//           </div>
-//         </body>
-//         </html>
-//       `,
-//     };
-
-//     const info = await transporter.sendMail(mailOptions);
-//     console.log("✅ Admin email sent:", info.messageId);
-//     return info;
-//   } catch (error) {
-//     console.error("❌ Error sending admin email:", error.message);
-//     throw error;
-//   }
-// };
-
-// const sendEmailToUser = async ({
-//   name,
-//   email,
-//   message,
-//   isReply = false,
-//   replyMessage = null,
-// }) => {
-//   try {
-//     let subject, htmlContent;
-
-//     if (isReply && replyMessage) {
-//       subject = "Reply to Your Contact Form Inquiry";
-//       htmlContent = `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//           <style>
-//             body { font-family: Arial, sans-serif; }
-//             .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa; border-radius: 10px; }
-//             .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; }
-//             .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; }
-//             .message-box { background: #f1f3f5; padding: 20px; border-radius: 5px; border-left: 4px solid #28a745; margin: 20px 0; }
-//             .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d; text-align: center; }
-//           </style>
-//         </head>
-//         <body>
-//           <div class="container">
-//             <div class="header">
-//               <h2 style="margin: 0;">📨 Reply to Your Inquiry</h2>
-//             </div>
-//             <div class="content">
-//               <p>Dear <strong>${name}</strong>,</p>
-//               <p>Thank you for your inquiry. Here's our response:</p>
-//               <div class="message-box">
-//                 ${replyMessage.replace(/\n/g, "<br>")}
-//               </div>
-//               <p>Your original message:</p>
-//               <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; color: #666; font-size: 14px;">
-//                 ${message.replace(/\n/g, "<br>")}
-//               </div>
-//               <p>Best regards,<br><strong>Support Team</strong></p>
-//             </div>
-//             <div class="footer">
-//               <p>This is an automated response to your inquiry.</p>
-//             </div>
-//           </div>
-//         </body>
-//         </html>
-//       `;
-//     } else {
-//       subject = "We Received Your Message - Thank You";
-//       htmlContent = `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//           <style>
-//             body { font-family: Arial, sans-serif; }
-//             .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa; border-radius: 10px; }
-//             .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; }
-//             .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; }
-//             .message-box { background: #f1f3f5; padding: 20px; border-radius: 5px; border-left: 4px solid #667eea; margin: 20px 0; }
-//             .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d; text-align: center; }
-//             .ref-id { background: #e9ecef; padding: 5px 10px; border-radius: 3px; font-family: monospace; }
-//           </style>
-//         </head>
-//         <body>
-//           <div class="container">
-//             <div class="header">
-//               <h2 style="margin: 0;">✅ Thank You for Contacting Us</h2>
-//             </div>
-//             <div class="content">
-//               <p>Dear <strong>${name}</strong>,</p>
-//               <p>Thank you for reaching out to us. We have received your message and will get back to you within 24-48 hours.</p>
-//               <p><strong>Your Message:</strong></p>
-//               <div class="message-box">
-//                 ${message.replace(/\n/g, "<br>")}
-//               </div>
-//               <p><strong>Reference ID:</strong> <span class="ref-id">${Date.now().toString(36).toUpperCase()}</span></p>
-//             </div>
-//             <div class="footer">
-//               <p>This is a confirmation email. Please keep this for your records.</p>
-//             </div>
-//           </div>
-//         </body>
-//         </html>
-//       `;
-//     }
-
-//     const mailOptions = {
-//       from: process.env.SMTP_USER,
-//       to: email,
-//       subject: subject,
-//       html: htmlContent,
-//     };
-
-//     const info = await transporter.sendMail(mailOptions);
-//     console.log("✅ User email sent:", info.messageId);
-//     return info;
-//   } catch (error) {
-//     console.error("❌ Error sending user email:", error.message);
-//     throw error;
-//   }
-// };
-
 // // ============ CONTROLLER FUNCTIONS ============
 
 // // ===========================
@@ -367,92 +150,6 @@
 // };
 
 // // 1. Submit Contact Form
-// // exports.submitContact = async (req, res) => {
-// //   try {
-// //     const errors = validationResult(req);
-
-// //     if (!errors.isEmpty()) {
-// //       return res.status(400).json({
-// //         success: false,
-// //         errors: errors.array().map((e) => ({
-// //           field: e.path,
-// //           message: e.msg,
-// //         })),
-// //       });
-// //     }
-
-// //     const { name, email, message } = req.body;
-
-// //     // Check for duplicate submissions
-// //     const recentSubmission = await Contact.findOne({
-// //       email,
-// //       createdAt: {
-// //         $gte: new Date(Date.now() - 5 * 60 * 1000),
-// //       },
-// //     });
-
-// //     if (recentSubmission) {
-// //       return res.status(429).json({
-// //         success: false,
-// //         message: "Please wait 5 minutes before submitting again",
-// //       });
-// //     }
-
-// //     // Create new contact
-// //     const contact = new Contact({
-// //       name,
-// //       email,
-// //       message,
-// //       ipAddress: getClientIP(req),
-// //       userAgent: req.headers["user-agent"],
-// //     });
-
-// //     await contact.save();
-
-// //     // ===========================
-// //     // CREATE ADMIN NOTIFICATION
-// //     // ===========================
-// //     await createAdminNotification(contact, "created");
-
-// //     // Send emails
-// //     try {
-// //       await Promise.all([
-// //         sendEmailToAdmin({
-// //           name,
-// //           email,
-// //           message,
-// //         }),
-// //         sendEmailToUser({
-// //           name,
-// //           email,
-// //           message,
-// //         }),
-// //       ]);
-// //     } catch (emailError) {
-// //       console.error("Email error:", emailError);
-// //     }
-
-// //     return res.status(201).json({
-// //       success: true,
-// //       message: "Contact form submitted successfully",
-// //       data: {
-// //         id: contact._id,
-// //         name: contact.name,
-// //         email: contact.email,
-// //         status: contact.status,
-// //         ipAddress: contact.ipAddress,
-// //         createdAt: contact.createdAt,
-// //       },
-// //     });
-// //   } catch (error) {
-// //     console.error("Submit contact error:", error);
-// //     return res.status(500).json({
-// //       success: false,
-// //       message: "Failed to submit contact form",
-// //     });
-// //   }
-// // };
-
 // exports.submitContact = async (req, res) => {
 //   try {
 //     const errors = validationResult(req);
@@ -580,32 +277,6 @@
 //     }
 
 //     // ===========================
-//     // SEND EMAILS
-//     // ===========================
-
-//     try {
-//       await Promise.all([
-//         sendEmailToAdmin({
-//           name: contact.name,
-//           email: contact.email,
-//           message: contact.message,
-//         }),
-
-//         sendEmailToUser({
-//           name: contact.name,
-//           email: contact.email,
-//           message: contact.message,
-//         }),
-//       ]);
-
-//       console.log(`✅ Contact emails processed for ${contact.email}`);
-//     } catch (emailError) {
-//       // Email failure should NOT
-//       // prevent successful contact creation.
-//       console.error("❌ Contact email error:", emailError.message);
-//     }
-
-//     // ===========================
 //     // RESPONSE
 //     // ===========================
 
@@ -692,7 +363,6 @@
 // };
 
 // // 3. Get Contact by ID
-
 // exports.getContactById = async (req, res) => {
 //   try {
 //     const { id } = req.params;
@@ -764,6 +434,7 @@
 //     });
 //   }
 // };
+
 // // 4. Get Contacts by Email
 // exports.getContactsByEmail = async (req, res) => {
 //   try {
@@ -808,42 +479,6 @@
 // };
 
 // // 5. Update Contact Status
-
-// // exports.updateContactStatus = async (req, res) => {
-// //   try {
-// //     const { status } = req.body;
-// //     const contact = await Contact.findById(req.params.id);
-
-// //     if (!contact) {
-// //       return res.status(404).json({
-// //         success: false,
-// //         message: "Contact not found",
-// //       });
-// //     }
-
-// //     const oldStatus = contact.status;
-// //     contact.status = status;
-// //     await contact.save();
-
-// //     // Create notification for status change
-// //     if (status === "replied") {
-// //       await createAdminNotification(contact, "replied");
-// //     }
-
-// //     res.status(200).json({
-// //       success: true,
-// //       message: "Contact status updated successfully",
-// //       data: contact,
-// //     });
-// //   } catch (error) {
-// //     console.error("Update contact status error:", error);
-// //     res.status(500).json({
-// //       success: false,
-// //       message: "Failed to update contact status",
-// //     });
-// //   }
-// // };
-
 // exports.updateContactStatus = async (req, res) => {
 //   try {
 //     const { id } = req.params;
@@ -942,8 +577,7 @@
 
 //     return res.status(200).json({
 //       success: true,
-//       message:
-//         "Contact status updated successfully",
+//       message: "Contact status updated successfully",
 
 //       data: {
 //         id: contact._id,
@@ -970,8 +604,6 @@
 // };
 
 // // 6. Reply to Contact
-
-
 // exports.replyToContact = async (req, res) => {
 //   try {
 //     const { replyMessage, status } = req.body;
@@ -986,8 +618,7 @@
 //     ) {
 //       return res.status(400).json({
 //         success: false,
-//         message:
-//           "Reply message must be at least 5 characters",
+//         message: "Reply message must be at least 5 characters",
 //       });
 //     }
 
@@ -1079,54 +710,12 @@
 //     }
 
 //     // ===========================
-//     // SEND REPLY EMAIL
-//     // ===========================
-
-//     let emailSent = true;
-
-//     try {
-//       await sendEmailToUser({
-//         name: contact.name,
-//         email: contact.email,
-//         message: contact.message,
-
-//         isReply: true,
-
-//         replyMessage:
-//           contact.replyMessage,
-
-//         status: contact.status,
-//       });
-
-//       console.log(
-//         `✅ Reply email sent to ${contact.email}`
-//       );
-//     } catch (emailError) {
-//       emailSent = false;
-
-//       console.error(
-//         "❌ Reply email error:",
-//         emailError.message
-//       );
-
-//       // IMPORTANT:
-//       // Do NOT throw the error.
-//       // The reply has already been saved.
-//     }
-
-//     // ===========================
 //     // RESPONSE
 //     // ===========================
 
 //     return res.status(200).json({
 //       success: true,
-
-//       message: emailSent
-//         ? "Reply sent successfully"
-//         : "Reply saved successfully, but the email could not be sent",
-
-//       emailSent,
-
+//       message: "Reply saved successfully",
 //       data: {
 //         id: contact._id,
 //         userId: contact.userId,
@@ -1347,6 +936,495 @@
 //   }
 // };
 
+// // ============================================================
+// // GET CONTACT NOTIFICATIONS
+// // ============================================================
+// // GET /api/notifications/contact
+// // GET /api/notifications/contact?page=1&limit=20
+// // GET /api/notifications/contact?status=new
+// // ============================================================
+
+// exports.getContactNotifications = async (req, res) => {
+//   try {
+//     // ===========================
+//     // PAGINATION
+//     // ===========================
+
+//     const page = Math.max(
+//       parseInt(req.query.page) || 1,
+//       1
+//     );
+
+//     const limit = Math.min(
+//       Math.max(
+//         parseInt(req.query.limit) || 20,
+//         1
+//       ),
+//       100
+//     );
+
+//     const skip = (page - 1) * limit;
+
+//     const status = req.query.status;
+
+//     // ===========================
+//     // BASE QUERY
+//     // ===========================
+
+//     const query = {
+//       type: {
+//         $regex: /^contact_/,
+//       },
+
+//       target: {
+//         $in: ["admin", "both"],
+//       },
+//     };
+
+//     // ===========================
+//     // OPTIONAL STATUS FILTER
+//     // ===========================
+
+//     if (status) {
+//       query.status = status;
+//     }
+
+//     // ===========================
+//     // GET DATA + COUNTS
+//     // ===========================
+
+//     const [
+//       notifications,
+//       total,
+//       unreadCount,
+//     ] = await Promise.all([
+//       Notification.find(query)
+//         .sort({ createdAt: -1 })
+//         .skip(skip)
+//         .limit(limit)
+//         .lean(),
+
+//       Notification.countDocuments(query),
+
+//       Notification.countDocuments({
+//         ...query,
+//         isRead: false,
+//         status: "new",
+//       }),
+//     ]);
+
+//     // ===========================
+//     // RESPONSE
+//     // ===========================
+
+//     return res.status(200).json({
+//       success: true,
+//       data: notifications,
+//       unreadCount,
+
+//       pagination: {
+//         page,
+//         limit,
+//         total,
+//         pages: Math.ceil(total / limit),
+//       },
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Get contact notifications error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch notifications",
+//     });
+//   }
+// };
+
+
+// // ============================================================
+// // MARK ONE CONTACT NOTIFICATION AS READ
+// // ============================================================
+// // PUT /api/notifications/contact/:id/read
+// // ============================================================
+
+// exports.markContactNotificationAsRead = async (
+//   req,
+//   res
+// ) => {
+//   try {
+//     const { id } = req.params;
+
+//     // ===========================
+//     // VALIDATE ID
+//     // ===========================
+
+//     if (!id) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "Notification ID is required",
+//       });
+//     }
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "Invalid notification ID",
+//       });
+//     }
+
+//     // ===========================
+//     // FIND NOTIFICATION
+//     // ===========================
+
+//     const notification =
+//       await Notification.findOne({
+//         _id: id,
+
+//         type: {
+//           $regex: /^contact_/,
+//         },
+
+//         target: {
+//           $in: ["admin", "both"],
+//         },
+//       });
+
+//     // ===========================
+//     // NOT FOUND
+//     // ===========================
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     // ===========================
+//     // MARK AS READ
+//     // ===========================
+
+//     notification.isRead = true;
+//     notification.status = "read";
+//     notification.readAt = new Date();
+
+//     await notification.save();
+
+//     // ===========================
+//     // RESPONSE
+//     // ===========================
+
+//     return res.status(200).json({
+//       success: true,
+//       message:
+//         "Notification marked as read",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Mark contact notification as read error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Failed to mark notification as read",
+//     });
+//   }
+// };
+
+
+// // ============================================================
+// // BULK MARK CONTACT NOTIFICATIONS AS READ
+// // ============================================================
+// // PUT /api/notifications/contact/read-all
+// //
+// // Body:
+// // {
+// //   "ids": ["id1", "id2", "id3"]
+// // }
+// //
+// // If ids are omitted or empty, ALL admin contact
+// // notifications will be marked as read.
+// // ============================================================
+
+// exports.bulkMarkContactNotificationsAsRead = async (
+//   req,
+//   res
+// ) => {
+//   try {
+//     const { ids } = req.body;
+
+//     // ===========================
+//     // BASE QUERY
+//     // ===========================
+
+//     const query = {
+//       type: {
+//         $regex: /^contact_/,
+//       },
+
+//       target: {
+//         $in: ["admin", "both"],
+//       },
+
+//       isRead: false,
+//     };
+
+//     // ===========================
+//     // IF IDS WERE PROVIDED
+//     // ===========================
+
+//     if (Array.isArray(ids) && ids.length > 0) {
+//       const invalidIds = ids.filter(
+//         (id) =>
+//           !mongoose.Types.ObjectId.isValid(id)
+//       );
+
+//       if (invalidIds.length > 0) {
+//         return res.status(400).json({
+//           success: false,
+//           message:
+//             "One or more notification IDs are invalid",
+//           invalidIds,
+//         });
+//       }
+
+//       query._id = {
+//         $in: ids,
+//       };
+//     }
+
+//     // ===========================
+//     // UPDATE
+//     // ===========================
+
+//     const result =
+//       await Notification.updateMany(
+//         query,
+//         {
+//           $set: {
+//             isRead: true,
+//             status: "read",
+//             readAt: new Date(),
+//           },
+//         }
+//       );
+
+//     // ===========================
+//     // RESPONSE
+//     // ===========================
+
+//     return res.status(200).json({
+//       success: true,
+
+//       message: ids?.length
+//         ? "Selected notifications marked as read"
+//         : "All contact notifications marked as read",
+
+//       modifiedCount:
+//         result.modifiedCount,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Bulk mark contact notifications as read error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Failed to mark notifications as read",
+//     });
+//   }
+// };
+
+
+// // ============================================================
+// // DELETE ONE CONTACT NOTIFICATION
+// // ============================================================
+// // DELETE /api/notifications/contact/:id
+// // ============================================================
+
+// exports.deleteContactNotification = async (
+//   req,
+//   res
+// ) => {
+//   try {
+//     const { id } = req.params;
+
+//     // ===========================
+//     // VALIDATE ID
+//     // ===========================
+
+//     if (!id) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "Notification ID is required",
+//       });
+//     }
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "Invalid notification ID",
+//       });
+//     }
+
+//     // ===========================
+//     // DELETE
+//     // ===========================
+
+//     const notification =
+//       await Notification.findOneAndDelete({
+//         _id: id,
+
+//         type: {
+//           $regex: /^contact_/,
+//         },
+
+//         target: {
+//           $in: ["admin", "both"],
+//         },
+//       });
+
+//     // ===========================
+//     // NOT FOUND
+//     // ===========================
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     // ===========================
+//     // RESPONSE
+//     // ===========================
+
+//     return res.status(200).json({
+//       success: true,
+//       message:
+//         "Notification deleted successfully",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Delete contact notification error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Failed to delete notification",
+//     });
+//   }
+// };
+
+
+// // ============================================================
+// // BULK DELETE CONTACT NOTIFICATIONS
+// // ============================================================
+// // DELETE /api/notifications/contact/bulk
+// //
+// // Body:
+// // {
+// //   "ids": ["id1", "id2", "id3"]
+// // }
+// //
+// // If ids are omitted or empty, ALL admin contact
+// // notifications will be deleted.
+// // ============================================================
+
+// exports.bulkDeleteContactNotifications = async (
+//   req,
+//   res
+// ) => {
+//   try {
+//     const { ids } = req.body;
+
+//     // ===========================
+//     // BASE QUERY
+//     // ===========================
+
+//     const query = {
+//       type: {
+//         $regex: /^contact_/,
+//       },
+
+//       target: {
+//         $in: ["admin", "both"],
+//       },
+//     };
+
+//     // ===========================
+//     // IF IDS WERE PROVIDED
+//     // ===========================
+
+//     if (Array.isArray(ids) && ids.length > 0) {
+//       const invalidIds = ids.filter(
+//         (id) =>
+//           !mongoose.Types.ObjectId.isValid(id)
+//       );
+
+//       if (invalidIds.length > 0) {
+//         return res.status(400).json({
+//           success: false,
+//           message:
+//             "One or more notification IDs are invalid",
+//           invalidIds,
+//         });
+//       }
+
+//       query._id = {
+//         $in: ids,
+//       };
+//     }
+
+//     // ===========================
+//     // DELETE
+//     // ===========================
+
+//     const result =
+//       await Notification.deleteMany(query);
+
+//     // ===========================
+//     // RESPONSE
+//     // ===========================
+
+//     return res.status(200).json({
+//       success: true,
+
+//       message: ids?.length
+//         ? "Selected notifications deleted successfully"
+//         : "All contact notifications deleted successfully",
+
+//       deletedCount:
+//         result.deletedCount,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Bulk delete contact notifications error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Failed to delete notifications",
+//     });
+//   }
+// };
+
 // // 13. Mark Notification as Read
 // exports.markNotificationAsRead = async (req, res) => {
 //   try {
@@ -1409,11 +1487,18 @@
 
 
 
+
+
+
+
+
+
 const Contact = require("../models/Contact");
 const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
 const UserActivity = require("../activity/UserActivity");
+const { sendEmailWithTemplate, emailTemplates } = require("../mails/contactServices");
 
 // ===========================
 // NOTIFICATION FUNCTIONS
@@ -1468,7 +1553,7 @@ const createAdminNotification = async (contact, type) => {
       isGlobal: false,
       status: "new",
       metadata: metadata,
-      target: "admin", // Only for admin
+      target: "admin",
       data: {
         contactId: contact._id,
         name: contact.name,
@@ -1502,7 +1587,7 @@ const createUserNotification = async (contact) => {
       isRead: false,
       isGlobal: false,
       status: "new",
-      target: "user", // For user
+      target: "user",
       data: {
         contactId: contact._id,
         name: contact.name,
@@ -1518,6 +1603,92 @@ const createUserNotification = async (contact) => {
   } catch (error) {
     console.error("❌ Error creating user notification:", error);
     return null;
+  }
+};
+
+// ===========================
+// EMAIL FUNCTIONS
+// ===========================
+
+// Send contact confirmation email to user
+const sendContactConfirmationEmail = async (contact) => {
+  try {
+    const result = await sendEmailWithTemplate(
+      contact.email,
+      'contactConfirmation',
+      contact
+    );
+
+    if (result.success) {
+      console.log(`✅ Contact confirmation email sent to ${contact.email}`);
+    } else {
+      console.error(
+        `❌ Failed to send contact confirmation email to ${contact.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending contact confirmation email:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send contact notification to admin
+const sendContactNotificationToAdmin = async (contact) => {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_FROM;
+
+    if (!adminEmail) {
+      console.log(`⚠️ No admin email configured`);
+      return { success: false, error: "No admin email configured" };
+    }
+
+    const result = await sendEmailWithTemplate(
+      adminEmail,
+      'contactNotificationForAdmin',
+      contact
+    );
+
+    if (result.success) {
+      console.log(`✅ Contact notification sent to admin ${adminEmail}`);
+    } else {
+      console.error(
+        `❌ Failed to send contact notification to admin:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending contact notification to admin:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send reply email to user
+const sendReplyEmailToUser = async (contact) => {
+  try {
+    const result = await sendEmailWithTemplate(
+      contact.email,
+      'contactReply',
+      contact
+    );
+
+    if (result.success) {
+      console.log(`✅ Reply email sent to ${contact.email}`);
+    } else {
+      console.error(
+        `❌ Failed to send reply email to ${contact.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending reply email:`, error.message);
+    return { success: false, error: error.message };
   }
 };
 
@@ -1637,6 +1808,29 @@ exports.submitContact = async (req, res) => {
     console.log(`✅ Contact created: ${contact._id}`);
 
     // ===========================
+    // SEND EMAILS
+    // ===========================
+
+    let confirmationEmailSent = false;
+    let adminEmailSent = false;
+
+    // Send confirmation email to user
+    try {
+      const result = await sendContactConfirmationEmail(contact);
+      confirmationEmailSent = result.success;
+    } catch (emailError) {
+      console.error("❌ Failed to send confirmation email:", emailError.message);
+    }
+
+    // Send notification to admin
+    try {
+      const result = await sendContactNotificationToAdmin(contact);
+      adminEmailSent = result.success;
+    } catch (emailError) {
+      console.error("❌ Failed to send admin notification email:", emailError.message);
+    }
+
+    // ===========================
     // CREATE USER ACTIVITY
     // ===========================
 
@@ -1691,7 +1885,9 @@ exports.submitContact = async (req, res) => {
     return res.status(201).json({
       success: true,
 
-      message: "Contact form submitted successfully",
+      message: "Contact form submitted successfully. A confirmation email has been sent.",
+
+      emailSent: confirmationEmailSent && adminEmailSent,
 
       data: {
         id: contact._id,
@@ -2091,6 +2287,18 @@ exports.replyToContact = async (req, res) => {
     await contact.save();
 
     // ===========================
+    // SEND REPLY EMAIL TO USER
+    // ===========================
+
+    let emailSent = false;
+    try {
+      const result = await sendReplyEmailToUser(contact);
+      emailSent = result.success;
+    } catch (emailError) {
+      console.error("❌ Failed to send reply email:", emailError.message);
+    }
+
+    // ===========================
     // CREATE NOTIFICATIONS
     // ===========================
 
@@ -2123,7 +2331,12 @@ exports.replyToContact = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Reply saved successfully",
+      message: emailSent
+        ? "Reply saved and email sent to user successfully"
+        : "Reply saved successfully, but email could not be sent",
+      
+      emailSent,
+
       data: {
         id: contact._id,
         userId: contact.userId,

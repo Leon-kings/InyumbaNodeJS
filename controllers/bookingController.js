@@ -1,14 +1,14 @@
 // // ============================================================
-// // CONTROLLERS / BOOKING.CONTROLLER.JS (Combined with Email & Cloudinary)
+// // CONTROLLERS / BOOKING.CONTROLLER.JS (Cloudinary Only)
 // // ============================================================
 // const Booking = require("../models/Booking");
-// const nodemailer = require("nodemailer");
 // const dotenv = require("dotenv");
 // const cloudinary = require("cloudinary").v2;
 // const multer = require("multer");
 // const { CloudinaryStorage } = require("multer-storage-cloudinary");
-
+// const Notification = require("../models/Notification");
 // dotenv.config();
+// const mongoose = require("mongoose");
 
 // // ===========================================
 // // CLOUDINARY CONFIGURATION
@@ -55,292 +55,6 @@
 // });
 
 // // ============================================================
-// // EMAIL TRANSPORTER
-// // ============================================================
-// const dns = require("dns");
-
-// const transporter = nodemailer.createTransport({
-//   host: process.env.SMTP_HOST,
-//   port: Number(process.env.SMTP_PORT),
-//   secure: Number(process.env.SMTP_PORT) === 465,
-
-//   auth: {
-//     user: process.env.SMTP_USER,
-//     pass: process.env.SMTP_PASS,
-//   },
-
-//   family: 4,
-
-//   connectionTimeout: 30000,
-//   greetingTimeout: 30000,
-//   socketTimeout: 30000,
-// });
-
-// transporter.verify((error, success) => {
-//   if (error) {
-//     console.error(
-//       "❌ SMTP connection failed:",
-//       error.message
-//     );
-//   } else {
-//     console.log(
-//       "✅ SMTP server for book is ready"
-//     );
-//   }
-// });
-// // ============================================================
-// // SEND EMAIL FUNCTION
-// // ============================================================
-// const sendEmail = async (to, subject, html) => {
-//   try {
-//     const info = await transporter.sendMail({
-//       from: process.env.ADMIN_EMAIL,
-//       to,
-//       subject,
-//       html,
-//     });
-//     console.log(`📧 Email sent to ${to}: ${info.messageId}`);
-//     return { success: true };
-//   } catch (error) {
-//     console.error("❌ Email error:", error.message);
-//     return { success: false, error: error.message };
-//   }
-// };
-
-// // ============================================================
-// // EMAIL TEMPLATES
-// // ============================================================
-// const guestConfirmationEmail = (data) => ({
-//   subject: `Booking Confirmed - ${data.bookingId}`,
-//   html: `
-//     <!DOCTYPE html>
-//     <html>
-//     <head>
-//       <style>
-//         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-//         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-//         .header { background: #FF385C; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-//         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-//         .details { background: white; padding: 20px; border-radius: 8px; margin: 15px 0; }
-//         .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-//         .row:last-child { border-bottom: none; }
-//         .total { font-size: 20px; font-weight: bold; color: #FF385C; }
-//         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-//         .badge { display: inline-block; background: #22c55e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
-//         .screenshot { max-width: 100%; border-radius: 8px; margin: 10px 0; border: 1px solid #ddd; }
-//       </style>
-//     </head>
-//     <body>
-//       <div class="container">
-//         <div class="header">
-//           <h1>🏠 Booking Confirmed!</h1>
-//         </div>
-//         <div class="content">
-//           <p>Dear <strong>${data.fullName}</strong>,</p>
-//           <p>Your booking has been confirmed successfully.</p>
-          
-//           <div class="details">
-//             <h3>Booking #${data.bookingId} <span class="badge">CONFIRMED</span></h3>
-//             <div class="row"><span>Property:</span><span><strong>${data.houseName}</strong></span></div>
-//             <div class="row"><span>Location:</span><span>${data.district}, ${data.sector}</span></div>
-//             <div class="row"><span>Check-in:</span><span>${new Date(data.checkIn).toLocaleDateString()}</span></div>
-//             <div class="row"><span>Check-out:</span><span>${new Date(data.checkOut).toLocaleDateString()}</span></div>
-//             <div class="row"><span>Duration:</span><span>${data.months} month(s)</span></div>
-//             <div class="row"><span>Guests:</span><span>${data.guests}</span></div>
-//             <div class="row"><span>Monthly Rent:</span><span>${data.monthlyRent.toLocaleString()} RWF</span></div>
-//             <div class="row"><span>Service Fee:</span><span>${data.serviceFee.toLocaleString()} RWF</span></div>
-//             <div class="row total"><span>Total Paid:</span><span>${data.totalAmount.toLocaleString()} RWF</span></div>
-//           </div>
-          
-//           ${
-//             data.paymentScreenshot
-//               ? `
-//           <div style="background: #f0f7ff; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
-//             <p><strong>📸 Payment Screenshot</strong></p>
-//             <img src="${data.paymentScreenshot}" alt="Payment Screenshot" class="screenshot" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #ddd;" />
-//           </div>
-//           `
-//               : ""
-//           }
-          
-//           <div style="background: #f0f7ff; padding: 15px; border-radius: 8px; border-left: 4px solid #FF385C; margin: 15px 0;">
-//             <p><strong>🏢 Landlord:</strong> ${data.ownerName || "N/A"}</p>
-//             <p><strong>📞 Contact:</strong> ${data.ownerContact || "N/A"}</p>
-//           </div>
-          
-//           ${
-//             data.specialRequests
-//               ? `
-//           <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 15px 0;">
-//             <p><strong>📝 Special Requests:</strong> ${data.specialRequests}</p>
-//           </div>
-//           `
-//               : ""
-//           }
-          
-//           <p>Questions? Contact: <a href="mailto:${process.env.SMTP_USER}">${process.env.SMTP_USER}</a></p>
-//         </div>
-//         <div class="footer">
-//           <p>© ${new Date().getFullYear()} Student Housing Booking. All rights reserved.</p>
-//         </div>
-//       </div>
-//     </body>
-//     </html>
-//   `,
-// });
-
-// const ownerNotificationEmail = (data) => ({
-//   subject: `New Booking - ${data.bookingId}`,
-//   html: `
-//     <!DOCTYPE html>
-//     <html>
-//     <head>
-//       <style>
-//         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-//         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-//         .header { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-//         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-//         .details { background: white; padding: 20px; border-radius: 8px; margin: 15px 0; }
-//         .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-//         .row:last-child { border-bottom: none; }
-//         .total { font-size: 18px; font-weight: bold; color: #2563eb; }
-//         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-//         .badge { display: inline-block; background: #22c55e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
-//         .screenshot { max-width: 100%; border-radius: 8px; margin: 10px 0; border: 1px solid #ddd; }
-//       </style>
-//     </head>
-//     <body>
-//       <div class="container">
-//         <div class="header">
-//           <h1>📋 New Booking Received!</h1>
-//         </div>
-//         <div class="content">
-//           <p>Dear <strong>${data.ownerName || "Property Owner"}</strong>,</p>
-//           <p>You have received a new booking for your property.</p>
-          
-//           <div class="details">
-//             <h3>Booking #${data.bookingId} <span class="badge">NEW</span></h3>
-            
-//             <h4 style="margin: 15px 0 10px; color: #2563eb;">👤 Guest</h4>
-//             <div class="row"><span>Name:</span><span>${data.fullName}</span></div>
-//             <div class="row"><span>Email:</span><span>${data.email}</span></div>
-//             <div class="row"><span>Phone:</span><span>${data.phone}</span></div>
-//             ${data.university ? `<div class="row"><span>University:</span><span>${data.university}</span></div>` : ""}
-            
-//             <h4 style="margin: 15px 0 10px; color: #2563eb;">📅 Booking</h4>
-//             <div class="row"><span>Property:</span><span><strong>${data.houseName}</strong></span></div>
-//             <div class="row"><span>Location:</span><span>${data.district}, ${data.sector}</span></div>
-//             <div class="row"><span>Check-in:</span><span>${new Date(data.checkIn).toLocaleDateString()}</span></div>
-//             <div class="row"><span>Check-out:</span><span>${new Date(data.checkOut).toLocaleDateString()}</span></div>
-//             <div class="row"><span>Duration:</span><span>${data.months} month(s)</span></div>
-//             <div class="row"><span>Guests:</span><span>${data.guests}</span></div>
-            
-//             <h4 style="margin: 15px 0 10px; color: #2563eb;">💰 Payment</h4>
-//             <div class="row"><span>Monthly Rent:</span><span>${data.monthlyRent.toLocaleString()} RWF</span></div>
-//             <div class="row"><span>Service Fee:</span><span>${data.serviceFee.toLocaleString()} RWF</span></div>
-//             <div class="row total"><span>Total:</span><span>${data.totalAmount.toLocaleString()} RWF</span></div>
-//             <div class="row"><span>Payment Status:</span><span style="color: #22c55e; font-weight: bold;">${data.paymentStatus.toUpperCase()}</span></div>
-//           </div>
-          
-//           ${
-//             data.paymentScreenshot
-//               ? `
-//           <div style="background: #f0f7ff; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
-//             <p><strong>📸 Payment Screenshot</strong></p>
-//             <img src="${data.paymentScreenshot}" alt="Payment Screenshot" class="screenshot" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #ddd;" />
-//           </div>
-//           `
-//               : ""
-//           }
-          
-//           ${
-//             data.specialRequests
-//               ? `
-//           <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 15px 0;">
-//             <p><strong>📝 Special Requests:</strong> ${data.specialRequests}</p>
-//           </div>
-//           `
-//               : ""
-//           }
-//         </div>
-//         <div class="footer">
-//           <p>© ${new Date().getFullYear()} Student Housing Booking. All rights reserved.</p>
-//         </div>
-//       </div>
-//     </body>
-//     </html>
-//   `,
-// });
-
-// const paymentVerifiedEmail = (data) => ({
-//   subject: `Payment Verified - ${data.bookingId}`,
-//   html: `
-//     <!DOCTYPE html>
-//     <html>
-//     <head>
-//       <style>
-//         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-//         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-//         .header { background: #22c55e; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-//         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-//         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-//       </style>
-//     </head>
-//     <body>
-//       <div class="container">
-//         <div class="header">
-//           <h1>✅ Payment Verified!</h1>
-//         </div>
-//         <div class="content">
-//           <p>Dear <strong>${data.fullName}</strong>,</p>
-//           <p>Your payment for booking <strong>#${data.bookingId}</strong> has been verified.</p>
-//           <p>Your booking is now fully confirmed.</p>
-//           <p>Thank you for choosing us!</p>
-//         </div>
-//         <div class="footer">
-//           <p>© ${new Date().getFullYear()} Student Housing Booking</p>
-//         </div>
-//       </div>
-//     </body>
-//     </html>
-//   `,
-// });
-
-// const bookingCancelledEmail = (data) => ({
-//   subject: `Booking Cancelled - ${data.bookingId}`,
-//   html: `
-//     <!DOCTYPE html>
-//     <html>
-//     <head>
-//       <style>
-//         body { font-family: Arial, sans-serif; line-height: 1.6; }
-//         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-//         .header { background: #ef4444; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-//         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-//         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-//       </style>
-//     </head>
-//     <body>
-//       <div class="container">
-//         <div class="header">
-//           <h1>❌ Booking Cancelled</h1>
-//         </div>
-//         <div class="content">
-//           <p>Dear <strong>${data.fullName}</strong>,</p>
-//           <p>Your booking <strong>#${data.bookingId}</strong> has been cancelled.</p>
-//           ${data.reason ? `<p><strong>Reason:</strong> ${data.reason}</p>` : ""}
-//           <p>If you have questions, contact us.</p>
-//         </div>
-//         <div class="footer">
-//           <p>© ${new Date().getFullYear()} Student Housing Booking</p>
-//         </div>
-//       </div>
-//     </body>
-//     </html>
-//   `,
-// });
-
-// // ============================================================
 // // BOOKING CONTROLLER FUNCTIONS
 // // ============================================================
 
@@ -380,7 +94,6 @@
 //       momoNumber,
 //     } = req.body;
 
-
 //     // ==========================
 //     // Validate required fields
 //     // ==========================
@@ -401,7 +114,6 @@
 //       });
 //     }
 
-
 //     // ==========================
 //     // Cloudinary Image
 //     // ==========================
@@ -409,7 +121,6 @@
 //       url: "",
 //       publicId: "",
 //     };
-
 
 //     if (req.file) {
 //       paymentScreenshot = {
@@ -424,7 +135,6 @@
 //     } else {
 //       console.log("⚠️ No payment screenshot uploaded");
 //     }
-
 
 //     // ==========================
 //     // Create Booking
@@ -471,72 +181,7 @@
 //       status: "pending",
 //     });
 
-
 //     await booking.save();
-
-
-//     // ==========================
-//     // Email Data
-//     // ==========================
-//     const emailData = {
-//       bookingId: booking.bookingId,
-
-//       fullName,
-//       email,
-//       phone,
-
-//       houseName,
-//       district,
-//       sector,
-
-//       checkIn: booking.checkIn,
-//       checkOut: booking.checkOut,
-
-//       months: booking.months,
-//       guests: booking.guests,
-
-//       specialRequests,
-
-//       monthlyRent: booking.monthlyRent,
-//       serviceFee: booking.serviceFee,
-//       totalAmount: booking.totalAmount,
-
-//       ownerName,
-//       ownerContact,
-//       university,
-
-//       paymentStatus: booking.paymentStatus,
-
-//       paymentScreenshot:
-//         booking.paymentScreenshot.url,
-//     };
-
-
-//     // ==========================
-//     // Guest Email
-//     // ==========================
-//     const guestEmail = guestConfirmationEmail(emailData);
-
-//     await sendEmail(
-//       email,
-//       guestEmail.subject,
-//       guestEmail.html
-//     );
-
-
-//     // ==========================
-//     // Owner Email
-//     // ==========================
-//     const ownerEmailTemplate =
-//       ownerNotificationEmail(emailData);
-
-
-//     await sendEmail(
-//       ownerEmail || process.env.SMTP_USER,
-//       ownerEmailTemplate.subject,
-//       ownerEmailTemplate.html
-//     );
-
 
 //     // ==========================
 //     // Response
@@ -544,31 +189,20 @@
 //     return res.status(201).json({
 //       success: true,
 //       message: "Booking created successfully",
-
 //       data: {
 //         bookingId: booking.bookingId,
 //         status: booking.status,
 //         paymentStatus: booking.paymentStatus,
-
-//         paymentScreenshot:
-//           booking.paymentScreenshot.url,
+//         paymentScreenshot: booking.paymentScreenshot.url,
 //       },
 //     });
 
-
 //   } catch (error) {
-
-//     console.error(
-//       "❌ Create booking error:",
-//       error
-//     );
-
+//     console.error("❌ Create booking error:", error);
 
 //     return res.status(500).json({
 //       success: false,
-//       message:
-//         error.message ||
-//         "Failed to create booking",
+//       message: error.message || "Failed to create booking",
 //     });
 //   }
 // };
@@ -654,9 +288,7 @@
 //   }
 // };
 
-// // ==========================
 // // GET BOOKINGS BY LANDLORD EMAIL
-// // ==========================
 // const getBookingsByOwnerEmail = async (req, res) => {
 //   try {
 //     const { email } = req.params;
@@ -678,22 +310,15 @@
 //       data: bookings,
 //     });
 //   } catch (error) {
-//     console.error(
-//       "❌ Get bookings by owner email error:",
-//       error
-//     );
+//     console.error("❌ Get bookings by owner email error:", error);
 
 //     return res.status(500).json({
 //       success: false,
 //       message: "Failed to fetch bookings",
-//       error:
-//         process.env.NODE_ENV === "development"
-//           ? error.message
-//           : undefined,
+//       error: process.env.NODE_ENV === "development" ? error.message : undefined,
 //     });
 //   }
 // };
-
 
 // // GET BOOKING BY ID
 // const getBookingById = async (req, res) => {
@@ -720,7 +345,267 @@
 //   }
 // };
 
-// // UPDATE BOOKING (with optional screenshot update)
+// // ============================================================
+// // GET ALL NOTIFICATIONS
+// // ============================================================
+// const getAllNotifications = async (req, res) => {
+//   try {
+//     const notifications = await Notification.find()
+//       .sort({ createdAt: -1 });
+
+//     return res.status(200).json({
+//       success: true,
+//       count: notifications.length,
+//       notifications,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "❌ Get all notifications error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch notifications",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ============================================================
+// // DELETE NOTIFICATION
+// // ============================================================
+// const deleteNotification = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const notification =
+//       await Notification.findByIdAndDelete(id);
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Notification deleted successfully",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "❌ Delete notification error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to delete notification",
+//       error: error.message,
+//     });
+//   }
+// };
+
+
+// // ============================================================
+// // DELETE MULTIPLE NOTIFICATIONS
+// // ============================================================
+
+// const bulkDeleteNotifications = async (req, res) => {
+//   try {
+//     const { id } = req.body;
+
+//     // ===========================
+//     // VALIDATION
+//     // ===========================
+
+//     if (!Array.isArray(id) || id.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "Please provide an array of notification id",
+//       });
+//     }
+
+//     // ===========================
+//     // DELETE NOTIFICATIONS
+//     // ===========================
+
+//     const result =
+//       await Notification.deleteMany({
+//         _id: {
+//           $in: id,
+//         },
+//       });
+
+//     // ===========================
+//     // NOTHING FOUND
+//     // ===========================
+
+//     if (result.deletedCount === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No notifications found",
+//       });
+//     }
+
+//     // ===========================
+//     // RESPONSE
+//     // ===========================
+
+//     return res.status(200).json({
+//       success: true,
+//       message:
+//         "Notifications deleted successfully",
+//       deletedCount: result.deletedCount,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "❌ Bulk delete notifications error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Failed to delete notifications",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ============================================================
+// // MARK NOTIFICATION AS READ
+// // ============================================================
+// const markNotificationAsRead = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const notification =
+//       await Notification.findByIdAndUpdate(
+//         id,
+//         {
+//           $set: {
+//             isRead: true,
+//           },
+//         },
+//         {
+//           new: true,
+//           runValidators: true,
+//         }
+//       );
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Notification marked as read",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "❌ Mark notification as read error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to mark notification as read",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // ============================================================
+// // MARK ALL NOTIFICATIONS AS READ
+// // Requires only an ID to confirm the request
+// // ============================================================
+
+// const markAllNotificationsAsRead = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     // Check that the provided ID exists
+//     const notification = await Notification.findById(id);
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     // Mark ALL notifications as read
+//     const result = await Notification.updateMany(
+//       {},
+//       {
+//         $set: {
+//           isRead: true,
+//         },
+//       }
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "All notifications marked as read",
+//       modifiedCount: result.modifiedCount,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "❌ Mark all notifications as read error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to mark all notifications as read",
+//       error: error.message,
+//     });
+//   }
+// };
+// // ============================================================
+// // GET NOTIFICATIONS BY EMAIL
+// // ============================================================
+// const getNotificationsByEmail = async (req, res) => {
+//   try {
+//     const { email } = req.params;
+
+//     if (!email) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email is required",
+//       });
+//     }
+
+//     const notifications = await Notification.find({
+//       email: email.toLowerCase().trim(),
+//     }).sort({ createdAt: -1 });
+
+//     return res.status(200).json({
+//       success: true,
+//       count: notifications.length,
+//       notifications,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "❌ Get notifications by email error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch notifications",
+//       error: error.message,
+//     });
+//   }
+// };
 
 // // UPDATE BOOKING
 // const updateBooking = async (req, res) => {
@@ -905,19 +790,6 @@
 
 //     await booking.save();
 
-//     if (booking.paymentStatus === "verified") {
-//       const emailData = {
-//         bookingId: booking.bookingId,
-//         fullName: booking.fullName,
-//         houseName: booking.houseName,
-//         totalAmount: booking.totalAmount,
-//       };
-
-//       const verifiedEmail = paymentVerifiedEmail(emailData);
-
-//       await sendEmail(booking.email, verifiedEmail.subject, verifiedEmail.html);
-//     }
-
 //     res.json({
 //       success: true,
 //       message: "Payment status updated",
@@ -1002,14 +874,6 @@
 //     }
 
 //     await booking.save();
-
-//     const cancelEmail = bookingCancelledEmail({
-//       bookingId: booking.bookingId,
-//       fullName: booking.fullName,
-//       reason: reason || "No reason provided",
-//     });
-
-//     await sendEmail(booking.email, cancelEmail.subject, cancelEmail.html);
 
 //     res.json({
 //       success: true,
@@ -1111,9 +975,15 @@
 //   updateBookingStatus,
 //   verifyPayment,
 //   deleteBooking,
+//   markAllNotificationsAsRead,
 //   cancelBooking,
 //   getBookingStats,
 //   getBookingsByOwnerEmail,
+//   getNotificationsByEmail,
+//   getAllNotifications,
+//   markNotificationAsRead,
+//   deleteNotification,
+//   bulkDeleteNotifications,
 //   uploadBookingScreenshot, // Export the multer middleware
 // };
 
@@ -1123,15 +993,20 @@
 
 
 
-// ============================================================
-// CONTROLLERS / BOOKING.CONTROLLER.JS (Cloudinary Only)
-// ============================================================
+
+
+
+
+
+
+
 const Booking = require("../models/Booking");
 const dotenv = require("dotenv");
 const cloudinary = require("cloudinary").v2;
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const Notification = require("../models/Notification");
+const { sendEmail, emailTemplates } = require("../mails/bookingSerivices");
 dotenv.config();
 const mongoose = require("mongoose");
 
@@ -1178,6 +1053,159 @@ const uploadBookingScreenshot = multer({
     cb(null, true);
   },
 });
+
+// ============================================================
+// SEND BOOKING EMAILS
+// ============================================================
+
+// Send booking confirmation email to tenant
+const sendBookingConfirmationEmail = async (booking) => {
+  try {
+    const { subject, html } = emailTemplates.bookingConfirmation(booking);
+    
+    const result = await sendEmail({
+      to: booking.email,
+      subject: subject,
+      html: html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Booking confirmation email sent to ${booking.email}`);
+    } else {
+      console.error(`❌ Failed to send booking confirmation email to ${booking.email}:`, result.error);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending booking confirmation email:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send booking notification to landlord
+const sendBookingNotificationToLandlord = async (booking) => {
+  try {
+    if (!booking.ownerEmail) {
+      console.log(`⚠️ No owner email provided for booking ${booking.bookingId}`);
+      return { success: false, error: "No owner email provided" };
+    }
+
+    const { subject, html } = emailTemplates.bookingNotificationForLandlord(booking);
+    
+    const result = await sendEmail({
+      to: booking.ownerEmail,
+      subject: subject,
+      html: html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Booking notification sent to landlord ${booking.ownerEmail}`);
+    } else {
+      console.error(`❌ Failed to send booking notification to landlord:`, result.error);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending booking notification to landlord:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send booking status update email to tenant
+const sendBookingStatusUpdateEmail = async (booking, statusMessage) => {
+  try {
+    const { subject, html } = emailTemplates.bookingStatusUpdate(booking, statusMessage);
+    
+    const result = await sendEmail({
+      to: booking.email,
+      subject: subject,
+      html: html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Booking status update email sent to ${booking.email}`);
+    } else {
+      console.error(`❌ Failed to send booking status update email:`, result.error);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending booking status update email:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send payment verification email to tenant
+const sendPaymentVerificationEmail = async (booking) => {
+  try {
+    const { subject, html } = emailTemplates.paymentVerification(booking);
+    
+    const result = await sendEmail({
+      to: booking.email,
+      subject: subject,
+      html: html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Payment verification email sent to ${booking.email}`);
+    } else {
+      console.error(`❌ Failed to send payment verification email:`, result.error);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending payment verification email:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send payment failure email to tenant
+const sendPaymentFailureEmail = async (booking) => {
+  try {
+    const { subject, html } = emailTemplates.paymentFailure(booking);
+    
+    const result = await sendEmail({
+      to: booking.email,
+      subject: subject,
+      html: html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Payment failure email sent to ${booking.email}`);
+    } else {
+      console.error(`❌ Failed to send payment failure email:`, result.error);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending payment failure email:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send booking reminder email to tenant
+const sendBookingReminderEmail = async (booking) => {
+  try {
+    const { subject, html } = emailTemplates.bookingReminder(booking);
+    
+    const result = await sendEmail({
+      to: booking.email,
+      subject: subject,
+      html: html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Booking reminder email sent to ${booking.email}`);
+    } else {
+      console.error(`❌ Failed to send booking reminder email:`, result.error);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error sending booking reminder email:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
 
 // ============================================================
 // BOOKING CONTROLLER FUNCTIONS
@@ -1309,11 +1337,23 @@ const createBooking = async (req, res) => {
     await booking.save();
 
     // ==========================
+    // SEND EMAILS
+    // ==========================
+
+    // Send confirmation email to tenant
+    await sendBookingConfirmationEmail(booking);
+
+    // Send notification to landlord if email exists
+    if (booking.ownerEmail) {
+      await sendBookingNotificationToLandlord(booking);
+    }
+
+    // ==========================
     // Response
     // ==========================
     return res.status(201).json({
       success: true,
-      message: "Booking created successfully",
+      message: "Booking created successfully. A confirmation email has been sent.",
       data: {
         bookingId: booking.bookingId,
         status: booking.status,
@@ -1871,6 +1911,7 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
+    const oldStatus = booking.status;
     booking.status = status;
 
     if (notes) {
@@ -1878,6 +1919,11 @@ const updateBookingStatus = async (req, res) => {
     }
 
     await booking.save();
+
+    // ==========================================================
+    // SEND STATUS UPDATE EMAIL TO TENANT
+    // ==========================================================
+    await sendBookingStatusUpdateEmail(booking, notes);
 
     res.json({
       success: true,
@@ -1907,6 +1953,7 @@ const verifyPayment = async (req, res) => {
       });
     }
 
+    const oldPaymentStatus = booking.paymentStatus;
     booking.paymentStatus = paymentStatus || "verified";
 
     if (notes) {
@@ -1914,6 +1961,15 @@ const verifyPayment = async (req, res) => {
     }
 
     await booking.save();
+
+    // ==========================================================
+    // SEND PAYMENT VERIFICATION EMAIL TO TENANT
+    // ==========================================================
+    if (booking.paymentStatus === "verified" && oldPaymentStatus !== "verified") {
+      await sendPaymentVerificationEmail(booking);
+    } else if (booking.paymentStatus === "failed") {
+      await sendPaymentFailureEmail(booking);
+    }
 
     res.json({
       success: true,
@@ -1999,6 +2055,11 @@ const cancelBooking = async (req, res) => {
     }
 
     await booking.save();
+
+    // ==========================================================
+    // SEND CANCELLATION EMAIL TO TENANT
+    // ==========================================================
+    await sendBookingStatusUpdateEmail(booking, reason);
 
     res.json({
       success: true,
