@@ -2872,10 +2872,86 @@ exports.bulkMarkContactNotificationsAsRead = async (
 // DELETE /api/notifications/contact/:id
 // ============================================================
 
-exports.deleteContactNotification = async (
-  req,
-  res
-) => {
+// exports.deleteContactNotification = async (
+//   req,
+//   res
+// ) => {
+//   try {
+//     const { id } = req.params;
+
+//     // ===========================
+//     // VALIDATE ID
+//     // ===========================
+
+//     if (!id) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "Notification ID is required",
+//       });
+//     }
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "Invalid notification ID",
+//       });
+//     }
+
+//     // ===========================
+//     // DELETE
+//     // ===========================
+
+//     const notification =
+//       await Notification.findOneAndDelete({
+//         _id: id,
+
+//         type: {
+//           $regex: /^contact_/,
+//         },
+
+//         target: {
+//           $in: ["admin", "both"],
+//         },
+//       });
+
+//     // ===========================
+//     // NOT FOUND
+//     // ===========================
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     // ===========================
+//     // RESPONSE
+//     // ===========================
+
+//     return res.status(200).json({
+//       success: true,
+//       message:
+//         "Notification deleted successfully",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Delete contact notification error:",
+//       error
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//       message:
+//         "Failed to delete notification",
+//     });
+//   }
+// };
+
+exports.deleteContactNotification = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2886,35 +2962,22 @@ exports.deleteContactNotification = async (
     if (!id) {
       return res.status(400).json({
         success: false,
-        message:
-          "Notification ID is required",
+        message: "Notification ID is required",
       });
     }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Invalid notification ID",
+        message: "Invalid notification ID",
       });
     }
 
     // ===========================
-    // DELETE
+    // DELETE NOTIFICATION
     // ===========================
 
-    const notification =
-      await Notification.findOneAndDelete({
-        _id: id,
-
-        type: {
-          $regex: /^contact_/,
-        },
-
-        target: {
-          $in: ["admin", "both"],
-        },
-      });
+    const notification = await Notification.findByIdAndDelete(id);
 
     // ===========================
     // NOT FOUND
@@ -2933,8 +2996,7 @@ exports.deleteContactNotification = async (
 
     return res.status(200).json({
       success: true,
-      message:
-        "Notification deleted successfully",
+      message: "Notification deleted successfully",
       data: notification,
     });
   } catch (error) {
@@ -2945,8 +3007,7 @@ exports.deleteContactNotification = async (
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to delete notification",
+      message: "Failed to delete notification",
     });
   }
 };
