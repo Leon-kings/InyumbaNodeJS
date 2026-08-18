@@ -118,6 +118,332 @@
 
 
 
+// const nodemailer = require("nodemailer");
+// const dns = require("dns");
+// require("dotenv").config();
+
+// // ============================================================
+// // FORCE IPV4
+// // ============================================================
+// // This does NOT use or hardcode any IP address.
+// // Node will resolve smtp.gmail.com normally and prefer IPv4.
+
+// try {
+//   dns.setDefaultResultOrder("ipv4first");
+// } catch (error) {
+//   console.log(
+//     "⚠️ Could not configure DNS result order:",
+//     error.message
+//   );
+// }
+
+// // ============================================================
+// // SMTP CONFIGURATION
+// // ============================================================
+
+// const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+// const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 587;
+// const SMTP_USER = process.env.SMTP_USER;
+// const SMTP_PASS = process.env.SMTP_PASS;
+
+// // ============================================================
+// // PRIMARY SMTP CONFIGURATION
+// // ============================================================
+
+// const SMTP_CONFIG = {
+//   host: SMTP_HOST,
+//   port: SMTP_PORT,
+//   secure: false,
+
+//   // Use IPv4 without specifying an IP address
+//   family: 4,
+
+//   auth: {
+//     user: SMTP_USER,
+//     pass: SMTP_PASS,
+//   },
+
+//   tls: {
+//     rejectUnauthorized: false,
+//     minVersion: "TLSv1.2",
+//     servername: SMTP_HOST,
+//   },
+
+//   debug: process.env.NODE_ENV === "development",
+//   logger: process.env.NODE_ENV === "development",
+// };
+
+// // ============================================================
+// // CREATE PRIMARY TRANSPORTER
+// // ============================================================
+
+// let transporter = nodemailer.createTransport(SMTP_CONFIG);
+
+// // ============================================================
+// // ALTERNATIVE SMTP CONFIGURATION
+// // ============================================================
+
+// const getAlternativeConfig = () => {
+//   return {
+//     host: SMTP_HOST,
+//     port: 465,
+//     secure: true,
+
+//     // Use IPv4 without specifying an IP address
+//     family: 4,
+
+//     auth: {
+//       user: SMTP_USER,
+//       pass: SMTP_PASS,
+//     },
+
+//     tls: {
+//       rejectUnauthorized: false,
+//       minVersion: "TLSv1.2",
+//       servername: SMTP_HOST,
+//     },
+
+//     debug: process.env.NODE_ENV === "development",
+//     logger: process.env.NODE_ENV === "development",
+//   };
+// };
+
+// // ============================================================
+// // TEST SMTP CONNECTION
+// // ============================================================
+
+// const testConnection = async () => {
+//   // ==========================================================
+//   // CHECK SMTP CREDENTIALS
+//   // ==========================================================
+
+//   if (!SMTP_USER || !SMTP_PASS) {
+//     console.error(
+//       "❌ SMTP_USER or SMTP_PASS is missing from environment variables."
+//     );
+
+//     return false;
+//   }
+
+//   // ==========================================================
+//   // PRIMARY CONNECTION - PORT 587
+//   // ==========================================================
+
+//   try {
+//     transporter = nodemailer.createTransport(
+//       SMTP_CONFIG
+//     );
+
+//     await transporter.verify();
+
+//     console.log(
+//       "✅ SMTP Transporter connected successfully on port 587"
+//     );
+
+//     return true;
+//   } catch (primaryError) {
+//     console.error(
+//       "⚠️ Primary SMTP connection failed:",
+//       primaryError.message
+//     );
+
+//     // ========================================================
+//     // ALTERNATIVE CONNECTION - PORT 465
+//     // ========================================================
+
+//     try {
+//       const alternativeConfig =
+//         getAlternativeConfig();
+
+//       transporter = nodemailer.createTransport(
+//         alternativeConfig
+//       );
+
+//       await transporter.verify();
+
+//       console.log(
+//         "✅ SMTP Transporter connected successfully on port 465"
+//       );
+
+//       return true;
+//     } catch (alternativeError) {
+//       console.error(
+//         "❌ SMTP connection failed on both configurations."
+//       );
+
+//       console.error(
+//         "Port 587 error:",
+//         primaryError.message
+//       );
+
+//       console.error(
+//         "Port 465 error:",
+//         alternativeError.message
+//       );
+
+//       return false;
+//     }
+//   }
+// };
+
+// // ============================================================
+// // CONNECTION ERROR CHECK
+// // ============================================================
+
+// const isConnectionError = (error) => {
+//   const connectionErrors = [
+//     "ENETUNREACH",
+//     "ECONNREFUSED",
+//     "ECONNRESET",
+//     "ETIMEDOUT",
+//     "ESOCKET",
+//     "EHOSTUNREACH",
+//     "EAI_AGAIN",
+//     "ECONNABORTED",
+//     "ENOTFOUND",
+//   ];
+
+//   return connectionErrors.includes(error?.code);
+// };
+
+// // ============================================================
+// // SEND EMAIL WITH RETRY
+// // ============================================================
+
+// const sendMailWithRetry = async (
+//   mailOptions,
+//   maxRetries = 3
+// ) => {
+//   let lastError = null;
+
+//   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+//     try {
+//       // ======================================================
+//       // MAKE SURE TRANSPORTER EXISTS
+//       // ======================================================
+
+//       if (!transporter) {
+//         transporter =
+//           nodemailer.createTransport(
+//             SMTP_CONFIG
+//           );
+//       }
+
+//       // ======================================================
+//       // SEND EMAIL
+//       // ======================================================
+
+//       const info = await transporter.sendMail(
+//         mailOptions
+//       );
+
+//       console.log(
+//         `✅ Email sent successfully: ${info.messageId}`
+//       );
+
+//       return {
+//         success: true,
+//         info,
+//       };
+//     } catch (error) {
+//       lastError = error;
+
+//       console.error(
+//         `⚠️ Email attempt ${attempt}/${maxRetries} failed:`,
+//         error.message
+//       );
+
+//       // ======================================================
+//       // RECREATE TRANSPORTER IF NETWORK ERROR
+//       // ======================================================
+
+//       if (isConnectionError(error)) {
+//         try {
+//           transporter =
+//             nodemailer.createTransport(
+//               SMTP_CONFIG
+//             );
+//         } catch (recreateError) {
+//           lastError = recreateError;
+//         }
+//       }
+
+//       // ======================================================
+//       // STOP AFTER FINAL ATTEMPT
+//       // ======================================================
+
+//       if (attempt === maxRetries) {
+//         console.error(
+//           "❌ Email sending failed after all attempts."
+//         );
+
+//         return {
+//           success: false,
+//           error:
+//             lastError?.message ||
+//             "Email sending failed",
+//         };
+//       }
+
+//       // ======================================================
+//       // RETRY DELAY
+//       // ======================================================
+
+//       await new Promise((resolve) => {
+//         setTimeout(
+//           resolve,
+//           attempt * 2000
+//         );
+//       });
+//     }
+//   }
+
+//   return {
+//     success: false,
+//     error:
+//       lastError?.message ||
+//       "Email sending failed",
+//   };
+// };
+
+// // ============================================================
+// // INITIAL SMTP CONNECTION TEST
+// // ============================================================
+
+// testConnection().catch((error) => {
+//   console.error(
+//     "❌ SMTP initialization error:",
+//     error.message
+//   );
+// });
+
+// // ============================================================
+// // EXPORT
+// // ============================================================
+
+// module.exports = {
+//   transporter,
+//   sendMailWithRetry,
+//   testConnection,
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const nodemailer = require("nodemailer");
 const dns = require("dns");
 require("dotenv").config();
@@ -125,37 +451,46 @@ require("dotenv").config();
 // ============================================================
 // FORCE IPV4
 // ============================================================
-// This does NOT use or hardcode any IP address.
-// Node will resolve smtp.gmail.com normally and prefer IPv4.
+// No IP address is hardcoded.
+// Node will resolve smtp.gmail.com normally.
 
 try {
   dns.setDefaultResultOrder("ipv4first");
 } catch (error) {
   console.log(
-    "⚠️ Could not configure DNS result order:",
+    "⚠️ DNS configuration warning:",
     error.message
   );
 }
 
 // ============================================================
+// ENVIRONMENT VARIABLES
+// ============================================================
+
+const SMTP_HOST =
+  process.env.SMTP_HOST || "smtp.gmail.com";
+
+const SMTP_PORT =
+  parseInt(process.env.SMTP_PORT, 10) || 587;
+
+const SMTP_USER =
+  process.env.SMTP_USER;
+
+const SMTP_PASS =
+  process.env.SMTP_PASS;
+
+// ============================================================
 // SMTP CONFIGURATION
-// ============================================================
-
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 587;
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-
-// ============================================================
-// PRIMARY SMTP CONFIGURATION
 // ============================================================
 
 const SMTP_CONFIG = {
   host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: false,
 
-  // Use IPv4 without specifying an IP address
+  port: SMTP_PORT,
+
+  secure: SMTP_PORT === 465,
+
+  // Force IPv4 without hardcoding an IP address
   family: 4,
 
   auth: {
@@ -166,144 +501,128 @@ const SMTP_CONFIG = {
   tls: {
     rejectUnauthorized: false,
     minVersion: "TLSv1.2",
-    servername: SMTP_HOST,
   },
 
-  debug: process.env.NODE_ENV === "development",
-  logger: process.env.NODE_ENV === "development",
+  debug:
+    process.env.NODE_ENV === "development",
+
+  logger:
+    process.env.NODE_ENV === "development",
 };
 
 // ============================================================
-// CREATE PRIMARY TRANSPORTER
+// CREATE TRANSPORTER
 // ============================================================
 
-let transporter = nodemailer.createTransport(SMTP_CONFIG);
+let transporter =
+  nodemailer.createTransport(
+    SMTP_CONFIG
+  );
 
 // ============================================================
-// ALTERNATIVE SMTP CONFIGURATION
+// CREATE TRANSPORTER AGAIN
 // ============================================================
 
-const getAlternativeConfig = () => {
-  return {
-    host: SMTP_HOST,
-    port: 465,
-    secure: true,
+const recreateTransporter = () => {
+  transporter =
+    nodemailer.createTransport(
+      SMTP_CONFIG
+    );
 
-    // Use IPv4 without specifying an IP address
-    family: 4,
-
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-
-    tls: {
-      rejectUnauthorized: false,
-      minVersion: "TLSv1.2",
-      servername: SMTP_HOST,
-    },
-
-    debug: process.env.NODE_ENV === "development",
-    logger: process.env.NODE_ENV === "development",
-  };
+  return transporter;
 };
 
 // ============================================================
-// TEST SMTP CONNECTION
+// CHECK SMTP CONFIGURATION
 // ============================================================
 
-const testConnection = async () => {
-  // ==========================================================
-  // CHECK SMTP CREDENTIALS
-  // ==========================================================
-
+const isSMTPConfigured = () => {
   if (!SMTP_USER || !SMTP_PASS) {
     console.error(
-      "❌ SMTP_USER or SMTP_PASS is missing from environment variables."
+      "❌ SMTP_USER or SMTP_PASS is missing."
     );
 
     return false;
   }
 
-  // ==========================================================
-  // PRIMARY CONNECTION - PORT 587
-  // ==========================================================
+  return true;
+};
+
+// ============================================================
+// TEST SMTP CONNECTION
+// ============================================================
+// IMPORTANT:
+// This does NOT run automatically when the server starts.
+// Calling verify() on startup is what was producing
+// the repeated timeout messages.
+//
+// Call testConnection() manually when you actually
+// want to test SMTP.
+
+const testConnection = async () => {
+  if (!isSMTPConfigured()) {
+    return false;
+  }
 
   try {
-    transporter = nodemailer.createTransport(
-      SMTP_CONFIG
-    );
+    const currentTransporter =
+      recreateTransporter();
 
-    await transporter.verify();
+    await currentTransporter.verify();
 
     console.log(
-      "✅ SMTP Transporter connected successfully on port 587"
+      "✅ SMTP Transporter connected successfully"
     );
 
     return true;
-  } catch (primaryError) {
+  } catch (error) {
     console.error(
-      "⚠️ Primary SMTP connection failed:",
-      primaryError.message
+      "❌ SMTP connection failed:",
+      error.message
     );
 
-    // ========================================================
-    // ALTERNATIVE CONNECTION - PORT 465
-    // ========================================================
-
-    try {
-      const alternativeConfig =
-        getAlternativeConfig();
-
-      transporter = nodemailer.createTransport(
-        alternativeConfig
-      );
-
-      await transporter.verify();
-
-      console.log(
-        "✅ SMTP Transporter connected successfully on port 465"
-      );
-
-      return true;
-    } catch (alternativeError) {
-      console.error(
-        "❌ SMTP connection failed on both configurations."
-      );
-
-      console.error(
-        "Port 587 error:",
-        primaryError.message
-      );
-
-      console.error(
-        "Port 465 error:",
-        alternativeError.message
-      );
-
-      return false;
-    }
+    return false;
   }
 };
 
 // ============================================================
-// CONNECTION ERROR CHECK
+// SEND EMAIL
 // ============================================================
 
-const isConnectionError = (error) => {
-  const connectionErrors = [
-    "ENETUNREACH",
-    "ECONNREFUSED",
-    "ECONNRESET",
-    "ETIMEDOUT",
-    "ESOCKET",
-    "EHOSTUNREACH",
-    "EAI_AGAIN",
-    "ECONNABORTED",
-    "ENOTFOUND",
-  ];
+const sendMail = async (mailOptions) => {
+  if (!isSMTPConfigured()) {
+    return {
+      success: false,
+      error: "SMTP is not configured",
+    };
+  }
 
-  return connectionErrors.includes(error?.code);
+  try {
+    const info =
+      await transporter.sendMail(
+        mailOptions
+      );
+
+    console.log(
+      "✅ Email sent successfully:",
+      info.messageId
+    );
+
+    return {
+      success: true,
+      info,
+    };
+  } catch (error) {
+    console.error(
+      "❌ Email sending failed:",
+      error.message
+    );
+
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 };
 
 // ============================================================
@@ -314,31 +633,29 @@ const sendMailWithRetry = async (
   mailOptions,
   maxRetries = 3
 ) => {
+  if (!isSMTPConfigured()) {
+    return {
+      success: false,
+      error: "SMTP is not configured",
+    };
+  }
+
   let lastError = null;
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  for (
+    let attempt = 1;
+    attempt <= maxRetries;
+    attempt++
+  ) {
     try {
-      // ======================================================
-      // MAKE SURE TRANSPORTER EXISTS
-      // ======================================================
-
-      if (!transporter) {
-        transporter =
-          nodemailer.createTransport(
-            SMTP_CONFIG
-          );
-      }
-
-      // ======================================================
-      // SEND EMAIL
-      // ======================================================
-
-      const info = await transporter.sendMail(
-        mailOptions
-      );
+      const info =
+        await transporter.sendMail(
+          mailOptions
+        );
 
       console.log(
-        `✅ Email sent successfully: ${info.messageId}`
+        "✅ Email sent successfully:",
+        info.messageId
       );
 
       return {
@@ -354,35 +671,29 @@ const sendMailWithRetry = async (
       );
 
       // ======================================================
-      // RECREATE TRANSPORTER IF NETWORK ERROR
+      // RECREATE TRANSPORTER
       // ======================================================
 
-      if (isConnectionError(error)) {
-        try {
-          transporter =
-            nodemailer.createTransport(
-              SMTP_CONFIG
-            );
-        } catch (recreateError) {
-          lastError = recreateError;
-        }
+      if (
+        error.code === "ENETUNREACH" ||
+        error.code === "ECONNREFUSED" ||
+        error.code === "ECONNRESET" ||
+        error.code === "ETIMEDOUT" ||
+        error.code === "ESOCKET" ||
+        error.code === "EHOSTUNREACH" ||
+        error.code === "EAI_AGAIN" ||
+        error.code === "ECONNABORTED" ||
+        error.code === "ENOTFOUND"
+      ) {
+        recreateTransporter();
       }
 
       // ======================================================
-      // STOP AFTER FINAL ATTEMPT
+      // LAST ATTEMPT
       // ======================================================
 
       if (attempt === maxRetries) {
-        console.error(
-          "❌ Email sending failed after all attempts."
-        );
-
-        return {
-          success: false,
-          error:
-            lastError?.message ||
-            "Email sending failed",
-        };
+        break;
       }
 
       // ======================================================
@@ -407,15 +718,52 @@ const sendMailWithRetry = async (
 };
 
 // ============================================================
-// INITIAL SMTP CONNECTION TEST
+// SEND EMAIL SAFELY
+// ============================================================
+// Use this when email should NEVER cause the main request
+// to fail.
+//
+// Example:
+// await sendMailSafely(mailOptions);
+
+const sendMailSafely = async (
+  mailOptions
+) => {
+  try {
+    const result =
+      await sendMailWithRetry(
+        mailOptions,
+        3
+      );
+
+    if (!result.success) {
+      console.error(
+        "⚠️ Email service unavailable:",
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      "⚠️ Email service error:",
+      error.message
+    );
+
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+// ============================================================
+// GET TRANSPORTER
 // ============================================================
 
-testConnection().catch((error) => {
-  console.error(
-    "❌ SMTP initialization error:",
-    error.message
-  );
-});
+const getTransporter = () => {
+  return transporter;
+};
 
 // ============================================================
 // EXPORT
@@ -423,6 +771,9 @@ testConnection().catch((error) => {
 
 module.exports = {
   transporter,
+  getTransporter,
+  sendMail,
   sendMailWithRetry,
+  sendMailSafely,
   testConnection,
 };
