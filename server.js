@@ -19,6 +19,7 @@ const teamRoutes = require("./routes/teamRoutes");
 const houseRoutes = require("./routes/houseRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
+const questionRoutes = require("./routes/questionRoutes");
 
 /* ---------------- APP ---------------- */
 const app = express();
@@ -39,6 +40,7 @@ app.use("/team", teamRoutes);
 app.use("/houses", houseRoutes);
 app.use("/requests", requestRoutes);
 app.use("/bookings", bookingRoutes);
+app.use("/questions", questionRoutes);
 
 /* ---------------- HEALTH CHECK ---------------- */
 
