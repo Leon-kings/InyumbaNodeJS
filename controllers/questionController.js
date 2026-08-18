@@ -1563,10 +1563,16 @@ const getQuestionReplyEmail = (question) => ({
 // ===========================================
 
 // Create notification for specific role
-// In questionController.js - Update the createRoleNotification function
+// In questionController.js
 
 const createRoleNotification = async (question, type, role, userInfo = null) => {
   try {
+    // Validate inputs
+    if (!question || !type || !role) {
+      console.error("❌ Missing required parameters for notification");
+      return null;
+    }
+
     let title = "";
     let message = "";
     let priority = "normal";
@@ -1574,6 +1580,7 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
     let targetUserEmail = question.email || "";
     let targetUserRole = role;
 
+    // Set notification content based on type
     switch (type) {
       case "question_created":
         title = "📩 New Question Submitted";
@@ -1604,6 +1611,13 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
       default:
         title = "📩 Question Notification";
         message = `Update for question from ${question.name}`;
+        priority = "normal";
+    }
+
+    // Ensure title and message are not empty
+    if (!title || !message) {
+      console.error("❌ Title or message is empty for notification");
+      return null;
     }
 
     // If userInfo is provided, use that for targeting
@@ -1613,11 +1627,14 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
       targetUserRole = userInfo.role || role;
     }
 
-    // ✅ Make sure all required fields are provided
+    // ✅ Create notification with ALL required fields
     const notificationData = {
+      // Required fields
       type: type, // ✅ Required
-      message: message, // ✅ Required
       title: title, // ✅ Required
+      message: message, // ✅ Required
+      
+      // Optional fields
       questionId: question._id,
       questionName: question.name,
       questionEmail: question.email,
@@ -1626,7 +1643,7 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
       userEmail: question.email,
       userRole: role,
       isRead: false,
-      status: "new", // ✅ Changed from "pending" to "new"
+      status: "new", // ✅ MUST be "new" - NOT "pending"
       targetRoles: [role],
       targetUserId: targetUserId,
       targetUserEmail: targetUserEmail,
@@ -1641,7 +1658,16 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
         status: question.status,
         priority: question.priority,
       },
+      isActive: true,
     };
+
+    // Log what we're creating for debugging
+    console.log(`📝 Creating ${role} notification:`, {
+      type: notificationData.type,
+      title: notificationData.title,
+      message: notificationData.message.substring(0, 50) + "...",
+      status: notificationData.status,
+    });
 
     const notification = new Notification(notificationData);
     await notification.save();
@@ -1649,6 +1675,12 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
     return notification;
   } catch (error) {
     console.error(`❌ Error creating ${role} notification:`, error.message);
+    if (error.errors) {
+      console.error("❌ Validation errors:", Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message
+      })));
+    }
     return null;
   }
 };
