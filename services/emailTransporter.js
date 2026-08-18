@@ -19,9 +19,6 @@ const SMTP_CONFIG = {
     rejectUnauthorized: false,
     minVersion: "TLSv1.2",
   },
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 15000,
   debug: process.env.NODE_ENV === "development",
   logger: process.env.NODE_ENV === "development",
 };
