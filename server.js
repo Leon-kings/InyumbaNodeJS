@@ -313,48 +313,6 @@ const connectDB = async () => {
   }
 };
 
-/* ---------------- CREATE REUSABLE TRANSPORTER ---------------- */
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT, 10) || 587,
-    secure: false,
-    family: 4,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-};
-
-/* ---------------- CHECK SMTP CONNECTION ---------------- */
-const checkEmailConnection = async () => {
-  try {
-    const transporter = createTransporter();
-    await transporter.verify();
-    console.log('✅ Email service connected successfully');
-    console.log(
-      `📧 SMTP: ${process.env.SMTP_HOST || 'smtp.gmail.com'}:${
-        process.env.SMTP_PORT || 587
-      }`
-    );
-    return {
-      connected: true,
-      transporter,
-    };
-  } catch (error) {
-    console.error('❌ Email service connection failed:', error.message);
-    return {
-      connected: false,
-      transporter: null,
-      error: error.message,
-    };
-  }
-};
-
 /* ---------------- SERVER START ---------------- */
 const PORT = process.env.PORT || 5000;
 
@@ -365,9 +323,6 @@ const startServer = async () => {
     console.error("❌ Server startup stopped because MongoDB is unavailable.");
     process.exit(1);
   }
-
-  // Check email connection during startup
-  await checkEmailConnection();
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
