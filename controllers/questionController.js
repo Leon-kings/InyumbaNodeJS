@@ -1563,6 +1563,8 @@ const getQuestionReplyEmail = (question) => ({
 // ===========================================
 
 // Create notification for specific role
+// In questionController.js - Update the createRoleNotification function
+
 const createRoleNotification = async (question, type, role, userInfo = null) => {
   try {
     let title = "";
@@ -1611,8 +1613,11 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
       targetUserRole = userInfo.role || role;
     }
 
-    const notification = new Notification({
-      type: type,
+    // ✅ Make sure all required fields are provided
+    const notificationData = {
+      type: type, // ✅ Required
+      message: message, // ✅ Required
+      title: title, // ✅ Required
       questionId: question._id,
       questionName: question.name,
       questionEmail: question.email,
@@ -1620,26 +1625,25 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
       userName: question.name,
       userEmail: question.email,
       userRole: role,
-      title,
-      message,
       isRead: false,
-      status: "new",
+      status: "new", // ✅ Changed from "pending" to "new"
       targetRoles: [role],
       targetUserId: targetUserId,
       targetUserEmail: targetUserEmail,
       targetUserRole: targetUserRole,
-      priority,
+      priority: priority,
       isGlobal: type === "question_created",
       metadata: {
         questionName: question.name,
         questionEmail: question.email,
         questionCategory: question.category,
-        questionPreview: question.question.substring(0, 100) + "...",
+        questionPreview: question.question ? question.question.substring(0, 100) + "..." : "",
         status: question.status,
         priority: question.priority,
       },
-    });
+    };
 
+    const notification = new Notification(notificationData);
     await notification.save();
     console.log(`✅ ${role} notification created: ${message}`);
     return notification;
