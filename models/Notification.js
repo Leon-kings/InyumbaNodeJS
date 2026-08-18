@@ -326,6 +326,9 @@ const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema(
   {
+    // =================================================
+    // NOTIFICATION TYPE - REQUIRED
+    // =================================================
     type: {
       type: String,
       enum: [
@@ -349,55 +352,71 @@ const notificationSchema = new mongoose.Schema(
       required: [true, 'Notification type is required'],
       index: true,
     },
+
+    // =================================================
+    // NOTIFICATION CONTENT - REQUIRED
+    // =================================================
+    title: {
+      type: String,
+      required: [true, 'Notification title is required'],
+      trim: true,
+      maxlength: 200,
+    },
+    message: {
+      type: String,
+      required: [true, 'Notification message is required'],
+      trim: true,
+      maxlength: 2000,
+    },
+
+    // =================================================
+    // QUESTION REFERENCES
+    // =================================================
     questionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Question",
-      required: false,
+      default: null,
     },
     questionName: {
       type: String,
-      required: false,
+      default: null,
       trim: true,
     },
     questionEmail: {
       type: String,
-      required: false,
+      default: null,
       trim: true,
       lowercase: true,
     },
+
+    // =================================================
+    // USER INFORMATION
+    // =================================================
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: false,
+      default: null,
     },
     userName: {
       type: String,
-      required: false,
+      default: null,
       trim: true,
     },
     userEmail: {
       type: String,
-      required: false,
+      default: null,
       trim: true,
       lowercase: true,
     },
     userRole: {
       type: String,
       enum: ["admin", "manager", "user", "superadmin", "support", "guest"],
-      required: false,
+      default: null,
     },
-    title: {
-      type: String,
-      required: [true, "Notification title is required"],
-      trim: true,
-      maxlength: 200,
-    },
-    message: {
-      type: String,
-      required: [true, "Notification message is required"],
-      trim: true,
-      maxlength: 2000,
-    },
+
+    // =================================================
+    // STATUS & PRIORITY
+    // =================================================
     isRead: {
       type: Boolean,
       default: false,
@@ -405,7 +424,7 @@ const notificationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["new", "read", "dismissed", "archived", "actioned"], // ✅ Fixed: removed "pending"
+      enum: ["new", "read", "dismissed", "archived", "actioned"], // ✅ NO "pending" here
       default: "new",
     },
     priority: {
@@ -413,35 +432,42 @@ const notificationSchema = new mongoose.Schema(
       enum: ["low", "normal", "high", "urgent", "critical"],
       default: "normal",
     },
+
+    // =================================================
+    // TARGETING
+    // =================================================
     targetRoles: {
       type: [String],
       enum: ["admin", "manager", "user", "superadmin", "support", "guest", "all"],
-      required: true,
       default: ["user"],
     },
     targetUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: false,
+      default: null,
     },
     targetUserEmail: {
       type: String,
-      required: false,
+      default: null,
       trim: true,
       lowercase: true,
     },
     targetUserRole: {
       type: String,
       enum: ["admin", "manager", "user", "superadmin", "support", "guest"],
-      required: false,
+      default: null,
     },
+
+    // =================================================
+    // SCOPE & READ RECEIPTS
+    // =================================================
     isGlobal: {
       type: Boolean,
       default: false,
     },
     readAt: {
       type: Date,
-      required: false,
+      default: null,
     },
     readBy: [
       {
@@ -464,14 +490,26 @@ const notificationSchema = new mongoose.Schema(
         },
       },
     ],
+
+    // =================================================
+    // EXPIRY
+    // =================================================
     expiresAt: {
       type: Date,
-      required: false,
+      default: null,
     },
+
+    // =================================================
+    // METADATA
+    // =================================================
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+
+    // =================================================
+    // ACTIONS
+    // =================================================
     actions: {
       type: [
         {
@@ -497,22 +535,32 @@ const notificationSchema = new mongoose.Schema(
       ],
       default: [],
     },
+
+    // =================================================
+    // CREATOR INFO
+    // =================================================
     createdBy: {
       userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: false,
+        default: null,
       },
       userName: {
         type: String,
         trim: true,
+        default: null,
       },
       userEmail: {
         type: String,
         trim: true,
         lowercase: true,
+        default: null,
       },
     },
+
+    // =================================================
+    // SYSTEM FIELDS
+    // =================================================
     isActive: {
       type: Boolean,
       default: true,
@@ -529,13 +577,8 @@ const notificationSchema = new mongoose.Schema(
 notificationSchema.index({ createdAt: -1 });
 notificationSchema.index({ isRead: 1, createdAt: -1 });
 notificationSchema.index({ targetRoles: 1, isRead: 1 });
-notificationSchema.index({ targetUserId: 1, isRead: 1 });
-notificationSchema.index({ targetUserEmail: 1, isRead: 1 });
-notificationSchema.index({ userId: 1, isRead: 1 });
 notificationSchema.index({ type: 1, createdAt: -1 });
 notificationSchema.index({ status: 1, createdAt: -1 });
-notificationSchema.index({ priority: 1, createdAt: -1 });
-notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Virtuals
 notificationSchema.virtual("timeAgo").get(function () {
