@@ -1953,6 +1953,7 @@ const getClientIP = (req) => {
 // ===========================
 
 // 1. Submit Contact Form
+
 exports.submitContact = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -1968,29 +1969,18 @@ exports.submitContact = async (req, res) => {
     }
 
     const { name, email, phone, message } = req.body;
+
     const normalizedEmail = email.toLowerCase().trim();
-
-    // Check for duplicate submissions
-    const recentSubmission = await Contact.findOne({
-      email: normalizedEmail,
-      createdAt: {
-        $gte: new Date(Date.now() - 5 * 60 * 1000),
-      },
-    });
-
-    if (recentSubmission) {
-      return res.status(429).json({
-        success: false,
-        message: "Please wait 5 minutes before submitting again",
-      });
-    }
 
     const userId = req.user?.id || null;
     const userRole = req.user?.role || "user";
     const ipAddress = getClientIP(req);
     const userAgent = req.headers["user-agent"] || null;
 
-    // Create new contact
+    // ===========================
+    // CREATE NEW CONTACT
+    // ===========================
+
     const contact = new Contact({
       userId,
       name: name.trim(),
@@ -2003,6 +1993,7 @@ exports.submitContact = async (req, res) => {
     });
 
     await contact.save();
+
     console.log(`✅ Contact created: ${contact._id}`);
 
     // ===========================
@@ -2012,22 +2003,36 @@ exports.submitContact = async (req, res) => {
     let confirmationEmailSent = false;
     let adminEmailSent = false;
 
-    // Send confirmation email to user
+    // ===========================
+    // SEND CONFIRMATION EMAIL
+    // ===========================
+
     try {
-      const userEmailTemplate = getContactConfirmationEmail(contact);
+      const userEmailTemplate =
+        getContactConfirmationEmail(contact);
+
       const result = await sendEmail({
         to: contact.email,
         subject: userEmailTemplate.subject,
         html: userEmailTemplate.html,
       });
+
       confirmationEmailSent = result.success;
     } catch (emailError) {
-      console.error("❌ Failed to send confirmation email:", emailError.message);
+      console.error(
+        "❌ Failed to send confirmation email:",
+        emailError.message
+      );
     }
 
-    // Send notification to admin
+    // ===========================
+    // SEND ADMIN NOTIFICATION
+    // ===========================
+
     try {
-      const adminEmailTemplate = getAdminNotificationEmail(contact);
+      const adminEmailTemplate =
+        getAdminNotificationEmail(contact);
+
       const adminEmail = process.env.ADMIN_EMAIL;
 
       if (adminEmail) {
@@ -2036,12 +2041,18 @@ exports.submitContact = async (req, res) => {
           subject: adminEmailTemplate.subject,
           html: adminEmailTemplate.html,
         });
+
         adminEmailSent = result.success;
       } else {
-        console.log("⚠️ No ADMIN_EMAIL configured in .env");
+        console.log(
+          "⚠️ No ADMIN_EMAIL configured in .env"
+        );
       }
     } catch (emailError) {
-      console.error("❌ Failed to send admin notification email:", emailError.message);
+      console.error(
+        "❌ Failed to send admin notification email:",
+        emailError.message
+      );
     }
 
     // ===========================
@@ -2058,9 +2069,15 @@ exports.submitContact = async (req, res) => {
         ipAddress,
         userAgent,
       });
-      console.log(`✅ User activity created for ${contact.email}`);
+
+      console.log(
+        `✅ User activity created for ${contact.email}`
+      );
     } catch (activityError) {
-      console.error("❌ Failed to create user activity:", activityError.message);
+      console.error(
+        "❌ Failed to create user activity:",
+        activityError.message
+      );
     }
 
     // ===========================
@@ -2068,10 +2085,19 @@ exports.submitContact = async (req, res) => {
     // ===========================
 
     try {
-      await createAllRoleNotifications(contact, "created");
-      console.log(`✅ Role-based notifications created for contact ${contact._id}`);
+      await createAllRoleNotifications(
+        contact,
+        "created"
+      );
+
+      console.log(
+        `✅ Role-based notifications created for contact ${contact._id}`
+      );
     } catch (notificationError) {
-      console.error("❌ Failed to create role-based notifications:", notificationError.message);
+      console.error(
+        "❌ Failed to create role-based notifications:",
+        notificationError.message
+      );
     }
 
     // ===========================
@@ -2080,8 +2106,10 @@ exports.submitContact = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Contact form submitted successfully. A confirmation email has been sent.",
-      emailSent: confirmationEmailSent && adminEmailSent,
+      message:
+        "Contact form submitted successfully. A confirmation email has been sent.",
+      emailSent:
+        confirmationEmailSent && adminEmailSent,
       data: {
         id: contact._id,
         userId: contact.userId,
@@ -2096,7 +2124,11 @@ exports.submitContact = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Submit contact error:", error);
+    console.error(
+      "Submit contact error:",
+      error
+    );
+
     return res.status(500).json({
       success: false,
       message: "Failed to submit contact form",
