@@ -1686,18 +1686,380 @@ const createRoleNotification = async (question, type, role, userInfo = null) => 
 };
 
 // Create notifications for all roles
-const createAllRoleNotifications = async (question, type, userInfo = null) => {
-  const roles = ["admin", "manager", "user"];
-  const notifications = [];
-
-  for (const role of roles) {
-    const notification = await createRoleNotification(question, type, role, userInfo);
-    if (notification) {
-      notifications.push(notification);
-    }
+const createAllRoleNotifications = async (
+  question,
+  notificationType = "question_created",
+  userInfo = {}
+) => {
+  // =================================================
+  // VALIDATE QUESTION
+  // =================================================
+  if (!question) {
+    throw new Error(
+      "Question is required for notification"
+    );
   }
 
-  return notifications;
+  // =================================================
+  // VALIDATE NOTIFICATION TYPE
+  // =================================================
+  const allowedTypes = [
+    "question_created",
+    "question_answered",
+    "question_archived",
+    "question_updated",
+    "question_deleted",
+    "question_assigned",
+    "question_escalated",
+    "question_closed",
+    "question_reopened",
+    "question_replied",
+    "comment_added",
+    "status_changed",
+    "priority_changed",
+    "system_notification",
+    "user_mentioned",
+    "reminder",
+  ];
+
+  if (
+    !allowedTypes.includes(
+      notificationType
+    )
+  ) {
+    throw new Error(
+      `Invalid notification type: ${notificationType}`
+    );
+  }
+
+  // =================================================
+  // NOTIFICATION TITLE
+  // =================================================
+  let title =
+    "Question Notification";
+
+  switch (notificationType) {
+    case "question_created":
+      title =
+        "New Question Submitted";
+      break;
+
+    case "question_answered":
+      title =
+        "Question Answered";
+      break;
+
+    case "question_archived":
+      title =
+        "Question Archived";
+      break;
+
+    case "question_updated":
+      title =
+        "Question Updated";
+      break;
+
+    case "question_deleted":
+      title =
+        "Question Deleted";
+      break;
+
+    case "question_assigned":
+      title =
+        "Question Assigned";
+      break;
+
+    case "question_escalated":
+      title =
+        "Question Escalated";
+      break;
+
+    case "question_closed":
+      title =
+        "Question Closed";
+      break;
+
+    case "question_reopened":
+      title =
+        "Question Reopened";
+      break;
+
+    case "question_replied":
+      title =
+        "Question Reply Received";
+      break;
+
+    case "comment_added":
+      title =
+        "Comment Added";
+      break;
+
+    case "status_changed":
+      title =
+        "Question Status Changed";
+      break;
+
+    case "priority_changed":
+      title =
+        "Question Priority Changed";
+      break;
+
+    case "system_notification":
+      title =
+        "System Notification";
+      break;
+
+    case "user_mentioned":
+      title =
+        "You Were Mentioned";
+      break;
+
+    case "reminder":
+      title =
+        "Question Reminder";
+      break;
+
+    default:
+      title =
+        "Question Notification";
+  }
+
+  // =================================================
+  // NOTIFICATION MESSAGE
+  // =================================================
+  let message =
+    `${question.name} submitted a new question.`;
+
+  switch (notificationType) {
+    case "question_created":
+      message =
+        `${question.name} submitted a new question.`;
+      break;
+
+    case "question_answered":
+      message =
+        `The question submitted by ${question.name} has been answered.`;
+      break;
+
+    case "question_archived":
+      message =
+        `The question submitted by ${question.name} has been archived.`;
+      break;
+
+    case "question_updated":
+      message =
+        `The question submitted by ${question.name} has been updated.`;
+      break;
+
+    case "question_deleted":
+      message =
+        `The question submitted by ${question.name} has been deleted.`;
+      break;
+
+    case "question_assigned":
+      message =
+        `The question submitted by ${question.name} has been assigned.`;
+      break;
+
+    case "question_escalated":
+      message =
+        `The question submitted by ${question.name} has been escalated.`;
+      break;
+
+    case "question_closed":
+      message =
+        `The question submitted by ${question.name} has been closed.`;
+      break;
+
+    case "question_reopened":
+      message =
+        `The question submitted by ${question.name} has been reopened.`;
+      break;
+
+    case "question_replied":
+      message =
+        `${question.name}'s question has received a reply.`;
+      break;
+
+    case "comment_added":
+      message =
+        `A comment was added to ${question.name}'s question.`;
+      break;
+
+    case "status_changed":
+      message =
+        `${question.name}'s question status has changed.`;
+      break;
+
+    case "priority_changed":
+      message =
+        `${question.name}'s question priority has changed.`;
+      break;
+
+    case "system_notification":
+      message =
+        `There is a system notification related to ${question.name}'s question.`;
+      break;
+
+    case "user_mentioned":
+      message =
+        `You were mentioned in ${question.name}'s question.`;
+      break;
+
+    case "reminder":
+      message =
+        `Reminder regarding ${question.name}'s question.`;
+      break;
+
+    default:
+      message =
+        `${question.name} submitted a new question.`;
+  }
+
+  // =================================================
+  // ROLES TO RECEIVE THE NOTIFICATION
+  // =================================================
+  const roles = [
+    "admin",
+    "manager",
+    "support",
+  ];
+
+  // =================================================
+  // CREATE NOTIFICATION FOR EACH ROLE
+  // =================================================
+  const createdNotifications = [];
+
+  for (const role of roles) {
+    const notificationData = {
+      // ---------------------------------------------
+      // NOTIFICATION INFORMATION
+      // ---------------------------------------------
+      type: notificationType,
+
+      title,
+
+      message,
+
+      // ---------------------------------------------
+      // QUESTION INFORMATION
+      // ---------------------------------------------
+      questionId:
+        question._id,
+
+      questionName:
+        question.name,
+
+      questionEmail:
+        question.email,
+
+      // ---------------------------------------------
+      // USER INFORMATION
+      // ---------------------------------------------
+      userId:
+        userInfo?.userId ||
+        question.userId ||
+        null,
+
+      userName:
+        question.name,
+
+      userEmail:
+        question.email,
+
+      userRole:
+        userInfo?.role ||
+        "user",
+
+      // ---------------------------------------------
+      // NOTIFICATION STATUS
+      // IMPORTANT:
+      // DO NOT USE question.status HERE
+      // ---------------------------------------------
+      status: "new",
+
+      priority:
+        question.priority ||
+        "normal",
+
+      // ---------------------------------------------
+      // TARGET
+      // ---------------------------------------------
+      targetRoles: [role],
+
+      targetUserId: null,
+
+      targetUserEmail: null,
+
+      targetUserRole: role,
+
+      // ---------------------------------------------
+      // SCOPE
+      // ---------------------------------------------
+      isGlobal: false,
+
+      // ---------------------------------------------
+      // READ STATE
+      // ---------------------------------------------
+      isRead: false,
+
+      readAt: null,
+
+      // ---------------------------------------------
+      // METADATA
+      // ---------------------------------------------
+      metadata: {
+        questionId:
+          question._id,
+
+        category:
+          question.category,
+
+        // This is allowed to be "pending"
+        // because it is metadata, NOT notification.status.
+        questionStatus:
+          question.status,
+
+        priority:
+          question.priority,
+
+        submittedAt:
+          question.createdAt,
+      },
+
+      // ---------------------------------------------
+      // CREATOR
+      // ---------------------------------------------
+      createdBy: {
+        userId:
+          userInfo?.userId ||
+          question.userId ||
+          null,
+
+        userName:
+          question.name,
+
+        userEmail:
+          question.email,
+      },
+
+      // ---------------------------------------------
+      // ACTIVE
+      // ---------------------------------------------
+      isActive: true,
+    };
+
+    const notification =
+      await Notification.create(
+        notificationData
+      );
+
+    createdNotifications.push(
+      notification
+    );
+  }
+
+  return createdNotifications;
 };
 
 // ===========================================
@@ -1813,11 +2175,15 @@ const getClientIP = (req) => {
 // 1. Submit Question
 exports.submitQuestion = async (req, res) => {
   try {
+    // =================================================
+    // VALIDATION RESULT
+    // =================================================
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
+
         errors: errors.array().map((e) => ({
           field: e.path,
           message: e.msg,
@@ -1825,135 +2191,287 @@ exports.submitQuestion = async (req, res) => {
       });
     }
 
-    const { name, email, phone, question, category, priority } = req.body;
+    // =================================================
+    // REQUEST DATA
+    // =================================================
+    const {
+      name,
+      email,
+      phone,
+      question,
+      category,
+      priority,
+    } = req.body;
 
-    // Validate required fields
+    // =================================================
+    // REQUIRED FIELDS
+    // =================================================
     if (!name || !email || !question) {
       return res.status(400).json({
         success: false,
-        message: "Name, email, and question are required",
+        message:
+          "Name, email, and question are required",
       });
     }
 
-    // Check for duplicate submissions (within 5 minutes)
-    const recentSubmission = await Question.findOne({
-      email: email.toLowerCase().trim(),
-      question: question.trim(),
-      createdAt: {
-        $gte: new Date(Date.now() - 5 * 60 * 1000),
-      },
-    });
+    // =================================================
+    // NORMALIZE INPUT
+    // =================================================
+    const normalizedName =
+      String(name).trim();
+
+    const normalizedEmail =
+      String(email)
+        .trim()
+        .toLowerCase();
+
+    const normalizedQuestion =
+      String(question).trim();
+
+    // =================================================
+    // CHECK DUPLICATE SUBMISSION
+    // =================================================
+    const recentSubmission =
+      await Question.findOne({
+        email: normalizedEmail,
+
+        question: normalizedQuestion,
+
+        createdAt: {
+          $gte: new Date(
+            Date.now() -
+              5 * 60 * 1000
+          ),
+        },
+      });
 
     if (recentSubmission) {
       return res.status(429).json({
         success: false,
-        message: "Please wait 5 minutes before submitting again",
+
+        message:
+          "Please wait 5 minutes before submitting again",
       });
     }
 
-    // Get user info from request
-    const userId = req.user?.id || null;
-    const userRole = req.user?.role || "user";
-    const ipAddress = getClientIP(req);
-    const userAgent = req.headers["user-agent"] || null;
+    // =================================================
+    // USER INFORMATION
+    // =================================================
+    const userId =
+      req.user?.id || null;
 
-    // Create question
-    const questionData = new Question({
-      userId,
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      phone: phone?.trim() || null,
-      question: question.trim(),
-      category: category || "general",
-      priority: priority || "normal",
-      ipAddress,
-      userAgent,
-      status: "pending",
-    });
+    const userRole =
+      req.user?.role || "user";
 
+    const ipAddress =
+      getClientIP(req);
+
+    const userAgent =
+      req.headers["user-agent"] ||
+      null;
+
+    // =================================================
+    // CREATE QUESTION
+    // =================================================
+    const questionData =
+      new Question({
+        userId,
+
+        name: normalizedName,
+
+        email: normalizedEmail,
+
+        phone:
+          phone?.trim() || null,
+
+        question:
+          normalizedQuestion,
+
+        category:
+          category || "general",
+
+        priority:
+          priority || "normal",
+
+        ipAddress,
+
+        userAgent,
+
+        // IMPORTANT:
+        // This belongs to Question.
+        // "pending" is correct here.
+        status: "pending",
+      });
+
+    // =================================================
+    // SAVE QUESTION
+    // =================================================
     await questionData.save();
-    console.log(`✅ Question created: ${questionData._id}`);
 
-    // ===========================================
+    console.log(
+      `✅ Question created: ${questionData._id}`
+    );
+
+    // =================================================
     // USER INFO FOR NOTIFICATIONS
-    // ===========================================
+    // =================================================
     const userInfo = {
-      userId: userId,
-      email: email,
+      userId,
+      email: normalizedEmail,
       role: userRole,
     };
 
-    // ===========================================
+    // =================================================
     // CREATE ROLE-BASED NOTIFICATIONS
-    // ===========================================
+    // =================================================
     try {
-      await createAllRoleNotifications(questionData, "question_created", userInfo);
-      console.log("✅ Notifications created successfully");
+      await createAllRoleNotifications(
+        questionData,
+        "question_created",
+        userInfo
+      );
+
+      console.log(
+        "✅ Notifications created successfully"
+      );
     } catch (notificationError) {
-      console.error("❌ Failed to create notifications:", notificationError.message);
-      // Don't fail the request
+      console.error(
+        "❌ Failed to create notifications:",
+        notificationError
+      );
+
+      // IMPORTANT:
+      // Notification failure must NOT
+      // fail the question submission.
     }
 
-    // ===========================================
+    // =================================================
     // SEND EMAILS
-    // ===========================================
+    // =================================================
     try {
-      await sendQuestionEmails(questionData, "question_created", userInfo);
-      console.log("✅ Emails sent successfully");
+      await sendQuestionEmails(
+        questionData,
+        "question_created",
+        userInfo
+      );
+
+      console.log(
+        "✅ Emails sent successfully"
+      );
     } catch (emailError) {
-      console.error("❌ Failed to send emails:", emailError.message);
-      // Don't fail the request
+      console.error(
+        "❌ Failed to send emails:",
+        emailError
+      );
+
+      // Email failure must NOT
+      // fail question submission.
     }
 
-    // ===========================================
+    // =================================================
     // CREATE USER ACTIVITY
-    // ===========================================
+    // =================================================
     try {
       const activityData = {
-        userName: questionData.name,
-        userEmail: questionData.email,
-        action: "question_created",
-        description: `User ${questionData.name} submitted a question`,
+        userName:
+          questionData.name,
+
+        userEmail:
+          questionData.email,
+
+        action:
+          "question_created",
+
+        description:
+          `User ${questionData.name} submitted a question`,
+
         ipAddress,
+
         userAgent,
+
         metadata: {
-          questionId: questionData._id,
-          category: questionData.category,
-          priority: questionData.priority,
+          questionId:
+            questionData._id,
+
+          category:
+            questionData.category,
+
+          priority:
+            questionData.priority,
         },
       };
 
       // Only add userId if it exists
       if (userId) {
-        activityData.userId = userId;
+        activityData.userId =
+          userId;
       }
 
-      await UserActivity.create(activityData);
-      console.log(`✅ User activity created for ${questionData.email}`);
+      await UserActivity.create(
+        activityData
+      );
+
+      console.log(
+        `✅ User activity created for ${questionData.email}`
+      );
     } catch (activityError) {
-      console.error("❌ Failed to create user activity:", activityError.message);
-      // Don't fail the request
+      console.error(
+        "❌ Failed to create user activity:",
+        activityError
+      );
+
+      // Activity failure must NOT
+      // fail question submission.
     }
 
-    res.status(201).json({
+    // =================================================
+    // SUCCESS RESPONSE
+    // =================================================
+    return res.status(201).json({
       success: true,
-      message: "Question submitted successfully",
+
+      message:
+        "Question submitted successfully",
+
       data: {
         id: questionData._id,
-        name: questionData.name,
-        email: questionData.email,
-        question: questionData.question,
-        category: questionData.category,
-        status: questionData.status,
-        priority: questionData.priority,
-        createdAt: questionData.createdAt,
+
+        name:
+          questionData.name,
+
+        email:
+          questionData.email,
+
+        question:
+          questionData.question,
+
+        category:
+          questionData.category,
+
+        status:
+          questionData.status,
+
+        priority:
+          questionData.priority,
+
+        createdAt:
+          questionData.createdAt,
       },
     });
   } catch (error) {
-    console.error("Submit question error:", error);
-    res.status(500).json({
+    // =================================================
+    // MAIN ERROR
+    // =================================================
+    console.error(
+      "Submit question error:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
-      message: "Failed to submit question",
+
+      message:
+        "Failed to submit question",
     });
   }
 };
