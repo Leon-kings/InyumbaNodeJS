@@ -52,7 +52,7 @@
 //     return true;
 //   } catch (primaryError) {
 //     console.log("⚠️ Primary connection failed:", primaryError.message);
-    
+
 //     // Try alternative configuration (port 465 with SSL)
 //     try {
 //       console.log("🔄 Trying alternative SMTP configuration...");
@@ -81,12 +81,12 @@
 //       return { success: true, info };
 //     } catch (error) {
 //       console.log(`📧 Email attempt ${i + 1} failed:`, error.message);
-      
+
 //       // If it's a connection error, try to recreate transporter
 //       if (error.code === "ENETUNREACH" || error.code === "ECONNREFUSED") {
 //         console.log("🔄 Recreating transporter...");
 //         transporter = nodemailer.createTransport(SMTP_CONFIG);
-        
+
 //         // Re-verify
 //         try {
 //           await transporter.verify();
@@ -94,11 +94,11 @@
 //           console.log("⚠️ Re-verification failed:", verifyError.message);
 //         }
 //       }
-      
+
 //       if (i === maxRetries - 1) {
 //         return { success: false, error: error.message };
 //       }
-      
+
 //       // Wait before retry (exponential backoff)
 //       await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
 //     }
@@ -110,13 +110,6 @@
 //   sendMailWithRetry,
 //   testConnection,
 // };
-
-
-
-
-
-
-
 
 // const nodemailer = require("nodemailer");
 // const dns = require("dns");
@@ -426,20 +419,6 @@
 //   sendMailWithRetry,
 //   testConnection,
 // };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // const nodemailer = require("nodemailer");
 // const dns = require("dns");
@@ -774,15 +753,6 @@
 //   sendMailSafely,
 //   testConnection,
 // };
-
-
-
-
-
-
-
-
-
 
 // const nodemailer = require("nodemailer");
 // const dns = require("dns");
@@ -1362,17 +1332,6 @@
 //   initializeSMTP,
 // };
 
-
-
-
-
-
-
-
-
-
-
-
 // const nodemailer = require("nodemailer");
 // const dns = require("dns");
 
@@ -1817,11 +1776,6 @@
 //   sendMailSafely,
 // };
 
-
-
-
-
-
 // const nodemailer = require("nodemailer");
 // const dns = require("dns");
 
@@ -2193,12 +2147,6 @@
 //   sendMailSafely,
 // };
 
-
-
-
-
-
-
 const nodemailer = require("nodemailer");
 const dns = require("dns");
 
@@ -2208,20 +2156,15 @@ require("dotenv").config();
    ENVIRONMENT
 ============================================================ */
 
-const SMTP_HOST =
-  process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 
-const SMTP_PORT =
-  parseInt(process.env.SMTP_PORT, 10) || 587;
+const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 587;
 
-const SMTP_USER =
-  process.env.SMTP_USER || "";
+const SMTP_USER = process.env.SMTP_USER || "";
 
-const SMTP_PASS =
-  process.env.SMTP_PASS || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
 
-const ADMIN_EMAIL =
-  process.env.ADMIN_EMAIL || "";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
 
 /* ============================================================
    FORCE IPV4
@@ -2230,21 +2173,14 @@ const ADMIN_EMAIL =
 try {
   dns.setDefaultResultOrder("ipv4first");
 } catch (error) {
-  console.warn(
-    "⚠️ Could not set IPv4 preference:",
-    error.message
-  );
+  console.warn("⚠️ Could not set IPv4 preference:", error.message);
 }
 
 /* ============================================================
    IPV4 DNS LOOKUP
 ============================================================ */
 
-const ipv4Lookup = (
-  hostname,
-  options,
-  callback
-) => {
+const ipv4Lookup = (hostname, options, callback) => {
   dns.lookup(
     hostname,
     {
@@ -2256,12 +2192,8 @@ const ipv4Lookup = (
         return callback(error);
       }
 
-      callback(
-        null,
-        address,
-        family
-      );
-    }
+      callback(null, address, family);
+    },
   );
 };
 
@@ -2270,12 +2202,7 @@ const ipv4Lookup = (
 ============================================================ */
 
 const isSMTPConfigured = () => {
-  return Boolean(
-    SMTP_HOST &&
-    SMTP_PORT &&
-    SMTP_USER &&
-    SMTP_PASS
-  );
+  return Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS);
 };
 
 /* ============================================================
@@ -2283,8 +2210,7 @@ const isSMTPConfigured = () => {
 ============================================================ */
 
 const createTransporter = () => {
-  const secure =
-    SMTP_PORT === 465;
+  const secure = SMTP_PORT === 465;
 
   return nodemailer.createTransport({
     host: SMTP_HOST,
@@ -2344,13 +2270,10 @@ let transporter = null;
 const getTransporter = () => {
   if (!transporter) {
     if (!isSMTPConfigured()) {
-      throw new Error(
-        "SMTP configuration is incomplete"
-      );
+      throw new Error("SMTP configuration is incomplete");
     }
 
-    transporter =
-      createTransporter();
+    transporter = createTransporter();
   }
 
   return transporter;
@@ -2363,26 +2286,20 @@ const getTransporter = () => {
 const testConnection = async () => {
   try {
     if (!isSMTPConfigured()) {
-      console.warn(
-        "⚠️ SMTP is not configured"
-      );
+      console.warn("⚠️ SMTP is not configured");
 
       return {
         success: false,
         connected: false,
-        error:
-          "SMTP configuration is incomplete",
+        error: "SMTP configuration is incomplete",
       };
     }
 
-    const smtp =
-      getTransporter();
+    const smtp = getTransporter();
 
     await smtp.verify();
 
-    console.log(
-      "✅ SMTP connection verified successfully"
-    );
+    console.log("✅ SMTP connection verified successfully");
 
     return {
       success: true,
@@ -2390,10 +2307,7 @@ const testConnection = async () => {
       error: null,
     };
   } catch (error) {
-    console.error(
-      "❌ SMTP verification failed:",
-      error.message
-    );
+    console.error("❌ SMTP verification failed:", error.message);
 
     return {
       success: false,
@@ -2407,45 +2321,29 @@ const testConnection = async () => {
    SEND MAIL
 ============================================================ */
 
-const sendMail = async (
-  mailOptions
-) => {
+const sendMail = async (mailOptions) => {
   try {
     if (!isSMTPConfigured()) {
       return {
         success: false,
-        error:
-          "SMTP configuration is incomplete",
+        error: "SMTP configuration is incomplete",
       };
     }
 
-    if (
-      !mailOptions ||
-      typeof mailOptions !== "object"
-    ) {
+    if (!mailOptions || typeof mailOptions !== "object") {
       return {
         success: false,
-        error:
-          "Mail options are required",
+        error: "Mail options are required",
       };
     }
 
-    const smtp =
-      getTransporter();
+    const smtp = getTransporter();
 
-    const info =
-      await smtp.sendMail(
-        mailOptions
-      );
+    const info = await smtp.sendMail(mailOptions);
 
-    console.log(
-      "✅ Email sent successfully"
-    );
+    console.log("✅ Email sent successfully");
 
-    console.log(
-      "📨 Message ID:",
-      info.messageId
-    );
+    console.log("📨 Message ID:", info.messageId);
 
     return {
       success: true,
@@ -2453,10 +2351,7 @@ const sendMail = async (
       error: null,
     };
   } catch (error) {
-    console.error(
-      "❌ Email sending failed:",
-      error.message
-    );
+    console.error("❌ Email sending failed:", error.message);
 
     return {
       success: false,
@@ -2513,8 +2408,7 @@ const sendEmail = async ({
   if (!to) {
     return {
       success: false,
-      error:
-        "Email recipient is required",
+      error: "Email recipient is required",
     };
   }
 
@@ -2525,8 +2419,7 @@ const sendEmail = async ({
   if (!subject) {
     return {
       success: false,
-      error:
-        "Email subject is required",
+      error: "Email subject is required",
     };
   }
 
@@ -2537,8 +2430,7 @@ const sendEmail = async ({
   if (!text && !html) {
     return {
       success: false,
-      error:
-        "Email text or HTML content is required",
+      error: "Email text or HTML content is required",
     };
   }
 
@@ -2547,10 +2439,7 @@ const sendEmail = async ({
   ========================================================== */
 
   const mailOptions = {
-    from:
-      from ||
-      process.env.SMTP_FROM ||
-      SMTP_USER,
+    from: from || process.env.ADMIN_EMAIL || SMTP_USER,
 
     to,
 
@@ -2597,71 +2486,44 @@ const sendEmail = async ({
      SEND THROUGH MAIN MAIL FUNCTION
   ========================================================== */
 
-  return await sendMailWithRetry(
-    mailOptions,
-    3
-  );
+  return await sendMailWithRetry(mailOptions, 3);
 };
 
 /* ============================================================
    SEND MAIL WITH RETRY
 ============================================================ */
 
-const sendMailWithRetry = async (
-  mailOptions,
-  maxRetries = 3
-) => {
+const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
   let lastError = null;
 
-  for (
-    let attempt = 1;
-    attempt <= maxRetries;
-    attempt++
-  ) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const result =
-        await sendMail(
-          mailOptions
-        );
+      const result = await sendMail(mailOptions);
 
       if (result.success) {
         return result;
       }
 
-      lastError =
-        result.error;
+      lastError = result.error;
     } catch (error) {
-      lastError =
-        error.message;
+      lastError = error.message;
     }
 
     /* ========================================================
        RETRY
     ======================================================== */
 
-    if (
-      attempt < maxRetries
-    ) {
-      console.log(
-        `🔄 Retrying email (${attempt + 1}/${maxRetries})...`
-      );
+    if (attempt < maxRetries) {
+      console.log(`🔄 Retrying email (${attempt + 1}/${maxRetries})...`);
 
-      await new Promise(
-        (resolve) =>
-          setTimeout(
-            resolve,
-            attempt * 2000
-          )
-      );
+      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
     }
   }
 
   return {
     success: false,
 
-    error:
-      lastError ||
-      "Email sending failed",
+    error: lastError || "Email sending failed",
   };
 };
 
@@ -2669,19 +2531,11 @@ const sendMailWithRetry = async (
    SAFE SEND
 ============================================================ */
 
-const sendMailSafely = async (
-  mailOptions
-) => {
+const sendMailSafely = async (mailOptions) => {
   try {
-    return await sendMailWithRetry(
-      mailOptions,
-      3
-    );
+    return await sendMailWithRetry(mailOptions, 3);
   } catch (error) {
-    console.error(
-      "⚠️ Email service error:",
-      error.message
-    );
+    console.error("⚠️ Email service error:", error.message);
 
     return {
       success: false,
@@ -2702,11 +2556,9 @@ const getSMTPInfo = () => {
 
     user: SMTP_USER,
 
-    adminEmail:
-      ADMIN_EMAIL,
+    adminEmail: ADMIN_EMAIL,
 
-    configured:
-      isSMTPConfigured(),
+    configured: isSMTPConfigured(),
   };
 };
 
