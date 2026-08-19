@@ -1822,6 +1822,383 @@
 
 
 
+// const nodemailer = require("nodemailer");
+// const dns = require("dns");
+
+// require("dotenv").config();
+
+// /* ============================================================
+//    ENVIRONMENT
+// ============================================================ */
+
+// const SMTP_HOST =
+//   process.env.SMTP_HOST || "smtp.gmail.com";
+
+// const SMTP_PORT =
+//   parseInt(process.env.SMTP_PORT, 10) || 587;
+
+// const SMTP_USER =
+//   process.env.SMTP_USER || "";
+
+// const SMTP_PASS =
+//   process.env.SMTP_PASS || "";
+
+// const ADMIN_EMAIL =
+//   process.env.ADMIN_EMAIL || "";
+
+// /* ============================================================
+//    FORCE IPV4
+// ============================================================ */
+
+// try {
+//   dns.setDefaultResultOrder("ipv4first");
+// } catch (error) {
+//   console.warn(
+//     "⚠️ Could not set IPv4 preference:",
+//     error.message
+//   );
+// }
+
+// /* ============================================================
+//    IPV4 DNS LOOKUP
+// ============================================================ */
+
+// const ipv4Lookup = (
+//   hostname,
+//   options,
+//   callback
+// ) => {
+//   dns.lookup(
+//     hostname,
+//     {
+//       family: 4,
+//       all: false,
+//     },
+//     (error, address, family) => {
+//       if (error) {
+//         return callback(error);
+//       }
+
+//       callback(
+//         null,
+//         address,
+//         family
+//       );
+//     }
+//   );
+// };
+
+// /* ============================================================
+//    SMTP CONFIGURATION CHECK
+// ============================================================ */
+
+// const isSMTPConfigured = () => {
+//   return Boolean(
+//     SMTP_HOST &&
+//     SMTP_PORT &&
+//     SMTP_USER &&
+//     SMTP_PASS
+//   );
+// };
+
+// /* ============================================================
+//    CREATE TRANSPORTER
+// ============================================================ */
+
+// const createTransporter = () => {
+//   const secure = SMTP_PORT === 465;
+
+//   return nodemailer.createTransport({
+//     host: SMTP_HOST,
+
+//     port: SMTP_PORT,
+
+//     secure,
+
+//     family: 4,
+
+//     auth: {
+//       user: SMTP_USER,
+//       pass: SMTP_PASS,
+//     },
+
+//     lookup: ipv4Lookup,
+
+//     tls: {
+//       servername: SMTP_HOST,
+//       minVersion: "TLSv1.2",
+//       rejectUnauthorized: false,
+//     },
+
+//     connectionTimeout: 30000,
+
+//     greetingTimeout: 30000,
+
+//     socketTimeout: 60000,
+
+//     pool: true,
+
+//     maxConnections: 3,
+
+//     maxMessages: 1000,
+//   });
+// };
+
+// /* ============================================================
+//    SINGLE REUSABLE TRANSPORTER
+// ============================================================ */
+
+// let transporter = null;
+
+// /* ============================================================
+//    GET TRANSPORTER
+// ============================================================ */
+
+// const getTransporter = () => {
+//   if (!transporter) {
+//     if (!isSMTPConfigured()) {
+//       throw new Error(
+//         "SMTP configuration is incomplete"
+//       );
+//     }
+
+//     transporter = createTransporter();
+//   }
+
+//   return transporter;
+// };
+
+// /* ============================================================
+//    CHECK SMTP CONNECTION
+// ============================================================ */
+
+// const testConnection = async () => {
+//   try {
+//     if (!isSMTPConfigured()) {
+//       console.warn(
+//         "⚠️ SMTP is not configured"
+//       );
+
+//       return {
+//         success: false,
+//         connected: false,
+//         error: "SMTP configuration is incomplete",
+//       };
+//     }
+
+//     const smtp = getTransporter();
+
+//     await smtp.verify();
+
+//     console.log(
+//       "✅ SMTP connection verified successfully"
+//     );
+
+//     return {
+//       success: true,
+//       connected: true,
+//       error: null,
+//     };
+//   } catch (error) {
+//     console.error(
+//       "❌ SMTP verification failed:",
+//       error.message
+//     );
+
+//     return {
+//       success: false,
+//       connected: false,
+//       error: error.message,
+//     };
+//   }
+// };
+
+// /* ============================================================
+//    SEND MAIL
+// ============================================================ */
+
+// const sendMail = async (mailOptions) => {
+//   try {
+//     if (!isSMTPConfigured()) {
+//       return {
+//         success: false,
+//         error: "SMTP configuration is incomplete",
+//       };
+//     }
+
+//     const smtp = getTransporter();
+
+//     const info = await smtp.sendMail(
+//       mailOptions
+//     );
+
+//     console.log(
+//       "✅ Email sent successfully"
+//     );
+
+//     console.log(
+//       "📨 Message ID:",
+//       info.messageId
+//     );
+
+//     return {
+//       success: true,
+//       info,
+//       error: null,
+//     };
+//   } catch (error) {
+//     console.error(
+//       "❌ Email sending failed:",
+//       error.message
+//     );
+
+//     return {
+//       success: false,
+//       error: error.message,
+//     };
+//   }
+// };
+
+// /* ============================================================
+//    SEND MAIL WITH RETRY
+// ============================================================ */
+
+// const sendMailWithRetry = async (
+//   mailOptions,
+//   maxRetries = 3
+// ) => {
+//   let lastError = null;
+
+//   for (
+//     let attempt = 1;
+//     attempt <= maxRetries;
+//     attempt++
+//   ) {
+//     try {
+//       const result =
+//         await sendMail(mailOptions);
+
+//       if (result.success) {
+//         return result;
+//       }
+
+//       lastError = result.error;
+//     } catch (error) {
+//       lastError = error.message;
+//     }
+
+//     if (
+//       attempt < maxRetries
+//     ) {
+//       console.log(
+//         `🔄 Retrying email (${attempt + 1}/${maxRetries})...`
+//       );
+
+//       await new Promise(
+//         (resolve) =>
+//           setTimeout(
+//             resolve,
+//             attempt * 2000
+//           )
+//       );
+//     }
+//   }
+
+//   return {
+//     success: false,
+//     error:
+//       lastError ||
+//       "Email sending failed",
+//   };
+// };
+
+// /* ============================================================
+//    SAFE SEND
+// ============================================================ */
+
+// const sendMailSafely = async (
+//   mailOptions
+// ) => {
+//   try {
+//     return await sendMailWithRetry(
+//       mailOptions,
+//       3
+//     );
+//   } catch (error) {
+//     console.error(
+//       "⚠️ Email service error:",
+//       error.message
+//     );
+
+//     return {
+//       success: false,
+//       error: error.message,
+//     };
+//   }
+// };
+
+// /* ============================================================
+//    SMTP INFORMATION
+// ============================================================ */
+
+// const getSMTPInfo = () => {
+//   return {
+//     host: SMTP_HOST,
+//     port: SMTP_PORT,
+//     user: SMTP_USER,
+//     adminEmail: ADMIN_EMAIL,
+//     configured: isSMTPConfigured(),
+//   };
+// };
+
+// /* ============================================================
+//    NO AUTOMATIC SMTP INITIALIZATION
+// ============================================================ */
+
+// /*
+//  * IMPORTANT:
+//  *
+//  * DO NOT call testConnection() here.
+//  *
+//  * This means your server will NOT automatically:
+//  *
+//  * ❌ connect to Gmail during startup
+//  * ❌ test port 587
+//  * ❌ test port 465
+//  * ❌ print SMTP SERVICE: OFFLINE
+//  * ❌ delay Render deployment
+//  *
+//  * SMTP is only contacted when sendMail() is actually called.
+//  */
+
+// /* ============================================================
+//    EXPORT
+// ============================================================ */
+
+// module.exports = {
+//   transporter,
+
+//   getTransporter,
+
+//   getSMTPInfo,
+
+//   isSMTPConfigured,
+
+//   testConnection,
+
+//   sendMail,
+
+//   sendMailWithRetry,
+
+//   sendMailSafely,
+// };
+
+
+
+
+
+
+
 const nodemailer = require("nodemailer");
 const dns = require("dns");
 
@@ -1906,7 +2283,8 @@ const isSMTPConfigured = () => {
 ============================================================ */
 
 const createTransporter = () => {
-  const secure = SMTP_PORT === 465;
+  const secure =
+    SMTP_PORT === 465;
 
   return nodemailer.createTransport({
     host: SMTP_HOST,
@@ -1915,6 +2293,7 @@ const createTransporter = () => {
 
     secure,
 
+    // Force IPv4
     family: 4,
 
     auth: {
@@ -1930,11 +2309,19 @@ const createTransporter = () => {
       rejectUnauthorized: false,
     },
 
-    connectionTimeout: 30000,
+    // ========================================================
+    // CONNECTION TIMEOUTS
+    // ========================================================
 
-    greetingTimeout: 30000,
+    connectionTimeout: 150000,
 
-    socketTimeout: 60000,
+    greetingTimeout: 150000,
+
+    socketTimeout: 150000,
+
+    // ========================================================
+    // CONNECTION POOL
+    // ========================================================
 
     pool: true,
 
@@ -1962,7 +2349,8 @@ const getTransporter = () => {
       );
     }
 
-    transporter = createTransporter();
+    transporter =
+      createTransporter();
   }
 
   return transporter;
@@ -1982,11 +2370,13 @@ const testConnection = async () => {
       return {
         success: false,
         connected: false,
-        error: "SMTP configuration is incomplete",
+        error:
+          "SMTP configuration is incomplete",
       };
     }
 
-    const smtp = getTransporter();
+    const smtp =
+      getTransporter();
 
     await smtp.verify();
 
@@ -2017,20 +2407,36 @@ const testConnection = async () => {
    SEND MAIL
 ============================================================ */
 
-const sendMail = async (mailOptions) => {
+const sendMail = async (
+  mailOptions
+) => {
   try {
     if (!isSMTPConfigured()) {
       return {
         success: false,
-        error: "SMTP configuration is incomplete",
+        error:
+          "SMTP configuration is incomplete",
       };
     }
 
-    const smtp = getTransporter();
+    if (
+      !mailOptions ||
+      typeof mailOptions !== "object"
+    ) {
+      return {
+        success: false,
+        error:
+          "Mail options are required",
+      };
+    }
 
-    const info = await smtp.sendMail(
-      mailOptions
-    );
+    const smtp =
+      getTransporter();
+
+    const info =
+      await smtp.sendMail(
+        mailOptions
+      );
 
     console.log(
       "✅ Email sent successfully"
@@ -2060,6 +2466,144 @@ const sendMail = async (mailOptions) => {
 };
 
 /* ============================================================
+   SEND EMAIL
+============================================================ */
+
+/*
+ * IMPORTANT
+ *
+ * Your controllers use:
+ *
+ * const { sendEmail } =
+ *   require("../services/emailTransporter");
+ *
+ * Therefore sendEmail MUST exist.
+ *
+ * This function accepts:
+ *
+ * {
+ *   to,
+ *   subject,
+ *   text,
+ *   html,
+ *   cc,
+ *   bcc,
+ *   replyTo,
+ *   attachments
+ * }
+ *
+ * and converts it into Nodemailer's mailOptions.
+ */
+
+const sendEmail = async ({
+  to,
+  subject,
+  text,
+  html,
+  cc,
+  bcc,
+  replyTo,
+  attachments,
+  from,
+}) => {
+  /* ==========================================================
+     VALIDATE RECIPIENT
+  ========================================================== */
+
+  if (!to) {
+    return {
+      success: false,
+      error:
+        "Email recipient is required",
+    };
+  }
+
+  /* ==========================================================
+     VALIDATE SUBJECT
+  ========================================================== */
+
+  if (!subject) {
+    return {
+      success: false,
+      error:
+        "Email subject is required",
+    };
+  }
+
+  /* ==========================================================
+     VALIDATE CONTENT
+  ========================================================== */
+
+  if (!text && !html) {
+    return {
+      success: false,
+      error:
+        "Email text or HTML content is required",
+    };
+  }
+
+  /* ==========================================================
+     BUILD MAIL OPTIONS
+  ========================================================== */
+
+  const mailOptions = {
+    from:
+      from ||
+      process.env.SMTP_FROM ||
+      SMTP_USER,
+
+    to,
+
+    subject,
+
+    ...(text
+      ? {
+          text,
+        }
+      : {}),
+
+    ...(html
+      ? {
+          html,
+        }
+      : {}),
+
+    ...(cc
+      ? {
+          cc,
+        }
+      : {}),
+
+    ...(bcc
+      ? {
+          bcc,
+        }
+      : {}),
+
+    ...(replyTo
+      ? {
+          replyTo,
+        }
+      : {}),
+
+    ...(attachments
+      ? {
+          attachments,
+        }
+      : {}),
+  };
+
+  /* ==========================================================
+     SEND THROUGH MAIN MAIL FUNCTION
+  ========================================================== */
+
+  return await sendMailWithRetry(
+    mailOptions,
+    3
+  );
+};
+
+/* ============================================================
    SEND MAIL WITH RETRY
 ============================================================ */
 
@@ -2076,16 +2620,24 @@ const sendMailWithRetry = async (
   ) {
     try {
       const result =
-        await sendMail(mailOptions);
+        await sendMail(
+          mailOptions
+        );
 
       if (result.success) {
         return result;
       }
 
-      lastError = result.error;
+      lastError =
+        result.error;
     } catch (error) {
-      lastError = error.message;
+      lastError =
+        error.message;
     }
+
+    /* ========================================================
+       RETRY
+    ======================================================== */
 
     if (
       attempt < maxRetries
@@ -2106,6 +2658,7 @@ const sendMailWithRetry = async (
 
   return {
     success: false,
+
     error:
       lastError ||
       "Email sending failed",
@@ -2144,10 +2697,16 @@ const sendMailSafely = async (
 const getSMTPInfo = () => {
   return {
     host: SMTP_HOST,
+
     port: SMTP_PORT,
+
     user: SMTP_USER,
-    adminEmail: ADMIN_EMAIL,
-    configured: isSMTPConfigured(),
+
+    adminEmail:
+      ADMIN_EMAIL,
+
+    configured:
+      isSMTPConfigured(),
   };
 };
 
@@ -2158,9 +2717,10 @@ const getSMTPInfo = () => {
 /*
  * IMPORTANT:
  *
- * DO NOT call testConnection() here.
+ * DO NOT call testConnection()
+ * here.
  *
- * This means your server will NOT automatically:
+ * The server will NOT automatically:
  *
  * ❌ connect to Gmail during startup
  * ❌ test port 587
@@ -2168,7 +2728,15 @@ const getSMTPInfo = () => {
  * ❌ print SMTP SERVICE: OFFLINE
  * ❌ delay Render deployment
  *
- * SMTP is only contacted when sendMail() is actually called.
+ * SMTP is only contacted when:
+ *
+ * sendMail()
+ *
+ * or
+ *
+ * sendEmail()
+ *
+ * is actually called.
  */
 
 /* ============================================================
@@ -2176,15 +2744,34 @@ const getSMTPInfo = () => {
 ============================================================ */
 
 module.exports = {
+  /*
+   * Nodemailer transporter
+   *
+   * IMPORTANT:
+   * This is the current cached value.
+   * Use getTransporter() when you need
+   * the actual initialized transporter.
+   */
   transporter,
 
+  /*
+   * Transporter functions
+   */
   getTransporter,
 
+  /*
+   * SMTP information
+   */
   getSMTPInfo,
 
   isSMTPConfigured,
 
   testConnection,
+
+  /*
+   * Main email functions
+   */
+  sendEmail,
 
   sendMail,
 
