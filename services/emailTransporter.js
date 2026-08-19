@@ -1,105 +1,72 @@
-
 // const nodemailer = require("nodemailer");
-// const dns = require("dns");
 
 // require("dotenv").config();
 
 // /* ============================================================
-//    ENVIRONMENT
+//    RESEND SMTP ENVIRONMENT
 // ============================================================ */
 
-// const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+// const SMTP_HOST =
+//   process.env.SMTP_HOST || "smtp.resend.com";
 
-// const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 587;
+// const SMTP_PORT =
+//   parseInt(process.env.SMTP_PORT, 10) || 465;
 
-// const SMTP_USER = process.env.SMTP_USER || "";
+// const SMTP_USER =
+//   process.env.SMTP_USER || "resend";
 
-// const SMTP_PASS = process.env.SMTP_PASS || "";
+// const SMTP_PASS =
+//   process.env.SMTP_PASS || "";
 
-// const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
+// const ADMIN_EMAIL =
+//   process.env.ADMIN_EMAIL || "";
 
-// /* ============================================================
-//    FORCE IPV4
-// ============================================================ */
-
-// try {
-//   dns.setDefaultResultOrder("ipv4first");
-// } catch (error) {
-//   console.warn("⚠️ Could not set IPv4 preference:", error.message);
-// }
-
-// /* ============================================================
-//    IPV4 DNS LOOKUP
-// ============================================================ */
-
-// const ipv4Lookup = (hostname, options, callback) => {
-//   dns.lookup(
-//     hostname,
-//     {
-//       family: 4,
-//       all: false,
-//     },
-//     (error, address, family) => {
-//       if (error) {
-//         return callback(error);
-//       }
-
-//       callback(null, address, family);
-//     },
-//   );
-// };
+// const EMAIL_FROM_NAME =
+//   process.env.EMAIL_FROM_NAME || "INYUMBA";
 
 // /* ============================================================
 //    SMTP CONFIGURATION CHECK
 // ============================================================ */
 
 // const isSMTPConfigured = () => {
-//   return Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS);
+//   return Boolean(
+//     SMTP_HOST &&
+//     SMTP_PORT &&
+//     SMTP_USER &&
+//     SMTP_PASS &&
+//     ADMIN_EMAIL
+//   );
 // };
 
 // /* ============================================================
-//    CREATE TRANSPORTER
+//    CREATE RESEND SMTP TRANSPORTER
 // ============================================================ */
 
 // const createTransporter = () => {
-//   const secure = SMTP_PORT === 465;
-
 //   return nodemailer.createTransport({
-//     host: SMTP_HOST,
 
-//     port: SMTP_PORT,
+//     host: "smtp.resend.com",
 
-//     secure,
+//     port: 465,
 
-//     // Force IPv4
-//     family: 4,
+//     secure: true,
 
 //     auth: {
-//       user: SMTP_USER,
+//       user: "resend",
 //       pass: SMTP_PASS,
 //     },
 
-//     lookup: ipv4Lookup,
-
 //     tls: {
-//       servername: SMTP_HOST,
 //       minVersion: "TLSv1.2",
-//       rejectUnauthorized: false,
+//       servername: "smtp.resend.com",
+//       rejectUnauthorized: true,
 //     },
-
-//     // ========================================================
-//     // CONNECTION TIMEOUTS
-//     // ========================================================
 
 //     connectionTimeout: 150000,
 
 //     greetingTimeout: 150000,
 
 //     socketTimeout: 150000,
-
-//     // ========================================================
-//     // CONNECTION POOL
-//     // ========================================================
 
 //     pool: true,
 
@@ -109,20 +76,14 @@
 //   });
 // };
 
-// /* ============================================================
-//    SINGLE REUSABLE TRANSPORTER
-// ============================================================ */
-
 // let transporter = null;
-
-// /* ============================================================
-//    GET TRANSPORTER
-// ============================================================ */
 
 // const getTransporter = () => {
 //   if (!transporter) {
 //     if (!isSMTPConfigured()) {
-//       throw new Error("SMTP configuration is incomplete");
+//       throw new Error(
+//         "Resend SMTP configuration is incomplete"
+//       );
 //     }
 
 //     transporter = createTransporter();
@@ -131,19 +92,18 @@
 //   return transporter;
 // };
 
-// /* ============================================================
-//    CHECK SMTP CONNECTION
-// ============================================================ */
-
 // const testConnection = async () => {
 //   try {
 //     if (!isSMTPConfigured()) {
-//       console.warn("⚠️ SMTP is not configured");
+//       console.warn(
+//         "⚠️ Resend SMTP configuration is incomplete"
+//       );
 
 //       return {
 //         success: false,
 //         connected: false,
-//         error: "SMTP configuration is incomplete",
+//         error:
+//           "Resend SMTP configuration is incomplete",
 //       };
 //     }
 
@@ -151,7 +111,9 @@
 
 //     await smtp.verify();
 
-//     console.log("✅ SMTP connection verified successfully");
+//     console.log(
+//       "✅ Resend SMTP connection verified successfully"
+//     );
 
 //     return {
 //       success: true,
@@ -159,7 +121,10 @@
 //       error: null,
 //     };
 //   } catch (error) {
-//     console.error("❌ SMTP verification failed:", error.message);
+//     console.error(
+//       "❌ Resend SMTP verification failed:",
+//       error.message
+//     );
 
 //     return {
 //       success: false,
@@ -169,20 +134,20 @@
 //   }
 // };
 
-// /* ============================================================
-//    SEND MAIL
-// ============================================================ */
-
 // const sendMail = async (mailOptions) => {
 //   try {
 //     if (!isSMTPConfigured()) {
 //       return {
 //         success: false,
-//         error: "SMTP configuration is incomplete",
+//         error:
+//           "Resend SMTP configuration is incomplete",
 //       };
 //     }
 
-//     if (!mailOptions || typeof mailOptions !== "object") {
+//     if (
+//       !mailOptions ||
+//       typeof mailOptions !== "object"
+//     ) {
 //       return {
 //         success: false,
 //         error: "Mail options are required",
@@ -193,9 +158,14 @@
 
 //     const info = await smtp.sendMail(mailOptions);
 
-//     console.log("✅ Email sent successfully");
+//     console.log(
+//       "✅ Email sent successfully through Resend"
+//     );
 
-//     console.log("📨 Message ID:", info.messageId);
+//     console.log(
+//       "📨 Message ID:",
+//       info.messageId
+//     );
 
 //     return {
 //       success: true,
@@ -203,7 +173,10 @@
 //       error: null,
 //     };
 //   } catch (error) {
-//     console.error("❌ Email sending failed:", error.message);
+//     console.error(
+//       "❌ Resend email sending failed:",
+//       error.message
+//     );
 
 //     return {
 //       success: false,
@@ -211,36 +184,6 @@
 //     };
 //   }
 // };
-
-// /* ============================================================
-//    SEND EMAIL
-// ============================================================ */
-
-// /*
-//  * IMPORTANT
-//  *
-//  * Your controllers use:
-//  *
-//  * const { sendEmail } =
-//  *   require("../services/emailTransporter");
-//  *
-//  * Therefore sendEmail MUST exist.
-//  *
-//  * This function accepts:
-//  *
-//  * {
-//  *   to,
-//  *   subject,
-//  *   text,
-//  *   html,
-//  *   cc,
-//  *   bcc,
-//  *   replyTo,
-//  *   attachments
-//  * }
-//  *
-//  * and converts it into Nodemailer's mailOptions.
-//  */
 
 // const sendEmail = async ({
 //   to,
@@ -251,11 +194,7 @@
 //   bcc,
 //   replyTo,
 //   attachments,
-//   from,
 // }) => {
-//   /* ==========================================================
-//      VALIDATE RECIPIENT
-//   ========================================================== */
 
 //   if (!to) {
 //     return {
@@ -264,10 +203,6 @@
 //     };
 //   }
 
-//   /* ==========================================================
-//      VALIDATE SUBJECT
-//   ========================================================== */
-
 //   if (!subject) {
 //     return {
 //       success: false,
@@ -275,23 +210,17 @@
 //     };
 //   }
 
-//   /* ==========================================================
-//      VALIDATE CONTENT
-//   ========================================================== */
-
 //   if (!text && !html) {
 //     return {
 //       success: false,
-//       error: "Email text or HTML content is required",
+//       error:
+//         "Email text or HTML content is required",
 //     };
 //   }
 
-//   /* ==========================================================
-//      BUILD MAIL OPTIONS
-//   ========================================================== */
-
 //   const mailOptions = {
-//     from: from || process.env.ADMIN_EMAIL || SMTP_USER,
+
+//     from: `"${EMAIL_FROM_NAME}" <${ADMIN_EMAIL}>`,
 
 //     to,
 
@@ -334,23 +263,27 @@
 //       : {}),
 //   };
 
-//   /* ==========================================================
-//      SEND THROUGH MAIN MAIL FUNCTION
-//   ========================================================== */
-
-//   return await sendMailWithRetry(mailOptions, 3);
+//   return await sendMailWithRetry(
+//     mailOptions,
+//     3
+//   );
 // };
 
-// /* ============================================================
-//    SEND MAIL WITH RETRY
-// ============================================================ */
+// const sendMailWithRetry = async (
+//   mailOptions,
+//   maxRetries = 3
+// ) => {
 
-// const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
 //   let lastError = null;
 
-//   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+//   for (
+//     let attempt = 1;
+//     attempt <= maxRetries;
+//     attempt++
+//   ) {
 //     try {
-//       const result = await sendMail(mailOptions);
+//       const result =
+//         await sendMail(mailOptions);
 
 //       if (result.success) {
 //         return result;
@@ -361,33 +294,42 @@
 //       lastError = error.message;
 //     }
 
-//     /* ========================================================
-//        RETRY
-//     ======================================================== */
-
 //     if (attempt < maxRetries) {
-//       console.log(`🔄 Retrying email (${attempt + 1}/${maxRetries})...`);
+//       console.log(
+//         `🔄 Retrying Resend email (${attempt + 1}/${maxRetries})...`
+//       );
 
-//       await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+//       await new Promise((resolve) =>
+//         setTimeout(
+//           resolve,
+//           attempt * 2000
+//         )
+//       );
 //     }
 //   }
 
 //   return {
 //     success: false,
 
-//     error: lastError || "Email sending failed",
+//     error:
+//       lastError ||
+//       "Resend email sending failed",
 //   };
 // };
 
-// /* ============================================================
-//    SAFE SEND
-// ============================================================ */
-
-// const sendMailSafely = async (mailOptions) => {
+// const sendMailSafely = async (
+//   mailOptions
+// ) => {
 //   try {
-//     return await sendMailWithRetry(mailOptions, 3);
+//     return await sendMailWithRetry(
+//       mailOptions,
+//       3
+//     );
 //   } catch (error) {
-//     console.error("⚠️ Email service error:", error.message);
+//     console.error(
+//       "⚠️ Resend email service error:",
+//       error.message
+//     );
 
 //     return {
 //       success: false,
@@ -395,10 +337,6 @@
 //     };
 //   }
 // };
-
-// /* ============================================================
-//    SMTP INFORMATION
-// ============================================================ */
 
 // const getSMTPInfo = () => {
 //   return {
@@ -410,97 +348,24 @@
 
 //     adminEmail: ADMIN_EMAIL,
 
-//     configured: isSMTPConfigured(),
+//     fromName: EMAIL_FROM_NAME,
+
+//     configured:
+//       isSMTPConfigured(),
 //   };
 // };
 
-// /* ============================================================
-//    NO AUTOMATIC SMTP INITIALIZATION
-// ============================================================ */
-
-// /*
-//  * IMPORTANT:
-//  *
-//  * DO NOT call testConnection()
-//  * here.
-//  *
-//  * The server will NOT automatically:
-//  *
-//  * ❌ connect to Gmail during startup
-//  * ❌ test port 587
-//  * ❌ test port 465
-//  * ❌ print SMTP SERVICE: OFFLINE
-//  * ❌ delay Render deployment
-//  *
-//  * SMTP is only contacted when:
-//  *
-//  * sendMail()
-//  *
-//  * or
-//  *
-//  * sendEmail()
-//  *
-//  * is actually called.
-//  */
-
-// /* ============================================================
-//    EXPORT
-// ============================================================ */
-
 // module.exports = {
-//   /*
-//    * Nodemailer transporter
-//    *
-//    * IMPORTANT:
-//    * This is the current cached value.
-//    * Use getTransporter() when you need
-//    * the actual initialized transporter.
-//    */
 //   transporter,
-
-//   /*
-//    * Transporter functions
-//    */
 //   getTransporter,
-
-//   /*
-//    * SMTP information
-//    */
 //   getSMTPInfo,
-
 //   isSMTPConfigured,
-
 //   testConnection,
-
-//   /*
-//    * Main email functions
-//    */
 //   sendEmail,
-
 //   sendMail,
-
 //   sendMailWithRetry,
-
 //   sendMailSafely,
 // };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const nodemailer = require("nodemailer");
 
@@ -510,24 +375,17 @@ require("dotenv").config();
    RESEND SMTP ENVIRONMENT
 ============================================================ */
 
-const SMTP_HOST =
-  process.env.SMTP_HOST || "smtp.resend.com";
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.resend.com";
 
-const SMTP_PORT =
-  parseInt(process.env.SMTP_PORT, 10) || 465;
+const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 465;
 
-const SMTP_USER =
-  process.env.SMTP_USER || "resend";
+const SMTP_USER = process.env.SMTP_USER || "resend";
 
-const SMTP_PASS =
-  process.env.SMTP_PASS || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
 
-const ADMIN_EMAIL =
-  process.env.ADMIN_EMAIL || "";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
 
-const EMAIL_FROM_NAME =
-  process.env.EMAIL_FROM_NAME || "INYUMBA";
-
+const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "INYUMBA";
 
 /* ============================================================
    SMTP CONFIGURATION CHECK
@@ -535,45 +393,56 @@ const EMAIL_FROM_NAME =
 
 const isSMTPConfigured = () => {
   return Boolean(
-    SMTP_HOST &&
-    SMTP_PORT &&
-    SMTP_USER &&
-    SMTP_PASS &&
-    ADMIN_EMAIL
+    SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS && ADMIN_EMAIL,
   );
 };
-
 
 /* ============================================================
    CREATE RESEND SMTP TRANSPORTER
 ============================================================ */
 
 const createTransporter = () => {
+  console.log("================================================");
+  console.log("📧 Creating Resend SMTP transporter...");
+  console.log("================================================");
+
+  console.log("SMTP Host:", SMTP_HOST);
+  console.log("SMTP Port:", SMTP_PORT);
+  console.log("SMTP User:", SMTP_USER);
+  console.log("SMTP Password:", SMTP_PASS ? "Configured ✅" : "Missing ❌");
+  console.log("Admin Email:", ADMIN_EMAIL);
+  console.log("From Name:", EMAIL_FROM_NAME);
+
   return nodemailer.createTransport({
+    host: SMTP_HOST,
 
-    host: "smtp.resend.com",
+    port: SMTP_PORT,
 
-    port: 465,
-
-    secure: true,
+    secure: SMTP_PORT === 465,
 
     auth: {
-      user: "resend",
+      user: SMTP_USER,
       pass: SMTP_PASS,
     },
 
     tls: {
       minVersion: "TLSv1.2",
-      servername: "smtp.resend.com",
+      servername: SMTP_HOST,
       rejectUnauthorized: true,
     },
 
+    /*
+     * Resend SMTP connection timeouts.
+     */
     connectionTimeout: 150000,
 
     greetingTimeout: 150000,
 
     socketTimeout: 150000,
 
+    /*
+     * Connection pooling.
+     */
     pool: true,
 
     maxConnections: 3,
@@ -582,16 +451,20 @@ const createTransporter = () => {
   });
 };
 
+/* ============================================================
+   TRANSPORTER
+============================================================ */
 
 let transporter = null;
 
+/* ============================================================
+   GET TRANSPORTER
+============================================================ */
 
 const getTransporter = () => {
   if (!transporter) {
     if (!isSMTPConfigured()) {
-      throw new Error(
-        "Resend SMTP configuration is incomplete"
-      );
+      throw new Error("Resend SMTP configuration is incomplete");
     }
 
     transporter = createTransporter();
@@ -600,82 +473,146 @@ const getTransporter = () => {
   return transporter;
 };
 
+/* ============================================================
+   VERIFY RESEND SMTP CONNECTION
+============================================================ */
 
 const testConnection = async () => {
   try {
+    console.log("");
+    console.log("================================================");
+    console.log("🔍 VERIFYING RESEND SMTP CONNECTION");
+    console.log("================================================");
+
+    /* ---------------------------------------------
+       CHECK ENVIRONMENT
+    --------------------------------------------- */
+
     if (!isSMTPConfigured()) {
-      console.warn(
-        "⚠️ Resend SMTP configuration is incomplete"
-      );
+      console.error("❌ Resend SMTP configuration is incomplete");
+
+      console.error("Required variables:");
+
+      console.error("SMTP_HOST");
+
+      console.error("SMTP_PORT");
+
+      console.error("SMTP_USER");
+
+      console.error("SMTP_PASS");
+
+      console.error("ADMIN_EMAIL");
 
       return {
         success: false,
         connected: false,
-        error:
-          "Resend SMTP configuration is incomplete",
+        error: "Resend SMTP configuration is incomplete",
       };
     }
 
+    /* ---------------------------------------------
+       GET TRANSPORTER
+    --------------------------------------------- */
+
     const smtp = getTransporter();
+
+    /* ---------------------------------------------
+       VERIFY CONNECTION
+    --------------------------------------------- */
+
+    console.log(`🔄 Connecting to ${SMTP_HOST}:${SMTP_PORT}...`);
 
     await smtp.verify();
 
-    console.log(
-      "✅ Resend SMTP connection verified successfully"
-    );
+    /* ---------------------------------------------
+       SUCCESS
+    --------------------------------------------- */
+
+    console.log("");
+    console.log("✅ RESEND SMTP CONNECTION VERIFIED");
+
+    console.log(`✅ SMTP Server: ${SMTP_HOST}`);
+
+    console.log(`✅ SMTP Port: ${SMTP_PORT}`);
+
+    console.log(`✅ SMTP User: ${SMTP_USER}`);
+
+    console.log("================================================");
 
     return {
       success: true,
       connected: true,
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      user: SMTP_USER,
       error: null,
     };
   } catch (error) {
-    console.error(
-      "❌ Resend SMTP verification failed:",
-      error.message
-    );
+    console.error("");
+    console.error("❌ RESEND SMTP CONNECTION FAILED");
+
+    console.error("❌ Error:", error.message);
+
+    console.error("================================================");
 
     return {
       success: false,
       connected: false,
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      user: SMTP_USER,
       error: error.message,
     };
   }
 };
 
+/* ============================================================
+   SEND MAIL
+============================================================ */
 
 const sendMail = async (mailOptions) => {
   try {
+    /* ---------------------------------------------
+       CHECK SMTP CONFIGURATION
+    --------------------------------------------- */
+
     if (!isSMTPConfigured()) {
       return {
         success: false,
-        error:
-          "Resend SMTP configuration is incomplete",
+        error: "Resend SMTP configuration is incomplete",
       };
     }
 
-    if (
-      !mailOptions ||
-      typeof mailOptions !== "object"
-    ) {
+    /* ---------------------------------------------
+       VALIDATE MAIL OPTIONS
+    --------------------------------------------- */
+
+    if (!mailOptions || typeof mailOptions !== "object") {
       return {
         success: false,
         error: "Mail options are required",
       };
     }
 
+    /* ---------------------------------------------
+       GET SMTP TRANSPORTER
+    --------------------------------------------- */
+
     const smtp = getTransporter();
+
+    /* ---------------------------------------------
+       SEND EMAIL
+    --------------------------------------------- */
 
     const info = await smtp.sendMail(mailOptions);
 
-    console.log(
-      "✅ Email sent successfully through Resend"
-    );
+    /* ---------------------------------------------
+       SUCCESS
+    --------------------------------------------- */
 
-    console.log(
-      "📨 Message ID:",
-      info.messageId
-    );
+    console.log("✅ Email sent successfully through Resend");
+
+    console.log("📨 Message ID:", info.messageId);
 
     return {
       success: true,
@@ -683,10 +620,7 @@ const sendMail = async (mailOptions) => {
       error: null,
     };
   } catch (error) {
-    console.error(
-      "❌ Resend email sending failed:",
-      error.message
-    );
+    console.error("❌ Resend email sending failed:", error.message);
 
     return {
       success: false,
@@ -695,6 +629,9 @@ const sendMail = async (mailOptions) => {
   }
 };
 
+/* ============================================================
+   SEND EMAIL
+============================================================ */
 
 const sendEmail = async ({
   to,
@@ -706,7 +643,9 @@ const sendEmail = async ({
   replyTo,
   attachments,
 }) => {
-
+  /* ---------------------------------------------
+     VALIDATE RECIPIENT
+  --------------------------------------------- */
 
   if (!to) {
     return {
@@ -715,6 +654,9 @@ const sendEmail = async ({
     };
   }
 
+  /* ---------------------------------------------
+     VALIDATE SUBJECT
+  --------------------------------------------- */
 
   if (!subject) {
     return {
@@ -723,18 +665,22 @@ const sendEmail = async ({
     };
   }
 
+  /* ---------------------------------------------
+     VALIDATE CONTENT
+  --------------------------------------------- */
 
   if (!text && !html) {
     return {
       success: false,
-      error:
-        "Email text or HTML content is required",
+      error: "Email text or HTML content is required",
     };
   }
 
+  /* ---------------------------------------------
+     MAIL OPTIONS
+  --------------------------------------------- */
 
   const mailOptions = {
-
     from: `"${EMAIL_FROM_NAME}" <${ADMIN_EMAIL}>`,
 
     to,
@@ -778,28 +724,25 @@ const sendEmail = async ({
       : {}),
   };
 
+  /* ---------------------------------------------
+     SEND WITH RETRY
+  --------------------------------------------- */
 
-  return await sendMailWithRetry(
-    mailOptions,
-    3
-  );
+  return await sendMailWithRetry(mailOptions, 3);
 };
 
-const sendMailWithRetry = async (
-  mailOptions,
-  maxRetries = 3
-) => {
+/* ============================================================
+   SEND MAIL WITH RETRY
+============================================================ */
 
+const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
   let lastError = null;
 
-  for (
-    let attempt = 1;
-    attempt <= maxRetries;
-    attempt++
-  ) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const result =
-        await sendMail(mailOptions);
+      console.log(`📧 Sending email attempt ${attempt}/${maxRetries}...`);
+
+      const result = await sendMail(mailOptions);
 
       if (result.success) {
         return result;
@@ -810,44 +753,33 @@ const sendMailWithRetry = async (
       lastError = error.message;
     }
 
+    /* ---------------------------------------------
+       RETRY
+    --------------------------------------------- */
 
     if (attempt < maxRetries) {
-      console.log(
-        `🔄 Retrying Resend email (${attempt + 1}/${maxRetries})...`
-      );
+      console.log(`🔄 Retrying Resend email (${attempt + 1}/${maxRetries})...`);
 
-      await new Promise((resolve) =>
-        setTimeout(
-          resolve,
-          attempt * 2000
-        )
-      );
+      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
     }
   }
 
   return {
     success: false,
 
-    error:
-      lastError ||
-      "Resend email sending failed",
+    error: lastError || "Resend email sending failed",
   };
 };
 
+/* ============================================================
+   SAFE SEND MAIL
+============================================================ */
 
-const sendMailSafely = async (
-  mailOptions
-) => {
+const sendMailSafely = async (mailOptions) => {
   try {
-    return await sendMailWithRetry(
-      mailOptions,
-      3
-    );
+    return await sendMailWithRetry(mailOptions, 3);
   } catch (error) {
-    console.error(
-      "⚠️ Resend email service error:",
-      error.message
-    );
+    console.error("⚠️ Resend email service error:", error.message);
 
     return {
       success: false,
@@ -856,6 +788,9 @@ const sendMailSafely = async (
   }
 };
 
+/* ============================================================
+   SMTP INFORMATION
+============================================================ */
 
 const getSMTPInfo = () => {
   return {
@@ -869,20 +804,59 @@ const getSMTPInfo = () => {
 
     fromName: EMAIL_FROM_NAME,
 
-    configured:
-      isSMTPConfigured(),
+    configured: isSMTPConfigured(),
+
+    transporterCreated: Boolean(transporter),
   };
 };
 
+/* ============================================================
+   CLOSE SMTP CONNECTION
+============================================================ */
+
+const closeTransporter = async () => {
+  try {
+    if (transporter) {
+      transporter.close();
+
+      transporter = null;
+
+      console.log("🔌 Resend SMTP transporter closed");
+    }
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("❌ Failed to close SMTP transporter:", error.message);
+
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+/* ============================================================
+   EXPORTS
+============================================================ */
 
 module.exports = {
-  transporter,
   getTransporter,
+
   getSMTPInfo,
+
   isSMTPConfigured,
+
   testConnection,
+
   sendEmail,
+
   sendMail,
+
   sendMailWithRetry,
+
   sendMailSafely,
+
+  closeTransporter,
 };
