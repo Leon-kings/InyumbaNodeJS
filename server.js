@@ -159,6 +159,11 @@
 //     tls: {
 //       rejectUnauthorized: false,
 //     },
+
+//     // SMTP connection timeouts
+//     connectionTimeout: 15000,
+//     greetingTimeout: 15000,
+//     socketTimeout: 20000,
 //   });
 // };
 
@@ -198,14 +203,8 @@
 
 // startServer();
 
-
-
-
-
-
-
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -213,12 +212,13 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const nodemailer = require('nodemailer');
 
-// Load environment variables once
 dotenv.config();
 
-/* ---------------- ROUTES ---------------- */
+/* ============================================================
+   ROUTES
+============================================================ */
+
 const authRoutes = require("./routes/authRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const testimonialRoutes = require("./routes/testimonialRoutes");
@@ -228,17 +228,28 @@ const requestRoutes = require("./routes/requestRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const questionRoutes = require("./routes/questionRoutes");
 
-/* ---------------- APP ---------------- */
+/* ============================================================
+   APP
+============================================================ */
+
 const app = express();
 
-/* ---------------- GLOBAL MIDDLEWARE ---------------- */
+/* ============================================================
+   GLOBAL MIDDLEWARE
+============================================================ */
+
 app.use(helmet());
 app.use(cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(morgan("dev"));
 
-/* ---------------- ROUTES ---------------- */
+/* ============================================================
+   ROUTES
+============================================================ */
+
 app.use("/auth", authRoutes);
 app.use("/contact", contactRoutes);
 app.use("/testimonials", testimonialRoutes);
@@ -248,7 +259,10 @@ app.use("/requests", requestRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/questions", questionRoutes);
 
-/* ---------------- HEALTH CHECK ---------------- */
+/* ============================================================
+   HEALTH CHECK
+============================================================ */
+
 app.get("/health", (req, res) => {
   const dbState = mongoose.connection.readyState;
 
@@ -259,76 +273,131 @@ app.get("/health", (req, res) => {
     3: "disconnecting",
   };
 
-  res.status(200).json({
+  const database = dbStatus[dbState] || "unknown";
+
+  return res.status(200).json({
     success: true,
     status: "OK",
     server: "running",
-    database: dbStatus[dbState] || "unknown",
+    database,
     dbState,
     time: new Date().toISOString(),
   });
 });
 
-/* ---------------- EMAIL HEALTH CHECK ---------------- */
-app.get("/email-health", async (req, res) => {
-  const result = await checkEmailConnection();
-  
-  res.status(result.connected ? 200 : 503).json({
-    success: result.connected,
-    status: result.connected ? "OK" : "Failed",
-    message: result.connected 
-      ? "Email service is connected" 
-      : "Email service is not available",
-    error: result.error || null,
-    time: new Date().toISOString()
-  });
-});
+/* ============================================================
+   ROOT
+============================================================ */
 
-/* ---------------- ROOT ---------------- */
 app.get("/", (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "INYUMBA API is running",
     version: "1.0.0",
   });
 });
 
-/* ---------------- 404 ---------------- */
+/* ============================================================
+   404
+============================================================ */
+
 app.use((req, res) => {
-  res.status(404).json({
+  return res.status(404).json({
     success: false,
     message: `Route not found: ${req.originalUrl}`,
   });
 });
 
-/* ---------------- DB CONNECTION ---------------- */
+/* ============================================================
+   MONGODB CONNECTION
+============================================================ */
+
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ MongoDB connected");
+    if (!process.env.MONGO_URI) {
+      console.error("❌ MONGO_URI is not configured");
+      return false;
+    }
+
+    await mongoose.connect(process.env.MONGO_URI, {
+      family: 4,
+      serverSelectionTimeoutMS: 15000,
+    });
+
+    console.log("✅ MongoDB connected successfully");
+
     return true;
   } catch (error) {
-    console.error("❌ DB connection failed:", error.message);
+    console.error("❌ MongoDB connection failed:", error.message);
+
     return false;
   }
 };
 
-/* ---------------- SERVER START ---------------- */
+/* ============================================================
+   MONGODB EVENTS
+============================================================ */
+
+mongoose.connection.on("connected", () => {
+  console.log("🟢 MongoDB connection established");
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.log("🟡 MongoDB disconnected");
+});
+
+mongoose.connection.on("reconnected", () => {
+  console.log("🟢 MongoDB reconnected");
+});
+
+mongoose.connection.on("error", (error) => {
+  console.error("❌ MongoDB error:", error.message);
+});
+
+/* ============================================================
+   SERVER START
+============================================================ */
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
+  /*
+   * IMPORTANT:
+   * The server starts regardless of MongoDB availability.
+   * MongoDB connection is attempted separately.
+   */
+
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log("==============================================");
+    console.log("🚀 INYUMBA API SERVER STARTED");
+    console.log(`🌐 Port: ${PORT}`);
+    console.log("🌍 Host: 0.0.0.0");
+    console.log("❤️ Health check: /health");
+    console.log("==============================================");
+  });
+
+  /*
+   * Attempt MongoDB connection after the HTTP server
+   * has already started.
+   */
+
   const dbConnected = await connectDB();
 
-  if (!dbConnected) {
-    console.error("❌ Server startup stopped because MongoDB is unavailable.");
-    process.exit(1);
-  }
+  if (dbConnected) {
+    console.log("✅ Database is ready");
+  } else {
+    console.warn("⚠️ MongoDB is currently unavailable.");
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`❤️ Health check: /health`);
-    console.log(`📧 Email health: /email-health`);
-  });
+    console.warn("⚠️ Server will remain running.");
+
+    console.warn(
+      "⚠️ Database-dependent requests may fail until MongoDB reconnects.",
+    );
+  }
 };
+
+/* ============================================================
+   START APPLICATION
+============================================================ */
 
 startServer();
