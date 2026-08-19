@@ -205,7 +205,9 @@
 
 const dns = require("dns");
 dns.setDefaultResultOrder("ipv4first");
-
+const {
+  startSMTPVerification,
+} = require("./services/emailTransporter");
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
@@ -227,7 +229,7 @@ const houseRoutes = require("./routes/houseRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const questionRoutes = require("./routes/questionRoutes");
-const { testConnection } = require("./services/emailTransporter");
+
 
 /* ============================================================
    APP
@@ -334,18 +336,6 @@ const connectDB = async () => {
     return false;
   }
 };
-testConnection()
-  .then((result) => {
-    if (result.connected) {
-      console.log("🟢 EMAIL SERVICE: ONLINE");
-    } else {
-      console.log("🔴 EMAIL SERVICE: OFFLINE");
-      console.log("Reason:", result.error);
-    }
-  })
-  .catch((error) => {
-    console.error("❌ Email startup verification error:", error.message);
-  });
 
 /* ============================================================
    MONGODB EVENTS
@@ -388,7 +378,7 @@ const startServer = async () => {
     console.log("❤️ Health check: /health");
     console.log("==============================================");
   });
-
+await startSMTPVerification();
   /*
    * Attempt MongoDB connection after the HTTP server
    * has already started.
