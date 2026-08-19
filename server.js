@@ -227,6 +227,7 @@ const houseRoutes = require("./routes/houseRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const questionRoutes = require("./routes/questionRoutes");
+const { testConnection } = require("./services/emailTransporter");
 
 /* ============================================================
    APP
@@ -333,6 +334,18 @@ const connectDB = async () => {
     return false;
   }
 };
+testConnection()
+  .then((result) => {
+    if (result.connected) {
+      console.log("🟢 EMAIL SERVICE: ONLINE");
+    } else {
+      console.log("🔴 EMAIL SERVICE: OFFLINE");
+      console.log("Reason:", result.error);
+    }
+  })
+  .catch((error) => {
+    console.error("❌ Email startup verification error:", error.message);
+  });
 
 /* ============================================================
    MONGODB EVENTS
