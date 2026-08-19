@@ -1,4 +1,3 @@
-
 // const mongoose = require("mongoose");
 
 // const notificationSchema = new mongoose.Schema(
@@ -312,15 +311,6 @@
 
 // module.exports = Notification;
 
-
-
-
-
-
-
-
-
-
 // // models/Notification.js
 // const mongoose = require("mongoose");
 
@@ -618,17 +608,6 @@
 //   mongoose.models.Notification || mongoose.model("Notification", notificationSchema);
 
 // module.exports = Notification;
-
-
-
-
-
-
-
-
-
-
-
 
 // const mongoose = require("mongoose");
 
@@ -1874,14 +1853,6 @@
 
 // module.exports = Notification;
 
-
-
-
-
-
-
-
-
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema(
@@ -1909,12 +1880,15 @@ const notificationSchema = new mongoose.Schema(
         "system_notification",
         "user_mentioned",
         "reminder",
+
+        // Contact notifications
+        "contact_created",
+        "contact_updated",
+        "contact_deleted",
+        "contact_replied",
       ],
 
-      required: [
-        true,
-        "Notification type is required",
-      ],
+      required: [true, "Notification type is required"],
 
       index: true,
     },
@@ -1973,8 +1947,8 @@ const notificationSchema = new mongoose.Schema(
         "superadmin",
         "support",
         "guest",
+        "host",
       ],
-
       default: null,
     },
 
@@ -1984,10 +1958,7 @@ const notificationSchema = new mongoose.Schema(
     title: {
       type: String,
 
-      required: [
-        true,
-        "Notification title is required",
-      ],
+      required: [true, "Notification title is required"],
 
       trim: true,
 
@@ -1997,10 +1968,7 @@ const notificationSchema = new mongoose.Schema(
     message: {
       type: String,
 
-      required: [
-        true,
-        "Notification message is required",
-      ],
+      required: [true, "Notification message is required"],
 
       trim: true,
 
@@ -2019,13 +1987,7 @@ const notificationSchema = new mongoose.Schema(
     status: {
       type: String,
 
-      enum: [
-        "new",
-        "read",
-        "dismissed",
-        "archived",
-        "actioned",
-      ],
+      enum: ["new", "read", "dismissed", "archived", "actioned"],
 
       default: "new",
     },
@@ -2033,13 +1995,7 @@ const notificationSchema = new mongoose.Schema(
     priority: {
       type: String,
 
-      enum: [
-        "low",
-        "normal",
-        "high",
-        "urgent",
-        "critical",
-      ],
+      enum: ["low", "normal", "high", "urgent", "critical"],
 
       default: "normal",
     },
@@ -2057,6 +2013,7 @@ const notificationSchema = new mongoose.Schema(
         "superadmin",
         "support",
         "guest",
+        "host",
         "all",
       ],
 
@@ -2086,6 +2043,7 @@ const notificationSchema = new mongoose.Schema(
         "superadmin",
         "support",
         "guest",
+        "host",
       ],
 
       default: null,
@@ -2127,6 +2085,7 @@ const notificationSchema = new mongoose.Schema(
             "superadmin",
             "support",
             "guest",
+            "host",
           ],
         },
 
@@ -2172,12 +2131,7 @@ const notificationSchema = new mongoose.Schema(
           method: {
             type: String,
 
-            enum: [
-              "GET",
-              "POST",
-              "PUT",
-              "DELETE",
-            ],
+            enum: ["GET", "POST", "PUT", "DELETE"],
 
             default: "GET",
           },
@@ -2185,13 +2139,7 @@ const notificationSchema = new mongoose.Schema(
           type: {
             type: String,
 
-            enum: [
-              "primary",
-              "secondary",
-              "danger",
-              "success",
-              "warning",
-            ],
+            enum: ["primary", "secondary", "danger", "success", "warning"],
 
             default: "primary",
           },
@@ -2243,7 +2191,7 @@ const notificationSchema = new mongoose.Schema(
     toObject: {
       virtuals: true,
     },
-  }
+  },
 );
 
 // =================================================
@@ -2300,75 +2248,52 @@ notificationSchema.index(
   },
   {
     expireAfterSeconds: 0,
-  }
+  },
 );
 
 // =================================================
 // VIRTUALS
 // =================================================
 
-notificationSchema.virtual("timeAgo").get(
-  function () {
-    const diff =
-      Date.now() -
-      this.createdAt.getTime();
+notificationSchema.virtual("timeAgo").get(function () {
+  const diff = Date.now() - this.createdAt.getTime();
 
-    const minutes = Math.floor(
-      diff / 60000
-    );
+  const minutes = Math.floor(diff / 60000);
 
-    const hours = Math.floor(
-      diff / 3600000
-    );
+  const hours = Math.floor(diff / 3600000);
 
-    const days = Math.floor(
-      diff / 86400000
-    );
+  const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) {
-      return "Just now";
-    }
-
-    if (minutes < 60) {
-      return `${minutes} minute${
-        minutes > 1 ? "s" : ""
-      } ago`;
-    }
-
-    if (hours < 24) {
-      return `${hours} hour${
-        hours > 1 ? "s" : ""
-      } ago`;
-    }
-
-    if (days < 7) {
-      return `${days} day${
-        days > 1 ? "s" : ""
-      } ago`;
-    }
-
-    return this.createdAt.toLocaleDateString();
+  if (minutes < 1) {
+    return "Just now";
   }
-);
 
-notificationSchema.virtual(
-  "formattedDate"
-).get(function () {
-  return this.createdAt.toLocaleString(
-    "en-US",
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
+  if (minutes < 60) {
+    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+  }
+
+  if (hours < 24) {
+    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  }
+
+  if (days < 7) {
+    return `${days} day${days > 1 ? "s" : ""} ago`;
+  }
+
+  return this.createdAt.toLocaleDateString();
 });
 
-notificationSchema.virtual(
-  "isExpired"
-).get(function () {
+notificationSchema.virtual("formattedDate").get(function () {
+  return this.createdAt.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+});
+
+notificationSchema.virtual("isExpired").get(function () {
   if (!this.expiresAt) {
     return false;
   }
@@ -2376,659 +2301,556 @@ notificationSchema.virtual(
   return this.expiresAt < new Date();
 });
 
-notificationSchema.virtual(
-  "isActionable"
-).get(function () {
-  return (
-    this.actions &&
-    this.actions.length > 0
-  );
+notificationSchema.virtual("isActionable").get(function () {
+  return this.actions && this.actions.length > 0;
 });
 
 // =================================================
 // METHODS
 // =================================================
 
-notificationSchema.methods.markAsRead =
-  async function (user) {
-    this.isRead = true;
-    this.status = "read";
-    this.readAt = new Date();
+notificationSchema.methods.markAsRead = async function (user) {
+  this.isRead = true;
+  this.status = "read";
+  this.readAt = new Date();
 
-    if (!this.readBy) {
-      this.readBy = [];
-    }
+  if (!this.readBy) {
+    this.readBy = [];
+  }
 
-    this.readBy.push({
-      userId: user?.id || null,
-      userEmail: user?.email || null,
-      userRole: user?.role || null,
-      readAt: new Date(),
-    });
+  this.readBy.push({
+    userId: user?.id || null,
+    userEmail: user?.email || null,
+    userRole: user?.role || null,
+    readAt: new Date(),
+  });
 
-    return await this.save();
-  };
+  return await this.save();
+};
 
-notificationSchema.methods.markAsUnread =
-  async function () {
-    this.isRead = false;
-    this.status = "new";
-    this.readAt = null;
+notificationSchema.methods.markAsUnread = async function () {
+  this.isRead = false;
+  this.status = "new";
+  this.readAt = null;
 
-    return await this.save();
-  };
+  return await this.save();
+};
 
-notificationSchema.methods.addAction =
-  function (action) {
-    if (!this.actions) {
-      this.actions = [];
-    }
+notificationSchema.methods.addAction = function (action) {
+  if (!this.actions) {
+    this.actions = [];
+  }
 
-    this.actions.push(action);
+  this.actions.push(action);
 
-    return this;
-  };
+  return this;
+};
 
-notificationSchema.methods.dismiss =
-  async function () {
-    this.status = "dismissed";
+notificationSchema.methods.dismiss = async function () {
+  this.status = "dismissed";
 
-    return await this.save();
-  };
+  return await this.save();
+};
 
-notificationSchema.methods.archive =
-  async function () {
-    this.status = "archived";
-    this.isActive = false;
+notificationSchema.methods.archive = async function () {
+  this.status = "archived";
+  this.isActive = false;
 
-    return await this.save();
-  };
+  return await this.save();
+};
 
-notificationSchema.methods.isTargetedForUser =
-  function (user) {
-    if (this.isGlobal) {
-      return true;
-    }
+notificationSchema.methods.isTargetedForUser = function (user) {
+  if (this.isGlobal) {
+    return true;
+  }
 
-    if (
-      this.targetUserId &&
-      this.targetUserId.toString() ===
-        user.id
-    ) {
-      return true;
-    }
+  if (this.targetUserId && this.targetUserId.toString() === user.id) {
+    return true;
+  }
 
-    if (
-      this.targetUserEmail &&
-      this.targetUserEmail ===
-        user.email
-    ) {
-      return true;
-    }
+  if (this.targetUserEmail && this.targetUserEmail === user.email) {
+    return true;
+  }
 
-    if (
-      this.targetRoles &&
-      this.targetRoles.includes(user.role)
-    ) {
-      return true;
-    }
+  if (this.targetRoles && this.targetRoles.includes(user.role)) {
+    return true;
+  }
 
-    if (
-      this.userId &&
-      this.userId.toString() ===
-        user.id
-    ) {
-      return true;
-    }
+  if (this.userId && this.userId.toString() === user.id) {
+    return true;
+  }
 
-    return false;
-  };
+  return false;
+};
 
 // =================================================
 // STATIC METHODS
 // =================================================
 
-notificationSchema.statics.getUnreadCount =
-  async function (user) {
-    const filter = {
-      isRead: false,
+notificationSchema.statics.getUnreadCount = async function (user) {
+  const filter = {
+    isRead: false,
 
-      isActive: true,
+    isActive: true,
 
-      $or: [
-        {
-          targetRoles: {
-            $in: [user.role],
-          },
-        },
-
-        {
-          targetUserId: user.id,
-        },
-
-        {
-          targetUserEmail: user.email,
-        },
-
-        {
-          userId: user.id,
-        },
-
-        {
-          isGlobal: true,
-        },
-      ],
-    };
-
-    return await this.countDocuments(
-      filter
-    );
-  };
-
-notificationSchema.statics.markAllAsRead =
-  async function (user) {
-    const filter = {
-      isRead: false,
-
-      isActive: true,
-
-      $or: [
-        {
-          targetRoles: {
-            $in: [user.role],
-          },
-        },
-
-        {
-          targetUserId: user.id,
-        },
-
-        {
-          targetUserEmail: user.email,
-        },
-
-        {
-          userId: user.id,
-        },
-
-        {
-          isGlobal: true,
-        },
-      ],
-    };
-
-    return await this.updateMany(
-      filter,
+    $or: [
       {
-        $set: {
-          isRead: true,
-          status: "read",
-          readAt: new Date(),
+        targetRoles: {
+          $in: [user.role],
         },
-      }
-    );
+      },
+
+      {
+        targetUserId: user.id,
+      },
+
+      {
+        targetUserEmail: user.email,
+      },
+
+      {
+        userId: user.id,
+      },
+
+      {
+        isGlobal: true,
+      },
+    ],
   };
 
-notificationSchema.statics.getForUser =
-  async function (
-    user,
-    options = {}
-  ) {
-    const {
-      page = 1,
-      limit = 20,
-      isRead,
-      status,
-      type,
-      priority,
-      startDate,
-      endDate,
-      sortBy = "createdAt",
-      sortOrder = "desc",
-    } = options;
+  return await this.countDocuments(filter);
+};
 
-    const filter = {
-      isActive: true,
+notificationSchema.statics.markAllAsRead = async function (user) {
+  const filter = {
+    isRead: false,
 
-      $or: [
-        {
-          targetRoles: {
-            $in: [user.role],
-          },
+    isActive: true,
+
+    $or: [
+      {
+        targetRoles: {
+          $in: [user.role],
         },
+      },
 
-        {
-          targetUserId: user.id,
-        },
+      {
+        targetUserId: user.id,
+      },
 
-        {
-          targetUserEmail: user.email,
-        },
+      {
+        targetUserEmail: user.email,
+      },
 
-        {
-          userId: user.id,
-        },
+      {
+        userId: user.id,
+      },
 
-        {
-          isGlobal: true,
-        },
-      ],
-    };
-
-    if (isRead !== undefined) {
-      filter.isRead =
-        isRead === "true" ||
-        isRead === true;
-    }
-
-    if (status) {
-      filter.status = status;
-    }
-
-    if (type) {
-      filter.type = type;
-    }
-
-    if (priority) {
-      filter.priority = priority;
-    }
-
-    if (startDate) {
-      filter.createdAt = {
-        $gte: new Date(startDate),
-      };
-    }
-
-    if (endDate) {
-      filter.createdAt = {
-        ...filter.createdAt,
-        $lte: new Date(endDate),
-      };
-    }
-
-    const parsedPage =
-      parseInt(page);
-
-    const parsedLimit =
-      parseInt(limit);
-
-    const skip =
-      (parsedPage - 1) *
-      parsedLimit;
-
-    const sort = {};
-
-    sort[sortBy] =
-      sortOrder === "desc"
-        ? -1
-        : 1;
-
-    const [
-      notifications,
-      total,
-      unreadCount,
-    ] = await Promise.all([
-      this.find(filter)
-        .sort(sort)
-        .skip(skip)
-        .limit(parsedLimit)
-        .lean(),
-
-      this.countDocuments(filter),
-
-      this.countDocuments({
-        ...filter,
-        isRead: false,
-      }),
-    ]);
-
-    return {
-      notifications,
-      total,
-      unreadCount,
-      page: parsedPage,
-      limit: parsedLimit,
-      pages: Math.ceil(
-        total / parsedLimit
-      ),
-    };
+      {
+        isGlobal: true,
+      },
+    ],
   };
 
-notificationSchema.statics.createNotification =
-  async function (data) {
-    const notificationData = {
-      ...data,
+  return await this.updateMany(filter, {
+    $set: {
+      isRead: true,
+      status: "read",
+      readAt: new Date(),
+    },
+  });
+};
 
-      status:
-        data.status || "new",
-
-      priority:
-        data.priority || "normal",
-
-      isRead: false,
-
-      isActive: true,
-    };
-
-    const notification =
-      new this(notificationData);
-
-    return await notification.save();
-  };
-
-notificationSchema.statics.getByType =
-  async function (
+notificationSchema.statics.getForUser = async function (user, options = {}) {
+  const {
+    page = 1,
+    limit = 20,
+    isRead,
+    status,
     type,
-    page = 1,
-    limit = 20
-  ) {
-    const skip =
-      (page - 1) * limit;
+    priority,
+    startDate,
+    endDate,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = options;
 
-    const [
-      notifications,
-      total,
-    ] = await Promise.all([
-      this.find({
-        type,
-        isActive: true,
-      })
-        .sort({
-          createdAt: -1,
-        })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+  const filter = {
+    isActive: true,
 
-      this.countDocuments({
-        type,
-        isActive: true,
-      }),
-    ]);
-
-    return {
-      notifications,
-      total,
-      page,
-      limit,
-      pages: Math.ceil(
-        total / limit
-      ),
-    };
-  };
-
-notificationSchema.statics.getByRole =
-  async function (
-    role,
-    page = 1,
-    limit = 20
-  ) {
-    const skip =
-      (page - 1) * limit;
-
-    const [
-      notifications,
-      total,
-    ] = await Promise.all([
-      this.find({
+    $or: [
+      {
         targetRoles: {
-          $in: [role],
+          $in: [user.role],
         },
+      },
 
-        isActive: true,
-      })
-        .sort({
-          createdAt: -1,
-        })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      {
+        targetUserId: user.id,
+      },
 
-      this.countDocuments({
-        targetRoles: {
-          $in: [role],
-        },
+      {
+        targetUserEmail: user.email,
+      },
 
-        isActive: true,
-      }),
-    ]);
+      {
+        userId: user.id,
+      },
 
-    return {
-      notifications,
-      total,
-      page,
-      limit,
-      pages: Math.ceil(
-        total / limit
-      ),
-    };
+      {
+        isGlobal: true,
+      },
+    ],
   };
 
-notificationSchema.statics.getByUserId =
-  async function (
-    userId,
-    page = 1,
-    limit = 20
-  ) {
-    const skip =
-      (page - 1) * limit;
+  if (isRead !== undefined) {
+    filter.isRead = isRead === "true" || isRead === true;
+  }
 
-    const [
-      notifications,
-      total,
-    ] = await Promise.all([
-      this.find({
-        userId,
+  if (status) {
+    filter.status = status;
+  }
 
-        isActive: true,
-      })
-        .sort({
-          createdAt: -1,
-        })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+  if (type) {
+    filter.type = type;
+  }
 
-      this.countDocuments({
-        userId,
+  if (priority) {
+    filter.priority = priority;
+  }
 
-        isActive: true,
-      }),
-    ]);
-
-    return {
-      notifications,
-      total,
-      page,
-      limit,
-      pages: Math.ceil(
-        total / limit
-      ),
+  if (startDate) {
+    filter.createdAt = {
+      $gte: new Date(startDate),
     };
-  };
+  }
 
-notificationSchema.statics.getUnreadForUser =
-  async function (
-    user,
-    page = 1,
-    limit = 20
-  ) {
-    const skip =
-      (page - 1) * limit;
+  if (endDate) {
+    filter.createdAt = {
+      ...filter.createdAt,
+      $lte: new Date(endDate),
+    };
+  }
 
-    const filter = {
+  const parsedPage = parseInt(page);
+
+  const parsedLimit = parseInt(limit);
+
+  const skip = (parsedPage - 1) * parsedLimit;
+
+  const sort = {};
+
+  sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+  const [notifications, total, unreadCount] = await Promise.all([
+    this.find(filter).sort(sort).skip(skip).limit(parsedLimit).lean(),
+
+    this.countDocuments(filter),
+
+    this.countDocuments({
+      ...filter,
       isRead: false,
+    }),
+  ]);
+
+  return {
+    notifications,
+    total,
+    unreadCount,
+    page: parsedPage,
+    limit: parsedLimit,
+    pages: Math.ceil(total / parsedLimit),
+  };
+};
+
+notificationSchema.statics.createNotification = async function (data) {
+  const notificationData = {
+    ...data,
+
+    status: data.status || "new",
+
+    priority: data.priority || "normal",
+
+    isRead: false,
+
+    isActive: true,
+  };
+
+  const notification = new this(notificationData);
+
+  return await notification.save();
+};
+
+notificationSchema.statics.getByType = async function (
+  type,
+  page = 1,
+  limit = 20,
+) {
+  const skip = (page - 1) * limit;
+
+  const [notifications, total] = await Promise.all([
+    this.find({
+      type,
+      isActive: true,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+
+    this.countDocuments({
+      type,
+      isActive: true,
+    }),
+  ]);
+
+  return {
+    notifications,
+    total,
+    page,
+    limit,
+    pages: Math.ceil(total / limit),
+  };
+};
+
+notificationSchema.statics.getByRole = async function (
+  role,
+  page = 1,
+  limit = 20,
+) {
+  const skip = (page - 1) * limit;
+
+  const [notifications, total] = await Promise.all([
+    this.find({
+      targetRoles: {
+        $in: [role],
+      },
 
       isActive: true,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
 
-      $or: [
-        {
-          targetRoles: {
-            $in: [user.role],
-          },
+    this.countDocuments({
+      targetRoles: {
+        $in: [role],
+      },
+
+      isActive: true,
+    }),
+  ]);
+
+  return {
+    notifications,
+    total,
+    page,
+    limit,
+    pages: Math.ceil(total / limit),
+  };
+};
+
+notificationSchema.statics.getByUserId = async function (
+  userId,
+  page = 1,
+  limit = 20,
+) {
+  const skip = (page - 1) * limit;
+
+  const [notifications, total] = await Promise.all([
+    this.find({
+      userId,
+
+      isActive: true,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+
+    this.countDocuments({
+      userId,
+
+      isActive: true,
+    }),
+  ]);
+
+  return {
+    notifications,
+    total,
+    page,
+    limit,
+    pages: Math.ceil(total / limit),
+  };
+};
+
+notificationSchema.statics.getUnreadForUser = async function (
+  user,
+  page = 1,
+  limit = 20,
+) {
+  const skip = (page - 1) * limit;
+
+  const filter = {
+    isRead: false,
+
+    isActive: true,
+
+    $or: [
+      {
+        targetRoles: {
+          $in: [user.role],
         },
+      },
 
-        {
-          targetUserId: user.id,
-        },
+      {
+        targetUserId: user.id,
+      },
 
-        {
-          targetUserEmail:
-            user.email,
-        },
+      {
+        targetUserEmail: user.email,
+      },
 
-        {
-          userId: user.id,
-        },
+      {
+        userId: user.id,
+      },
 
-        {
-          isGlobal: true,
-        },
-      ],
-    };
-
-    const [
-      notifications,
-      total,
-    ] = await Promise.all([
-      this.find(filter)
-        .sort({
-          createdAt: -1,
-        })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-
-      this.countDocuments(filter),
-    ]);
-
-    return {
-      notifications,
-      total,
-      page,
-      limit,
-      pages: Math.ceil(
-        total / limit
-      ),
-    };
+      {
+        isGlobal: true,
+      },
+    ],
   };
 
-notificationSchema.statics.getStatistics =
-  async function () {
-    const total =
-      await this.countDocuments({
-        isActive: true,
-      });
+  const [notifications, total] = await Promise.all([
+    this.find(filter)
+      .sort({
+        createdAt: -1,
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
 
-    const unread =
-      await this.countDocuments({
-        isRead: false,
-        isActive: true,
-      });
+    this.countDocuments(filter),
+  ]);
 
-    const read =
-      await this.countDocuments({
-        isRead: true,
-        isActive: true,
-      });
-
-    const byType =
-      await this.aggregate([
-        {
-          $match: {
-            isActive: true,
-          },
-        },
-
-        {
-          $group: {
-            _id: "$type",
-            count: {
-              $sum: 1,
-            },
-          },
-        },
-
-        {
-          $sort: {
-            count: -1,
-          },
-        },
-
-        {
-          $limit: 10,
-        },
-      ]);
-
-    const byRole =
-      await this.aggregate([
-        {
-          $match: {
-            isActive: true,
-          },
-        },
-
-        {
-          $unwind:
-            "$targetRoles",
-        },
-
-        {
-          $group: {
-            _id: "$targetRoles",
-            count: {
-              $sum: 1,
-            },
-          },
-        },
-      ]);
-
-    const byPriority =
-      await this.aggregate([
-        {
-          $match: {
-            isActive: true,
-          },
-        },
-
-        {
-          $group: {
-            _id: "$priority",
-            count: {
-              $sum: 1,
-            },
-          },
-        },
-      ]);
-
-    const today = new Date();
-
-    today.setHours(
-      0,
-      0,
-      0,
-      0
-    );
-
-    const todayNotifications =
-      await this.countDocuments({
-        createdAt: {
-          $gte: today,
-        },
-
-        isActive: true,
-      });
-
-    return {
-      total,
-      unread,
-      read,
-      byType,
-      byRole,
-      byPriority,
-      todayNotifications,
-    };
+  return {
+    notifications,
+    total,
+    page,
+    limit,
+    pages: Math.ceil(total / limit),
   };
+};
+
+notificationSchema.statics.getStatistics = async function () {
+  const total = await this.countDocuments({
+    isActive: true,
+  });
+
+  const unread = await this.countDocuments({
+    isRead: false,
+    isActive: true,
+  });
+
+  const read = await this.countDocuments({
+    isRead: true,
+    isActive: true,
+  });
+
+  const byType = await this.aggregate([
+    {
+      $match: {
+        isActive: true,
+      },
+    },
+
+    {
+      $group: {
+        _id: "$type",
+        count: {
+          $sum: 1,
+        },
+      },
+    },
+
+    {
+      $sort: {
+        count: -1,
+      },
+    },
+
+    {
+      $limit: 10,
+    },
+  ]);
+
+  const byRole = await this.aggregate([
+    {
+      $match: {
+        isActive: true,
+      },
+    },
+
+    {
+      $unwind: "$targetRoles",
+    },
+
+    {
+      $group: {
+        _id: "$targetRoles",
+        count: {
+          $sum: 1,
+        },
+      },
+    },
+  ]);
+
+  const byPriority = await this.aggregate([
+    {
+      $match: {
+        isActive: true,
+      },
+    },
+
+    {
+      $group: {
+        _id: "$priority",
+        count: {
+          $sum: 1,
+        },
+      },
+    },
+  ]);
+
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+
+  const todayNotifications = await this.countDocuments({
+    createdAt: {
+      $gte: today,
+    },
+
+    isActive: true,
+  });
+
+  return {
+    total,
+    unread,
+    read,
+    byType,
+    byRole,
+    byPriority,
+    todayNotifications,
+  };
+};
 
 // =================================================
 // PRE-SAVE MIDDLEWARE
@@ -3041,88 +2863,59 @@ notificationSchema.statics.getStatistics =
 //
 // =================================================
 
-notificationSchema.pre(
-  "save",
-  function () {
-    // ---------------------------------------------
-    // READ STATUS
-    // ---------------------------------------------
+notificationSchema.pre("save", function () {
+  // ---------------------------------------------
+  // READ STATUS
+  // ---------------------------------------------
 
-    if (
-      this.isRead &&
-      !this.readAt
-    ) {
+  if (this.isRead && !this.readAt) {
+    this.readAt = new Date();
+  }
+
+  // ---------------------------------------------
+  // STATUS READ
+  // ---------------------------------------------
+
+  if (this.status === "read" && !this.isRead) {
+    this.isRead = true;
+
+    if (!this.readAt) {
       this.readAt = new Date();
     }
+  }
 
-    // ---------------------------------------------
-    // STATUS READ
-    // ---------------------------------------------
+  // ---------------------------------------------
+  // READ BY
+  // ---------------------------------------------
 
-    if (
-      this.status === "read" &&
-      !this.isRead
-    ) {
-      this.isRead = true;
-
-      if (!this.readAt) {
-        this.readAt = new Date();
+  if (this.readBy && this.readBy.length > 0) {
+    this.readBy.forEach((entry) => {
+      if (!entry.readAt) {
+        entry.readAt = new Date();
       }
-    }
+    });
+  }
 
-    // ---------------------------------------------
-    // READ BY
-    // ---------------------------------------------
+  // ---------------------------------------------
+  // TARGET ROLES
+  // ---------------------------------------------
 
-    if (
-      this.readBy &&
-      this.readBy.length > 0
-    ) {
-      this.readBy.forEach(
-        (entry) => {
-          if (!entry.readAt) {
-            entry.readAt =
-              new Date();
-          }
-        }
-      );
-    }
-
-    // ---------------------------------------------
-    // TARGET ROLES
-    // ---------------------------------------------
-
-    if (
-      !this.targetRoles ||
-      this.targetRoles.length === 0
-    ) {
-      if (this.userRole) {
-        this.targetRoles = [
-          this.userRole,
-        ];
-      } else {
-        this.targetRoles = [
-          "user",
-        ];
-      }
-    }
-
-    // ---------------------------------------------
-    // MESSAGE LENGTH
-    // ---------------------------------------------
-
-    if (
-      this.message &&
-      this.message.length > 2000
-    ) {
-      this.message =
-        this.message.substring(
-          0,
-          1997
-        ) + "...";
+  if (!this.targetRoles || this.targetRoles.length === 0) {
+    if (this.userRole) {
+      this.targetRoles = [this.userRole];
+    } else {
+      this.targetRoles = ["user"];
     }
   }
-);
+
+  // ---------------------------------------------
+  // MESSAGE LENGTH
+  // ---------------------------------------------
+
+  if (this.message && this.message.length > 2000) {
+    this.message = this.message.substring(0, 1997) + "...";
+  }
+});
 
 // =================================================
 // MODEL EXPORT
@@ -3130,9 +2923,6 @@ notificationSchema.pre(
 
 const Notification =
   mongoose.models.Notification ||
-  mongoose.model(
-    "Notification",
-    notificationSchema
-  );
+  mongoose.model("Notification", notificationSchema);
 
 module.exports = Notification;
