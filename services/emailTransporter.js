@@ -658,13 +658,21 @@ require("dotenv").config();
 
 /* ============================================================
    RESEND SMTP ENVIRONMENT
+   ALWAYS USE PORT 465
 ============================================================ */
 
 const SMTP_HOST =
   process.env.SMTP_HOST || "smtp.resend.com";
 
-const SMTP_PORT =
-  parseInt(process.env.SMTP_PORT, 10) || 587;
+/*
+ * IMPORTANT:
+ *
+ * Resend SMTP always uses port 465 in this application.
+ *
+ * SMTP_PORT is intentionally NOT read from .env.
+ * Port 587 is completely removed.
+ */
+const SMTP_PORT = 465;
 
 const SMTP_USER =
   process.env.SMTP_USER || "resend";
@@ -697,7 +705,6 @@ let smtpLastCheckedAt = null;
 const isSMTPConfigured = () => {
   return Boolean(
     SMTP_HOST &&
-      SMTP_PORT &&
       SMTP_USER &&
       SMTP_PASS &&
       ADMIN_EMAIL
@@ -705,12 +712,10 @@ const isSMTPConfigured = () => {
 };
 
 /* ============================================================
-   SMTP CONNECTION MODE
+   SMTP SECURITY
 ============================================================ */
 
-const isImplicitTLS = SMTP_PORT === 465;
-
-const isSTARTTLS = SMTP_PORT === 587;
+const SMTP_SECURITY = "Implicit TLS / SSL";
 
 /* ============================================================
    CREATE RESEND SMTP TRANSPORTER
@@ -722,49 +727,69 @@ const createTransporter = () => {
   console.log("📧 CREATING RESEND SMTP TRANSPORTER");
   console.log("================================================");
 
-  console.log("SMTP Host:", SMTP_HOST);
-  console.log("SMTP Port:", SMTP_PORT);
-  console.log("SMTP User:", SMTP_USER);
+  console.log(
+    "SMTP Host:",
+    SMTP_HOST
+  );
+
+  console.log(
+    "SMTP Port:",
+    SMTP_PORT
+  );
+
+  console.log(
+    "SMTP User:",
+    SMTP_USER
+  );
+
   console.log(
     "SMTP Password:",
-    SMTP_PASS ? "Configured ✅" : "Missing ❌"
+    SMTP_PASS
+      ? "Configured ✅"
+      : "Missing ❌"
   );
+
   console.log(
     "Admin Email:",
     ADMIN_EMAIL || "Missing ❌"
   );
-  console.log("From Name:", EMAIL_FROM_NAME);
+
+  console.log(
+    "From Name:",
+    EMAIL_FROM_NAME
+  );
 
   console.log(
     "SMTP Security:",
-    isImplicitTLS
-      ? "Implicit TLS / SSL"
-      : isSTARTTLS
-      ? "STARTTLS"
-      : "Custom SMTP mode"
+    SMTP_SECURITY
+  );
+
+  console.log(
+    "SMTP Protocol:",
+    "SMTPS"
   );
 
   console.log("================================================");
 
-  /*
-   * Resend SMTP:
-   *
-   * Port 465:
-   *   secure: true
-   *   Implicit TLS
-   *
-   * Port 587:
-   *   secure: false
-   *   requireTLS: true
-   *   STARTTLS
-   */
+  /* ==========================================================
+     RESEND SMTP CONFIGURATION
+     
+     PORT 465 ONLY
+     
+     secure: true
+     Implicit TLS / SSL
+     
+     NO STARTTLS
+     NO PORT 587
+     NO TIMEOUT SETTINGS
+  ========================================================== */
 
   const config = {
     host: SMTP_HOST,
 
-    port: SMTP_PORT,
+    port: 465,
 
-    secure: isImplicitTLS,
+    secure: true,
 
     auth: {
       user: SMTP_USER,
@@ -779,14 +804,6 @@ const createTransporter = () => {
       rejectUnauthorized: true,
     },
   };
-
-  /*
-   * STARTTLS is required only for port 587.
-   */
-
-  if (isSTARTTLS) {
-    config.requireTLS = true;
-  }
 
   return nodemailer.createTransport(config);
 };
@@ -836,16 +853,13 @@ const testConnection = async () => {
     );
 
     console.error("");
+
     console.error(
       "Required environment variables:"
     );
 
     console.error(
       "SMTP_HOST"
-    );
-
-    console.error(
-      "SMTP_PORT"
     );
 
     console.error(
@@ -860,6 +874,16 @@ const testConnection = async () => {
       "ADMIN_EMAIL"
     );
 
+    console.error("");
+
+    console.error(
+      "SMTP_PORT is not required."
+    );
+
+    console.error(
+      "SMTP port is permanently set to 465."
+    );
+
     console.log("================================================");
 
     return {
@@ -869,7 +893,7 @@ const testConnection = async () => {
 
       host: SMTP_HOST,
 
-      port: SMTP_PORT,
+      port: 465,
 
       user: SMTP_USER,
 
@@ -891,7 +915,7 @@ const testConnection = async () => {
     ======================================================== */
 
     console.log(
-      `🔄 Connecting to ${SMTP_HOST}:${SMTP_PORT}...`
+      `🔄 Connecting to ${SMTP_HOST}:465...`
     );
 
     console.log(
@@ -899,13 +923,11 @@ const testConnection = async () => {
     );
 
     console.log(
-      `🔐 Security mode: ${
-        isImplicitTLS
-          ? "Implicit TLS"
-          : isSTARTTLS
-          ? "STARTTLS"
-          : "Custom"
-      }`
+      "🔐 Security mode: Implicit TLS / SSL"
+    );
+
+    console.log(
+      "🔐 SMTP protocol: SMTPS"
     );
 
     /* ========================================================
@@ -925,30 +947,41 @@ const testConnection = async () => {
     smtpLastCheckedAt = new Date();
 
     console.log("");
+
     console.log("================================================");
+
     console.log(
       "✅ RESEND SMTP CONNECTION VERIFIED"
     );
-    console.log("🟢 EMAIL SERVICE: ONLINE");
-    console.log("🟢 RESEND SMTP: CONNECTED");
+
+    console.log(
+      "🟢 EMAIL SERVICE: ONLINE"
+    );
+
+    console.log(
+      "🟢 RESEND SMTP: CONNECTED"
+    );
+
     console.log(
       `🟢 SMTP SERVER: ${SMTP_HOST}`
     );
+
     console.log(
-      `🟢 SMTP PORT: ${SMTP_PORT}`
+      "🟢 SMTP PORT: 465"
     );
+
     console.log(
       `🟢 SMTP USER: ${SMTP_USER}`
     );
+
     console.log(
-      `🟢 SECURITY: ${
-        isImplicitTLS
-          ? "Implicit TLS"
-          : isSTARTTLS
-          ? "STARTTLS"
-          : "Custom"
-      }`
+      "🟢 SECURITY: Implicit TLS / SSL"
     );
+
+    console.log(
+      "🟢 PROTOCOL: SMTPS"
+    );
+
     console.log("================================================");
 
     return {
@@ -958,7 +991,7 @@ const testConnection = async () => {
 
       host: SMTP_HOST,
 
-      port: SMTP_PORT,
+      port: 465,
 
       user: SMTP_USER,
 
@@ -978,26 +1011,38 @@ const testConnection = async () => {
     smtpLastCheckedAt = new Date();
 
     console.error("");
+
     console.error("================================================");
+
     console.error(
       "❌ RESEND SMTP CONNECTION FAILED"
     );
+
     console.error(
       "🔴 EMAIL SERVICE: OFFLINE"
     );
+
     console.error(
       "🔴 RESEND SMTP: NOT CONNECTED"
     );
+
     console.error(
       "❌ Error:",
       error.message
     );
+
     console.error(
       `❌ SMTP Server: ${SMTP_HOST}`
     );
+
     console.error(
-      `❌ SMTP Port: ${SMTP_PORT}`
+      "❌ SMTP Port: 465"
     );
+
+    console.error(
+      "❌ Security: Implicit TLS / SSL"
+    );
+
     console.error("================================================");
 
     return {
@@ -1007,7 +1052,7 @@ const testConnection = async () => {
 
       host: SMTP_HOST,
 
-      port: SMTP_PORT,
+      port: 465,
 
       user: SMTP_USER,
 
@@ -1076,14 +1121,27 @@ const sendMail = async (mailOptions) => {
     smtpLastCheckedAt = new Date();
 
     console.log("");
+
     console.log("================================================");
+
     console.log(
       "✅ EMAIL SENT SUCCESSFULLY THROUGH RESEND"
     );
+
     console.log(
       "📨 Message ID:",
       info.messageId
     );
+
+    console.log(
+      "📡 SMTP:",
+      `${SMTP_HOST}:465`
+    );
+
+    console.log(
+      "🔐 Security: Implicit TLS / SSL"
+    );
+
     console.log("================================================");
 
     return {
@@ -1105,14 +1163,23 @@ const sendMail = async (mailOptions) => {
     smtpLastCheckedAt = new Date();
 
     console.error("");
+
     console.error("================================================");
+
     console.error(
       "❌ RESEND EMAIL SENDING FAILED"
     );
+
     console.error(
       "❌ Error:",
       error.message
     );
+
+    console.error(
+      "❌ SMTP:",
+      `${SMTP_HOST}:465`
+    );
+
     console.error("================================================");
 
     return {
@@ -1325,7 +1392,10 @@ const getSMTPInfo = () => {
   return {
     host: SMTP_HOST,
 
-    port: SMTP_PORT,
+    /*
+     * ALWAYS 465
+     */
+    port: 465,
 
     user: SMTP_USER,
 
@@ -1348,11 +1418,10 @@ const getSMTPInfo = () => {
         : "OFFLINE",
 
     security:
-      isImplicitTLS
-        ? "Implicit TLS"
-        : isSTARTTLS
-        ? "STARTTLS"
-        : "Custom",
+      "Implicit TLS / SSL",
+
+    protocol:
+      "SMTPS",
 
     lastError:
       smtpLastError,
@@ -1377,6 +1446,7 @@ const closeTransporter = async () => {
     smtpConnected = false;
 
     console.log("");
+
     console.log(
       "🔌 RESEND SMTP TRANSPORTER CLOSED"
     );
@@ -1404,10 +1474,13 @@ const closeTransporter = async () => {
 
 const startSMTPVerification = async () => {
   console.log("");
+
   console.log("================================================");
+
   console.log(
     "📧 EMAIL SERVICE STARTUP CHECK"
   );
+
   console.log("================================================");
 
   const result =
@@ -1418,6 +1491,14 @@ const startSMTPVerification = async () => {
   if (result.connected) {
     console.log(
       "🟢 EMAIL SERVICE STATUS: ONLINE"
+    );
+
+    console.log(
+      "🟢 RESEND SMTP PORT: 465"
+    );
+
+    console.log(
+      "🟢 RESEND SMTP SECURITY: Implicit TLS / SSL"
     );
   } else {
     console.log(
@@ -1431,6 +1512,7 @@ const startSMTPVerification = async () => {
   }
 
   console.log("================================================");
+
   console.log("");
 
   return result;
