@@ -839,7 +839,7 @@
 //       message: emailSent
 //         ? "Reply saved and email sent to user successfully"
 //         : "Reply saved successfully, but email could not be sent",
-      
+
 //       emailSent,
 
 //       data: {
@@ -1168,7 +1168,6 @@
 //   }
 // };
 
-
 // // ============================================================
 // // MARK ONE CONTACT NOTIFICATION AS READ
 // // ============================================================
@@ -1263,7 +1262,6 @@
 //     });
 //   }
 // };
-
 
 // // ============================================================
 // // BULK MARK CONTACT NOTIFICATIONS AS READ
@@ -1369,7 +1367,6 @@
 //     });
 //   }
 // };
-
 
 // // ============================================================
 // // DELETE ONE CONTACT NOTIFICATION
@@ -1516,7 +1513,6 @@
 //     });
 //   }
 // };
-
 
 // // ============================================================
 // // BULK DELETE CONTACT NOTIFICATIONS
@@ -1670,14 +1666,6 @@
 //   }
 // };
 
-
-
-
-
-
-
-
-
 const Contact = require("../models/Contact");
 const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
@@ -1711,7 +1699,7 @@ const getContactConfirmationEmail = (contact) => ({
           <h3 style="margin: 0 0 15px; color: #667eea;">Your Message Summary</h3>
           <p style="margin: 5px 0;"><strong>Name:</strong> ${contact.name}</p>
           <p style="margin: 5px 0;"><strong>Email:</strong> ${contact.email}</p>
-          ${contact.phone ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${contact.phone}</p>` : ''}
+          ${contact.phone ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${contact.phone}</p>` : ""}
           <p style="margin: 5px 0;"><strong>Message:</strong></p>
           <p style="background: #f1f3f5; padding: 15px; border-radius: 5px; margin: 5px 0 0;">${contact.message}</p>
         </div>
@@ -1757,17 +1745,17 @@ const getAdminNotificationEmail = (contact) => ({
           <h3 style="margin: 0 0 15px; color: #f5576c;">Contact Details</h3>
           <p style="margin: 5px 0;"><strong>Name:</strong> ${contact.name}</p>
           <p style="margin: 5px 0;"><strong>Email:</strong> ${contact.email}</p>
-          ${contact.phone ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${contact.phone}</p>` : ''}
+          ${contact.phone ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${contact.phone}</p>` : ""}
           <p style="margin: 5px 0;"><strong>Status:</strong> ${contact.status}</p>
           <p style="margin: 5px 0;"><strong>Submitted:</strong> ${new Date(contact.createdAt).toLocaleString()}</p>
-          ${contact.ipAddress ? `<p style="margin: 5px 0;"><strong>IP Address:</strong> ${contact.ipAddress}</p>` : ''}
+          ${contact.ipAddress ? `<p style="margin: 5px 0;"><strong>IP Address:</strong> ${contact.ipAddress}</p>` : ""}
           <p style="margin: 15px 0 5px;"><strong>Message:</strong></p>
           <p style="background: #f1f3f5; padding: 15px; border-radius: 5px; margin: 5px 0 0;">${contact.message}</p>
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
           <p style="margin: 0; text-align: center;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/contacts/${contact._id}" 
+            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/admin/contacts/${contact._id}" 
                style="display: inline-block; background: #667eea; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px;">
               View & Reply
             </a>
@@ -2008,8 +1996,7 @@ exports.submitContact = async (req, res) => {
     // ===========================
 
     try {
-      const userEmailTemplate =
-        getContactConfirmationEmail(contact);
+      const userEmailTemplate = getContactConfirmationEmail(contact);
 
       const result = await sendEmail({
         to: contact.email,
@@ -2021,7 +2008,7 @@ exports.submitContact = async (req, res) => {
     } catch (emailError) {
       console.error(
         "❌ Failed to send confirmation email:",
-        emailError.message
+        emailError.message,
       );
     }
 
@@ -2030,8 +2017,7 @@ exports.submitContact = async (req, res) => {
     // ===========================
 
     try {
-      const adminEmailTemplate =
-        getAdminNotificationEmail(contact);
+      const adminEmailTemplate = getAdminNotificationEmail(contact);
 
       const adminEmail = process.env.ADMIN_EMAIL;
 
@@ -2044,14 +2030,12 @@ exports.submitContact = async (req, res) => {
 
         adminEmailSent = result.success;
       } else {
-        console.log(
-          "⚠️ No ADMIN_EMAIL configured in .env"
-        );
+        console.log("⚠️ No ADMIN_EMAIL configured in .env");
       }
     } catch (emailError) {
       console.error(
         "❌ Failed to send admin notification email:",
-        emailError.message
+        emailError.message,
       );
     }
 
@@ -2070,13 +2054,11 @@ exports.submitContact = async (req, res) => {
         userAgent,
       });
 
-      console.log(
-        `✅ User activity created for ${contact.email}`
-      );
+      console.log(`✅ User activity created for ${contact.email}`);
     } catch (activityError) {
       console.error(
         "❌ Failed to create user activity:",
-        activityError.message
+        activityError.message,
       );
     }
 
@@ -2085,18 +2067,15 @@ exports.submitContact = async (req, res) => {
     // ===========================
 
     try {
-      await createAllRoleNotifications(
-        contact,
-        "created"
-      );
+      await createAllRoleNotifications(contact, "created");
 
       console.log(
-        `✅ Role-based notifications created for contact ${contact._id}`
+        `✅ Role-based notifications created for contact ${contact._id}`,
       );
     } catch (notificationError) {
       console.error(
         "❌ Failed to create role-based notifications:",
-        notificationError.message
+        notificationError.message,
       );
     }
 
@@ -2108,8 +2087,7 @@ exports.submitContact = async (req, res) => {
       success: true,
       message:
         "Contact form submitted successfully. A confirmation email has been sent.",
-      emailSent:
-        confirmationEmailSent && adminEmailSent,
+      emailSent: confirmationEmailSent && adminEmailSent,
       data: {
         id: contact._id,
         userId: contact.userId,
@@ -2124,10 +2102,7 @@ exports.submitContact = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(
-      "Submit contact error:",
-      error
-    );
+    console.error("Submit contact error:", error);
 
     return res.status(500).json({
       success: false,
@@ -2213,7 +2188,10 @@ exports.getContactById = async (req, res) => {
       try {
         await createAllRoleNotifications(contact, "read");
       } catch (notificationError) {
-        console.error("Failed to create read notification:", notificationError.message);
+        console.error(
+          "Failed to create read notification:",
+          notificationError.message,
+        );
       }
     }
 
@@ -2320,7 +2298,10 @@ exports.updateContactStatus = async (req, res) => {
       try {
         await createAllRoleNotifications(contact, notificationType);
       } catch (notificationError) {
-        console.error("Failed to create status notification:", notificationError.message);
+        console.error(
+          "Failed to create status notification:",
+          notificationError.message,
+        );
       }
     }
 
@@ -2409,7 +2390,10 @@ exports.replyToContact = async (req, res) => {
     try {
       await createAllRoleNotifications(contact, "replied");
     } catch (notificationError) {
-      console.error("Role-based notification error:", notificationError.message);
+      console.error(
+        "Role-based notification error:",
+        notificationError.message,
+      );
     }
 
     return res.status(200).json({
@@ -2527,13 +2511,13 @@ exports.exportContacts = async (req, res) => {
     let csv = "Name,Email,Phone,Message,Status,Submitted At\n";
 
     contacts.forEach((c) => {
-      csv += `"${c.name}","${c.email}","${c.phone || ''}","${c.message.replace(/"/g, '""')}","${c.status}","${c.createdAt.toISOString()}"\n`;
+      csv += `"${c.name}","${c.email}","${c.phone || ""}","${c.message.replace(/"/g, '""')}","${c.status}","${c.createdAt.toISOString()}"\n`;
     });
 
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=contacts_${Date.now()}.csv`
+      `attachment; filename=contacts_${Date.now()}.csv`,
     );
     res.status(200).send(csv);
   } catch (error) {
@@ -2647,7 +2631,10 @@ exports.getContactNotifications = async (req, res) => {
 exports.markContactNotificationAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;
+
+    // ============================================================
+    // VALIDATE NOTIFICATION ID
+    // ============================================================
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -2655,6 +2642,10 @@ exports.markContactNotificationAsRead = async (req, res) => {
         message: "Invalid notification ID",
       });
     }
+
+    // ============================================================
+    // FIND CONTACT NOTIFICATION
+    // ============================================================
 
     const notification = await Notification.findOne({
       _id: id,
@@ -2664,40 +2655,23 @@ exports.markContactNotificationAsRead = async (req, res) => {
     if (!notification) {
       return res.status(404).json({
         success: false,
-        message: "Notification not found",
+        message: "Contact notification not found",
       });
     }
 
-    // Check permission
-    const hasPermission =
-      notification.targetRoles.includes(user.role) ||
-      notification.targetUserId?.toString() === user.id ||
-      notification.targetUserEmail === user.email ||
-      notification.userId?.toString() === user.id ||
-      user.role === "admin";
-
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to mark this notification as read",
-      });
-    }
+    // ============================================================
+    // MARK AS READ
+    // ============================================================
 
     notification.isRead = true;
     notification.status = "read";
     notification.readAt = new Date();
 
-    if (!notification.readBy) {
-      notification.readBy = [];
-    }
-
-    notification.readBy.push({
-      userId: user.id,
-      userEmail: user.email,
-      userRole: user.role,
-    });
-
     await notification.save();
+
+    // ============================================================
+    // SUCCESS
+    // ============================================================
 
     return res.status(200).json({
       success: true,
@@ -2706,27 +2680,39 @@ exports.markContactNotificationAsRead = async (req, res) => {
     });
   } catch (error) {
     console.error("Mark contact notification as read error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to mark notification as read",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
-
 // 14. Bulk Mark Contact Notifications as Read
 exports.bulkMarkContactNotificationsAsRead = async (req, res) => {
   try {
-    const user = req.user;
     const { ids } = req.body;
+
+    // ============================================================
+    // BASE QUERY
+    // Only unread contact notifications
+    // ============================================================
 
     const query = {
       type: { $regex: /^contact_/ },
       isRead: false,
     };
 
-    // If IDs were provided, filter by them
+    // ============================================================
+    // IF IDS ARE PROVIDED
+    // Mark only selected notifications as read
+    // ============================================================
+
     if (Array.isArray(ids) && ids.length > 0) {
-      const invalidIds = ids.filter((id) => !mongoose.Types.ObjectId.isValid(id));
+      const invalidIds = ids.filter(
+        (id) => !mongoose.Types.ObjectId.isValid(id),
+      );
+
       if (invalidIds.length > 0) {
         return res.status(400).json({
           success: false,
@@ -2734,51 +2720,54 @@ exports.bulkMarkContactNotificationsAsRead = async (req, res) => {
           invalidIds,
         });
       }
-      query._id = { $in: ids };
-    } else {
-      // If no IDs, mark all based on user role
-      if (user.role !== "admin") {
-        query.$or = [
-          { targetRoles: { $in: [user.role] } },
-          { targetUserId: user.id },
-          { targetUserEmail: user.email },
-          { userId: user.id },
-        ];
-      }
+
+      query._id = {
+        $in: ids,
+      };
     }
 
-    const result = await Notification.updateMany(
-      query,
-      {
-        $set: {
-          isRead: true,
-          status: "read",
-          readAt: new Date(),
-        },
-      }
-    );
+    // ============================================================
+    // MARK NOTIFICATIONS AS READ
+    // ============================================================
+
+    const result = await Notification.updateMany(query, {
+      $set: {
+        isRead: true,
+        status: "read",
+        readAt: new Date(),
+      },
+    });
+
+    // ============================================================
+    // RESPONSE
+    // ============================================================
 
     return res.status(200).json({
       success: true,
-      message: ids?.length
-        ? "Selected notifications marked as read"
-        : "All contact notifications marked as read",
+      message:
+        Array.isArray(ids) && ids.length > 0
+          ? "Selected notifications marked as read"
+          : "All contact notifications marked as read",
       modifiedCount: result.modifiedCount,
     });
   } catch (error) {
     console.error("Bulk mark contact notifications as read error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to mark notifications as read",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
-
 // 15. Delete Contact Notification
 exports.deleteContactNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;
+
+    // ============================================================
+    // VALIDATE NOTIFICATION ID
+    // ============================================================
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -2786,6 +2775,10 @@ exports.deleteContactNotification = async (req, res) => {
         message: "Invalid notification ID",
       });
     }
+
+    // ============================================================
+    // FIND CONTACT NOTIFICATION
+    // ============================================================
 
     const notification = await Notification.findOne({
       _id: id,
@@ -2795,43 +2788,41 @@ exports.deleteContactNotification = async (req, res) => {
     if (!notification) {
       return res.status(404).json({
         success: false,
-        message: "Notification not found",
+        message: "Contact notification not found",
       });
     }
 
-    // Check permission
-    const hasPermission =
-      user.role === "admin" ||
-      notification.targetUserId?.toString() === user.id ||
-      notification.userId?.toString() === user.id;
+    // ============================================================
+    // DELETE
+    // ============================================================
 
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to delete this notification",
-      });
-    }
-
-    await notification.deleteOne();
+    await Notification.deleteOne({
+      _id: notification._id,
+    });
 
     return res.status(200).json({
       success: true,
       message: "Notification deleted successfully",
+      deletedId: notification._id,
     });
   } catch (error) {
     console.error("Delete contact notification error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to delete notification",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
-
 // 16. Bulk Delete Contact Notifications
 exports.bulkDeleteContactNotifications = async (req, res) => {
   try {
     const { ids } = req.body;
-    const user = req.user;
+
+    // ============================================================
+    // VALIDATE IDS
+    // ============================================================
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
@@ -2840,28 +2831,43 @@ exports.bulkDeleteContactNotifications = async (req, res) => {
       });
     }
 
-    let query = {
-      _id: { $in: ids },
-      type: { $regex: /^contact_/ },
-    };
+    // ============================================================
+    // VALIDATE MONGODB IDS
+    // ============================================================
 
-    // Non-admin users can only delete their own notifications
-    if (user.role !== "admin") {
-      query.$or = [
-        { targetUserId: user.id },
-        { userId: user.id },
-        { targetUserEmail: user.email },
-      ];
+    const invalidIds = ids.filter((id) => !mongoose.Types.ObjectId.isValid(id));
+
+    if (invalidIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more notification IDs are invalid",
+        invalidIds,
+      });
     }
 
-    const result = await Notification.deleteMany(query);
+    // ============================================================
+    // DELETE CONTACT NOTIFICATIONS
+    // ============================================================
+
+    const result = await Notification.deleteMany({
+      _id: { $in: ids },
+      type: { $regex: /^contact_/ },
+    });
+
+    // ============================================================
+    // NOTHING DELETED
+    // ============================================================
 
     if (result.deletedCount === 0) {
       return res.status(404).json({
         success: false,
-        message: "No notifications found to delete",
+        message: "No contact notifications found to delete",
       });
     }
+
+    // ============================================================
+    // SUCCESS
+    // ============================================================
 
     return res.status(200).json({
       success: true,
@@ -2870,9 +2876,11 @@ exports.bulkDeleteContactNotifications = async (req, res) => {
     });
   } catch (error) {
     console.error("Bulk delete contact notifications error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to delete notifications",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -2880,35 +2888,30 @@ exports.bulkDeleteContactNotifications = async (req, res) => {
 // 17. Mark All Contact Notifications as Read (User)
 exports.markAllContactNotificationsAsRead = async (req, res) => {
   try {
-    const user = req.user;
-    const { role } = req.query;
+    // ============================================================
+    // FIND ALL UNREAD CONTACT NOTIFICATIONS
+    // ============================================================
 
-    let query = {
+    const query = {
       type: { $regex: /^contact_/ },
       isRead: false,
     };
 
-    if (role) {
-      query.targetRoles = { $in: [role] };
-    } else {
-      query.$or = [
-        { targetRoles: { $in: [user.role] } },
-        { targetUserId: user.id },
-        { targetUserEmail: user.email },
-        { userId: user.id },
-      ];
-    }
+    // ============================================================
+    // MARK ALL AS READ
+    // ============================================================
 
-    const result = await Notification.updateMany(
-      query,
-      {
-        $set: {
-          isRead: true,
-          status: "read",
-          readAt: new Date(),
-        },
-      }
-    );
+    const result = await Notification.updateMany(query, {
+      $set: {
+        isRead: true,
+        status: "read",
+        readAt: new Date(),
+      },
+    });
+
+    // ============================================================
+    // SUCCESS
+    // ============================================================
 
     return res.status(200).json({
       success: true,
@@ -2917,9 +2920,11 @@ exports.markAllContactNotificationsAsRead = async (req, res) => {
     });
   } catch (error) {
     console.error("Mark all contact notifications as read error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to mark notifications as read",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
