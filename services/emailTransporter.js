@@ -660,17 +660,23 @@ require("dotenv").config();
    RESEND SMTP ENVIRONMENT
 ============================================================ */
 
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.resend.com";
+const SMTP_HOST =
+  process.env.SMTP_HOST || "smtp.resend.com";
 
-const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 587;
+const SMTP_PORT =
+  parseInt(process.env.SMTP_PORT, 10) || 587;
 
-const SMTP_USER = process.env.SMTP_USER || "resend";
+const SMTP_USER =
+  process.env.SMTP_USER || "resend";
 
-const SMTP_PASS = process.env.SMTP_PASS || "";
+const SMTP_PASS =
+  process.env.SMTP_PASS || "";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
+const ADMIN_EMAIL =
+  process.env.ADMIN_EMAIL || "";
 
-const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "INYUMBA";
+const EMAIL_FROM_NAME =
+  process.env.EMAIL_FROM_NAME || "INYUMBA";
 
 /* ============================================================
    SMTP STATUS
@@ -690,9 +696,21 @@ let smtpLastCheckedAt = null;
 
 const isSMTPConfigured = () => {
   return Boolean(
-    SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS && ADMIN_EMAIL,
+    SMTP_HOST &&
+      SMTP_PORT &&
+      SMTP_USER &&
+      SMTP_PASS &&
+      ADMIN_EMAIL
   );
 };
+
+/* ============================================================
+   SMTP CONNECTION MODE
+============================================================ */
+
+const isImplicitTLS = SMTP_PORT === 465;
+
+const isSTARTTLS = SMTP_PORT === 587;
 
 /* ============================================================
    CREATE RESEND SMTP TRANSPORTER
@@ -700,38 +718,53 @@ const isSMTPConfigured = () => {
 
 const createTransporter = () => {
   console.log("");
-
   console.log("================================================");
-
   console.log("📧 CREATING RESEND SMTP TRANSPORTER");
-
   console.log("================================================");
 
   console.log("SMTP Host:", SMTP_HOST);
-
   console.log("SMTP Port:", SMTP_PORT);
-
   console.log("SMTP User:", SMTP_USER);
-
-  console.log("SMTP Password:", SMTP_PASS ? "Configured ✅" : "Missing ❌");
-
-  console.log("Admin Email:", ADMIN_EMAIL ? ADMIN_EMAIL : "Missing ❌");
-
+  console.log(
+    "SMTP Password:",
+    SMTP_PASS ? "Configured ✅" : "Missing ❌"
+  );
+  console.log(
+    "Admin Email:",
+    ADMIN_EMAIL || "Missing ❌"
+  );
   console.log("From Name:", EMAIL_FROM_NAME);
+
+  console.log(
+    "SMTP Security:",
+    isImplicitTLS
+      ? "Implicit TLS / SSL"
+      : isSTARTTLS
+      ? "STARTTLS"
+      : "Custom SMTP mode"
+  );
 
   console.log("================================================");
 
   /*
-   * Resend SMTP
+   * Resend SMTP:
    *
-   * Port 587 = STARTTLS
+   * Port 465:
+   *   secure: true
+   *   Implicit TLS
+   *
+   * Port 587:
+   *   secure: false
+   *   requireTLS: true
+   *   STARTTLS
    */
 
-  return nodemailer.createTransport({
+  const config = {
     host: SMTP_HOST,
-    port: 587,
-    secure: false,
-    requireTLS: true,
+
+    port: SMTP_PORT,
+
+    secure: isImplicitTLS,
 
     auth: {
       user: SMTP_USER,
@@ -740,10 +773,22 @@ const createTransporter = () => {
 
     tls: {
       minVersion: "TLSv1.2",
+
       servername: SMTP_HOST,
+
       rejectUnauthorized: true,
     },
-  });
+  };
+
+  /*
+   * STARTTLS is required only for port 587.
+   */
+
+  if (isSTARTTLS) {
+    config.requireTLS = true;
+  }
+
+  return nodemailer.createTransport(config);
 };
 
 /* ============================================================
@@ -752,7 +797,9 @@ const createTransporter = () => {
 
 const getTransporter = () => {
   if (!isSMTPConfigured()) {
-    throw new Error("Resend SMTP configuration is incomplete");
+    throw new Error(
+      "Resend SMTP configuration is incomplete"
+    );
   }
 
   if (!transporter) {
@@ -768,11 +815,8 @@ const getTransporter = () => {
 
 const testConnection = async () => {
   console.log("");
-
   console.log("================================================");
-
   console.log("🔍 VERIFYING RESEND SMTP CONNECTION");
-
   console.log("================================================");
 
   smtpLastCheckedAt = new Date();
@@ -784,21 +828,37 @@ const testConnection = async () => {
   if (!isSMTPConfigured()) {
     smtpConnected = false;
 
-    smtpLastError = "Resend SMTP configuration is incomplete";
+    smtpLastError =
+      "Resend SMTP configuration is incomplete";
 
-    console.error("❌ RESEND SMTP CONFIGURATION INCOMPLETE");
+    console.error(
+      "❌ RESEND SMTP CONFIGURATION INCOMPLETE"
+    );
 
-    console.error("Required environment variables:");
+    console.error("");
+    console.error(
+      "Required environment variables:"
+    );
 
-    console.error("SMTP_HOST");
+    console.error(
+      "SMTP_HOST"
+    );
 
-    console.error("SMTP_PORT");
+    console.error(
+      "SMTP_PORT"
+    );
 
-    console.error("SMTP_USER");
+    console.error(
+      "SMTP_USER"
+    );
 
-    console.error("SMTP_PASS");
+    console.error(
+      "SMTP_PASS"
+    );
 
-    console.error("ADMIN_EMAIL");
+    console.error(
+      "ADMIN_EMAIL"
+    );
 
     console.log("================================================");
 
@@ -827,14 +887,30 @@ const testConnection = async () => {
     const smtp = getTransporter();
 
     /* ========================================================
-       VERIFY CONNECTION
+       CONNECTION INFORMATION
     ======================================================== */
 
-    console.log("");
+    console.log(
+      `🔄 Connecting to ${SMTP_HOST}:${SMTP_PORT}...`
+    );
 
-    console.log(`🔄 Connecting to ${SMTP_HOST}:${SMTP_PORT}...`);
+    console.log(
+      `🔐 SMTP authentication user: ${SMTP_USER}`
+    );
 
-    console.log(`🔐 SMTP authentication user: ${SMTP_USER}`);
+    console.log(
+      `🔐 Security mode: ${
+        isImplicitTLS
+          ? "Implicit TLS"
+          : isSTARTTLS
+          ? "STARTTLS"
+          : "Custom"
+      }`
+    );
+
+    /* ========================================================
+       VERIFY SMTP CONNECTION
+    ======================================================== */
 
     await smtp.verify();
 
@@ -849,21 +925,30 @@ const testConnection = async () => {
     smtpLastCheckedAt = new Date();
 
     console.log("");
-
     console.log("================================================");
-
-    console.log("✅ RESEND SMTP CONNECTION VERIFIED");
-
+    console.log(
+      "✅ RESEND SMTP CONNECTION VERIFIED"
+    );
     console.log("🟢 EMAIL SERVICE: ONLINE");
-
     console.log("🟢 RESEND SMTP: CONNECTED");
-
-    console.log(`🟢 SMTP SERVER: ${SMTP_HOST}`);
-
-    console.log(`🟢 SMTP PORT: ${SMTP_PORT}`);
-
-    console.log(`🟢 SMTP USER: ${SMTP_USER}`);
-
+    console.log(
+      `🟢 SMTP SERVER: ${SMTP_HOST}`
+    );
+    console.log(
+      `🟢 SMTP PORT: ${SMTP_PORT}`
+    );
+    console.log(
+      `🟢 SMTP USER: ${SMTP_USER}`
+    );
+    console.log(
+      `🟢 SECURITY: ${
+        isImplicitTLS
+          ? "Implicit TLS"
+          : isSTARTTLS
+          ? "STARTTLS"
+          : "Custom"
+      }`
+    );
     console.log("================================================");
 
     return {
@@ -893,21 +978,26 @@ const testConnection = async () => {
     smtpLastCheckedAt = new Date();
 
     console.error("");
-
     console.error("================================================");
-
-    console.error("❌ RESEND SMTP CONNECTION FAILED");
-
-    console.error("🔴 EMAIL SERVICE: OFFLINE");
-
-    console.error("🔴 RESEND SMTP: NOT CONNECTED");
-
-    console.error("❌ Error:", error.message);
-
-    console.error(`❌ SMTP Server: ${SMTP_HOST}`);
-
-    console.error(`❌ SMTP Port: ${SMTP_PORT}`);
-
+    console.error(
+      "❌ RESEND SMTP CONNECTION FAILED"
+    );
+    console.error(
+      "🔴 EMAIL SERVICE: OFFLINE"
+    );
+    console.error(
+      "🔴 RESEND SMTP: NOT CONNECTED"
+    );
+    console.error(
+      "❌ Error:",
+      error.message
+    );
+    console.error(
+      `❌ SMTP Server: ${SMTP_HOST}`
+    );
+    console.error(
+      `❌ SMTP Port: ${SMTP_PORT}`
+    );
     console.error("================================================");
 
     return {
@@ -942,7 +1032,8 @@ const sendMail = async (mailOptions) => {
       return {
         success: false,
 
-        error: "Resend SMTP configuration is incomplete",
+        error:
+          "Resend SMTP configuration is incomplete",
       };
     }
 
@@ -950,7 +1041,10 @@ const sendMail = async (mailOptions) => {
        VALIDATE MAIL OPTIONS
     ======================================================== */
 
-    if (!mailOptions || typeof mailOptions !== "object") {
+    if (
+      !mailOptions ||
+      typeof mailOptions !== "object"
+    ) {
       return {
         success: false,
 
@@ -968,7 +1062,8 @@ const sendMail = async (mailOptions) => {
        SEND EMAIL
     ======================================================== */
 
-    const info = await smtp.sendMail(mailOptions);
+    const info =
+      await smtp.sendMail(mailOptions);
 
     /* ========================================================
        SUCCESS
@@ -981,13 +1076,14 @@ const sendMail = async (mailOptions) => {
     smtpLastCheckedAt = new Date();
 
     console.log("");
-
     console.log("================================================");
-
-    console.log("✅ EMAIL SENT SUCCESSFULLY THROUGH RESEND");
-
-    console.log("📨 Message ID:", info.messageId);
-
+    console.log(
+      "✅ EMAIL SENT SUCCESSFULLY THROUGH RESEND"
+    );
+    console.log(
+      "📨 Message ID:",
+      info.messageId
+    );
     console.log("================================================");
 
     return {
@@ -998,6 +1094,10 @@ const sendMail = async (mailOptions) => {
       error: null,
     };
   } catch (error) {
+    /* ========================================================
+       FAILURE
+    ======================================================== */
+
     smtpConnected = false;
 
     smtpLastError = error.message;
@@ -1005,13 +1105,14 @@ const sendMail = async (mailOptions) => {
     smtpLastCheckedAt = new Date();
 
     console.error("");
-
     console.error("================================================");
-
-    console.error("❌ RESEND EMAIL SENDING FAILED");
-
-    console.error("❌ Error:", error.message);
-
+    console.error(
+      "❌ RESEND EMAIL SENDING FAILED"
+    );
+    console.error(
+      "❌ Error:",
+      error.message
+    );
     console.error("================================================");
 
     return {
@@ -1068,7 +1169,8 @@ const sendEmail = async ({
     return {
       success: false,
 
-      error: "Email text or HTML content is required",
+      error:
+        "Email text or HTML content is required",
     };
   }
 
@@ -1124,21 +1226,34 @@ const sendEmail = async ({
      SEND
   ========================================================== */
 
-  return await sendMailWithRetry(mailOptions, 3);
+  return await sendMailWithRetry(
+    mailOptions,
+    3
+  );
 };
 
 /* ============================================================
    SEND MAIL WITH RETRY
 ============================================================ */
 
-const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
+const sendMailWithRetry = async (
+  mailOptions,
+  maxRetries = 3
+) => {
   let lastError = null;
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  for (
+    let attempt = 1;
+    attempt <= maxRetries;
+    attempt++
+  ) {
     try {
-      console.log(`📧 Sending email attempt ${attempt}/${maxRetries}...`);
+      console.log(
+        `📧 Sending email attempt ${attempt}/${maxRetries}...`
+      );
 
-      const result = await sendMail(mailOptions);
+      const result =
+        await sendMail(mailOptions);
 
       if (result.success) {
         return result;
@@ -1154,16 +1269,25 @@ const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
     ======================================================== */
 
     if (attempt < maxRetries) {
-      console.log(`🔄 Retrying Resend email (${attempt + 1}/${maxRetries})...`);
+      console.log(
+        `🔄 Retrying Resend email (${attempt + 1}/${maxRetries})...`
+      );
 
-      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+      await new Promise((resolve) =>
+        setTimeout(
+          resolve,
+          attempt * 2000
+        )
+      );
     }
   }
 
   return {
     success: false,
 
-    error: lastError || "Resend email sending failed",
+    error:
+      lastError ||
+      "Resend email sending failed",
   };
 };
 
@@ -1171,11 +1295,19 @@ const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
    SAFE SEND MAIL
 ============================================================ */
 
-const sendMailSafely = async (mailOptions) => {
+const sendMailSafely = async (
+  mailOptions
+) => {
   try {
-    return await sendMailWithRetry(mailOptions, 3);
+    return await sendMailWithRetry(
+      mailOptions,
+      3
+    );
   } catch (error) {
-    console.error("⚠️ Resend email service error:", error.message);
+    console.error(
+      "⚠️ Resend email service error:",
+      error.message
+    );
 
     return {
       success: false,
@@ -1201,17 +1333,32 @@ const getSMTPInfo = () => {
 
     fromName: EMAIL_FROM_NAME,
 
-    configured: isSMTPConfigured(),
+    configured:
+      isSMTPConfigured(),
 
-    transporterCreated: Boolean(transporter),
+    transporterCreated:
+      Boolean(transporter),
 
-    connected: smtpConnected,
+    connected:
+      smtpConnected,
 
-    status: smtpConnected ? "ONLINE" : "OFFLINE",
+    status:
+      smtpConnected
+        ? "ONLINE"
+        : "OFFLINE",
 
-    lastError: smtpLastError,
+    security:
+      isImplicitTLS
+        ? "Implicit TLS"
+        : isSTARTTLS
+        ? "STARTTLS"
+        : "Custom",
 
-    lastCheckedAt: smtpLastCheckedAt,
+    lastError:
+      smtpLastError,
+
+    lastCheckedAt:
+      smtpLastCheckedAt,
   };
 };
 
@@ -1230,14 +1377,18 @@ const closeTransporter = async () => {
     smtpConnected = false;
 
     console.log("");
-
-    console.log("🔌 RESEND SMTP TRANSPORTER CLOSED");
+    console.log(
+      "🔌 RESEND SMTP TRANSPORTER CLOSED"
+    );
 
     return {
       success: true,
     };
   } catch (error) {
-    console.error("❌ Failed to close SMTP transporter:", error.message);
+    console.error(
+      "❌ Failed to close SMTP transporter:",
+      error.message
+    );
 
     return {
       success: false,
@@ -1253,27 +1404,33 @@ const closeTransporter = async () => {
 
 const startSMTPVerification = async () => {
   console.log("");
-
+  console.log("================================================");
+  console.log(
+    "📧 EMAIL SERVICE STARTUP CHECK"
+  );
   console.log("================================================");
 
-  console.log("📧 EMAIL SERVICE STARTUP CHECK");
-
-  console.log("================================================");
-
-  const result = await testConnection();
+  const result =
+    await testConnection();
 
   console.log("");
 
   if (result.connected) {
-    console.log("🟢 EMAIL SERVICE STATUS: ONLINE");
+    console.log(
+      "🟢 EMAIL SERVICE STATUS: ONLINE"
+    );
   } else {
-    console.log("🔴 EMAIL SERVICE STATUS: OFFLINE");
+    console.log(
+      "🔴 EMAIL SERVICE STATUS: OFFLINE"
+    );
 
-    console.log("🔴 Reason:", result.error);
+    console.log(
+      "🔴 Reason:",
+      result.error
+    );
   }
 
   console.log("================================================");
-
   console.log("");
 
   return result;
