@@ -2476,6 +2476,272 @@ exports.submitQuestion = async (req, res) => {
   }
 };
 
+exports.replyQuestion = async (req, res) => {
+  try {
+    // ============================================================
+    // VALIDATION
+    // ============================================================
+
+    const { id } = req.params;
+    const { replyMessage } = req.body;
+
+    // ============================================================
+    // VALIDATE QUESTION ID
+    // ============================================================
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid question ID",
+      });
+    }
+
+    // ============================================================
+    // VALIDATE REPLY
+    // ============================================================
+
+    if (
+      !replyMessage ||
+      typeof replyMessage !== "string" ||
+      !replyMessage.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Reply message is required",
+      });
+    }
+
+    const normalizedReply = replyMessage.trim();
+
+    if (normalizedReply.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Reply message must be at least 2 characters",
+      });
+    }
+
+    // ============================================================
+    // FIND QUESTION
+    // ============================================================
+
+    const question = await Question.findById(id);
+
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: "Question not found",
+      });
+    }
+
+    // ============================================================
+    // GET REPLYING USER
+    // ============================================================
+
+    const repliedBy =
+      req.user?._id ||
+      req.user?.id ||
+      null;
+
+    // ============================================================
+    // UPDATE QUESTION
+    // ============================================================
+
+    question.replyMessage = normalizedReply;
+
+    question.repliedAt = new Date();
+
+    question.status = "replied";
+
+    if (repliedBy) {
+      question.repliedBy = repliedBy;
+    } else {
+      question.repliedBy = null;
+    }
+
+    // ============================================================
+    // SAVE QUESTION
+    // ============================================================
+
+    await question.save();
+
+    console.log(
+      `✅ Question replied successfully: ${question._id}`
+    );
+
+    // ============================================================
+    // CREATE NOTIFICATION
+    // ============================================================
+
+    try {
+      const notificationData = {
+        title: "Question Replied",
+        message: `Your question has received a reply: ${normalizedReply}`,
+        type: "question_replied",
+        relatedId: question._id,
+        relatedType: "Question",
+        userEmail: question.email,
+        actionLink: `/questions/${question._id}`,
+        metadata: {
+          questionId: question._id,
+          question: question.question,
+          replyMessage: normalizedReply,
+          category: question.category,
+          priority: question.priority,
+        },
+      };
+
+      // Add userId only when the question belongs
+      // to a registered user.
+      if (question.userId) {
+        notificationData.userId = question.userId;
+      }
+
+      await Notification.create(notificationData);
+
+      console.log(
+        `✅ Reply notification created for ${question.email}`
+      );
+    } catch (notificationError) {
+      console.error(
+        "❌ Failed to create reply notification:",
+        notificationError
+      );
+
+      // Notification failure must NOT
+      // fail the reply.
+    }
+
+    // ============================================================
+    // SEND EMAIL TO QUESTION OWNER
+    // ============================================================
+
+    try {
+      if (question.email) {
+        await sendQuestionReplyEmail(question);
+
+        console.log(
+          `✅ Reply email sent to ${question.email}`
+        );
+      }
+    } catch (emailError) {
+      console.error(
+        "❌ Failed to send question reply email:",
+        emailError
+      );
+
+      // Email failure must NOT
+      // fail the reply.
+    }
+
+    // ============================================================
+    // USER ACTIVITY
+    // ============================================================
+
+    try {
+      const activityData = {
+        userName: question.name,
+        userEmail: question.email,
+        action: "question_replied",
+        description: `Question from ${question.name} was replied to`,
+        ipAddress: getClientIP(req),
+        userAgent: req.headers["user-agent"] || null,
+        metadata: {
+          questionId: question._id,
+          category: question.category,
+          priority: question.priority,
+          replyMessage: normalizedReply,
+        },
+      };
+
+      if (question.userId) {
+        activityData.userId = question.userId;
+      }
+
+      await UserActivity.create(activityData);
+
+      console.log(
+        `✅ Reply activity created for ${question.email}`
+      );
+    } catch (activityError) {
+      console.error(
+        "❌ Failed to create reply activity:",
+        activityError
+      );
+
+      // Activity failure must NOT
+      // fail the reply.
+    }
+
+    // ============================================================
+    // SUCCESS RESPONSE
+    // ============================================================
+
+    return res.status(200).json({
+      success: true,
+      message: "Question replied successfully",
+
+      data: {
+        id: question._id,
+
+        userId: question.userId,
+
+        name: question.name,
+
+        email: question.email,
+
+        phone: question.phone,
+
+        question: question.question,
+
+        category: question.category,
+
+        priority: question.priority,
+
+        status: question.status,
+
+        replyMessage: question.replyMessage,
+
+        repliedAt: question.repliedAt,
+
+        repliedBy: question.repliedBy,
+
+        createdAt: question.createdAt,
+
+        updatedAt: question.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Reply question error:",
+      error
+    );
+
+    // ============================================================
+    // MONGOOSE VALIDATION ERROR
+    // ============================================================
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Question reply validation failed",
+        errors: Object.values(error.errors).map((err) => ({
+          field: err.path,
+          message: err.message,
+        })),
+      });
+    }
+
+    // ============================================================
+    // MAIN ERROR
+    // ============================================================
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reply to question",
+    });
+  }
+};
+
 // 2. Get All Questions
 exports.getQuestions = async (req, res) => {
   try {
