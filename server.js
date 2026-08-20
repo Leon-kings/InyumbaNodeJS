@@ -635,10 +635,6 @@ const connectDB = async () => {
 
     console.log("🟢 MONGODB CONNECTED SUCCESSFULLY");
 
-    console.log("🟢 Database:", mongoose.connection.name);
-
-    console.log("🟢 Host:", mongoose.connection.host);
-
     console.log("🟢 Ready State:", mongoose.connection.readyState);
 
     console.log("================================================");
@@ -787,27 +783,3 @@ const shutdown = async (signal) => {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 process.on("SIGINT", () => shutdown("SIGINT"));
-
-/* ============================================================
-   UNHANDLED REJECTION
-============================================================ */
-
-process.on("unhandledRejection", (error) => {
-  console.error("");
-
-  console.error("❌ UNHANDLED PROMISE REJECTION");
-
-  console.error(error);
-});
-
-/* ============================================================
-   UNCAUGHT EXCEPTION
-============================================================ */
-
-process.on("uncaughtException", (error) => {
-  console.error("");
-
-  console.error("❌ UNCAUGHT EXCEPTION");
-
-  console.error(error);
-});
