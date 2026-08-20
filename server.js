@@ -322,9 +322,7 @@ const connectDB = async () => {
       return false;
     }
 
-    await mongoose.connect(process.env.MONGO_URI, {
-      family: 4
-    });
+    await mongoose.connect(process.env.MONGO_URI);
 
     console.log("✅ MongoDB connected successfully");
 
