@@ -1905,14 +1905,21 @@ exports.getMyQuestionNotifications = async (req, res) => {
 exports.markNotificationAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    // ============================================================
+    // VALIDATE NOTIFICATION ID
+    // ============================================================
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid notification ID",
       });
     }
+
+    // ============================================================
+    // FIND NOTIFICATION
+    // ============================================================
 
     const notification = await Notification.findById(id);
 
@@ -1923,36 +1930,19 @@ exports.markNotificationAsRead = async (req, res) => {
       });
     }
 
-    // Check permission
-    const hasPermission =
-      notification.targetRoles.includes(user.role) ||
-      notification.targetUserId?.toString() === user.id ||
-      notification.targetUserEmail === user.email ||
-      notification.userId?.toString() === user.id ||
-      user.role === "admin";
-
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to mark this notification as read",
-      });
-    }
+    // ============================================================
+    // MARK AS READ
+    // ============================================================
 
     notification.isRead = true;
     notification.status = "read";
     notification.readAt = new Date();
 
-    if (!notification.readBy) {
-      notification.readBy = [];
-    }
-
-    notification.readBy.push({
-      userId: user.id,
-      userEmail: user.email,
-      userRole: user.role,
-    });
-
     await notification.save();
+
+    // ============================================================
+    // SUCCESS
+    // ============================================================
 
     return res.status(200).json({
       success: true,
@@ -1965,7 +1955,10 @@ exports.markNotificationAsRead = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to mark notification as read",
-      error: error.message,
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
@@ -1973,25 +1966,20 @@ exports.markNotificationAsRead = async (req, res) => {
 // 14. Mark All Notifications as Read
 exports.markAllNotificationsAsRead = async (req, res) => {
   try {
-    const user = req.user;
-    const { role } = req.query;
+    // ============================================================
+    // FILTER
+    // Only unread active question notifications
+    // ============================================================
 
-    let filter = {
+    const filter = {
       type: { $regex: /^question_/ },
       isRead: false,
       isActive: true,
     };
 
-    if (role) {
-      filter.targetRoles = { $in: [role] };
-    } else if (user) {
-      filter.$or = [
-        { targetRoles: { $in: [user.role] } },
-        { targetUserId: user.id },
-        { targetUserEmail: user.email },
-        { userId: user.id },
-      ];
-    }
+    // ============================================================
+    // MARK ALL AS READ
+    // ============================================================
 
     const result = await Notification.updateMany(
       filter,
@@ -2004,18 +1992,28 @@ exports.markAllNotificationsAsRead = async (req, res) => {
       }
     );
 
+    // ============================================================
+    // SUCCESS
+    // ============================================================
+
     return res.status(200).json({
       success: true,
       message: `${result.modifiedCount} notifications marked as read`,
       modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    console.error("❌ Mark all notifications as read error:", error);
+    console.error(
+      "❌ Mark all notifications as read error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
       message: "Failed to mark all notifications as read",
-      error: error.message,
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
@@ -2086,14 +2084,21 @@ exports.getUnreadCount = async (req, res) => {
 exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    // ============================================================
+    // VALIDATE NOTIFICATION ID
+    // ============================================================
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid notification ID",
       });
     }
+
+    // ============================================================
+    // FIND NOTIFICATION
+    // ============================================================
 
     const notification = await Notification.findById(id);
 
@@ -2104,20 +2109,17 @@ exports.deleteNotification = async (req, res) => {
       });
     }
 
-    // Check permission
-    const hasPermission =
-      user.role === "admin" ||
-      notification.targetUserId?.toString() === user.id ||
-      notification.userId?.toString() === user.id;
+    // ============================================================
+    // DELETE NOTIFICATION
+    // ============================================================
 
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to delete this notification",
-      });
-    }
+    await Notification.deleteOne({
+      _id: notification._id,
+    });
 
-    await notification.deleteOne();
+    // ============================================================
+    // SUCCESS
+    // ============================================================
 
     return res.status(200).json({
       success: true,
@@ -2130,7 +2132,10 @@ exports.deleteNotification = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to delete notification",
-      error: error.message,
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
@@ -2139,7 +2144,10 @@ exports.deleteNotification = async (req, res) => {
 exports.bulkDeleteNotifications = async (req, res) => {
   try {
     const { ids } = req.body;
-    const user = req.user;
+
+    // ============================================================
+    // VALIDATE IDS
+    // ============================================================
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
@@ -2148,7 +2156,13 @@ exports.bulkDeleteNotifications = async (req, res) => {
       });
     }
 
-    const invalidIds = ids.filter((id) => !mongoose.Types.ObjectId.isValid(id));
+    // ============================================================
+    // VALIDATE MONGODB IDS
+    // ============================================================
+
+    const invalidIds = ids.filter(
+      (id) => !mongoose.Types.ObjectId.isValid(id)
+    );
 
     if (invalidIds.length > 0) {
       return res.status(400).json({
@@ -2158,29 +2172,32 @@ exports.bulkDeleteNotifications = async (req, res) => {
       });
     }
 
-    let query = {
+    // ============================================================
+    // DELETE QUESTION NOTIFICATIONS
+    // ============================================================
+
+    const query = {
       _id: { $in: ids },
       type: { $regex: /^question_/ },
       isActive: true,
     };
 
-    // Non-admin users can only delete their own notifications
-    if (user.role !== "admin") {
-      query.$or = [
-        { targetUserId: user.id },
-        { userId: user.id },
-        { targetUserEmail: user.email },
-      ];
-    }
-
     const result = await Notification.deleteMany(query);
+
+    // ============================================================
+    // NOTHING DELETED
+    // ============================================================
 
     if (result.deletedCount === 0) {
       return res.status(404).json({
         success: false,
-        message: "No notifications found to delete",
+        message: "No question notifications found to delete",
       });
     }
+
+    // ============================================================
+    // SUCCESS
+    // ============================================================
 
     return res.status(200).json({
       success: true,
@@ -2193,7 +2210,10 @@ exports.bulkDeleteNotifications = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to delete notifications",
-      error: error.message,
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
