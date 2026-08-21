@@ -128,6 +128,7 @@ const houseSchema = new mongoose.Schema(
       enum: [
         "available",
         "pending",
+        "booked",
         "unavailable",
         "maintenance",
       ],
