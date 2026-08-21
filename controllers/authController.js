@@ -46,7 +46,6 @@
 //   };
 // };
 
-
 // // ======================================================
 // // GENERATE VERIFICATION CODE
 // // ======================================================
@@ -57,7 +56,6 @@
 //     .toString("hex")
 //     .toUpperCase();
 // };
-
 
 // // ======================================================
 // // CREATE NOTIFICATION
@@ -101,7 +99,6 @@
 //     return null;
 //   }
 // };
-
 
 // // ======================================================
 // // REGISTER USER
@@ -420,7 +417,6 @@
 //   }
 // };
 
-
 // // ======================================================
 // // GET ALL NOTIFICATIONS
 // // ======================================================
@@ -458,7 +454,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // GET NOTIFICATIONS BY EMAIL
@@ -513,7 +508,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // VERIFY EMAIL
@@ -669,7 +663,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // RESEND VERIFICATION CODE
 // // ======================================================
@@ -794,7 +787,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // CHECK EMAIL VERIFICATION STATUS
 // // ======================================================
@@ -854,7 +846,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // GET ALL USERS
 // // ======================================================
@@ -895,7 +886,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // LOGIN
@@ -1102,7 +1092,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // LOGOUT
 // // ======================================================
@@ -1143,7 +1132,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // FORGOT PASSWORD
@@ -1296,7 +1284,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // RESET PASSWORD
@@ -1472,7 +1459,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // GET CURRENT USER
 // // ======================================================
@@ -1536,7 +1522,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // GET USER BY EMAIL
@@ -1624,7 +1609,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // UPDATE CURRENT USER
@@ -1816,7 +1800,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // GET USERS
 // // ======================================================
@@ -1855,7 +1838,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // GET SINGLE USER
@@ -1902,7 +1884,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // UPDATE USER - ADMIN
@@ -2063,7 +2044,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // DELETE USER - ADMIN
 // // ======================================================
@@ -2167,7 +2147,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // DELETE CURRENT USER
@@ -2277,7 +2256,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // UPDATE STATISTICS
 // // ======================================================
@@ -2383,7 +2361,6 @@
 //       });
 //     }
 //   };
-
 
 // // ======================================================
 // // GET USER STATISTICS
@@ -2508,7 +2485,6 @@
 //     }
 //   };
 
-
 // // ======================================================
 // // EXPORT ALL CONTROLLERS
 // // ======================================================
@@ -2550,15 +2526,6 @@
 //   getAllNotifications,
 //   getNotificationsByEmail,
 // };
-
-
-
-
-
-
-
-
-
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -2693,7 +2660,10 @@ const createNotification = async ({
 
     return notification;
   } catch (error) {
-    console.error(`❌ Failed to create notification for ${email}:`, error.message);
+    console.error(
+      `❌ Failed to create notification for ${email}:`,
+      error.message,
+    );
     return null;
   }
 };
@@ -2766,10 +2736,7 @@ const register = async (req, res) => {
     // ===========================
 
     const existingUser = await User.findOne({
-      $or: [
-        { email: normalizedEmail },
-        { phone: normalizedPhone },
-      ],
+      $or: [{ email: normalizedEmail }, { phone: normalizedPhone }],
     });
 
     if (existingUser) {
@@ -2856,13 +2823,19 @@ const register = async (req, res) => {
         userEmail: newUser.email,
         action: "user_created",
         description: `New user ${newUser.name} created an account`,
-        ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
+        ipAddress:
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          null,
         userAgent: req.headers["user-agent"] || null,
       });
 
       console.log(`✅ User activity created for ${newUser.email}`);
     } catch (activityError) {
-      console.error("❌ Failed to create user activity:", activityError.message);
+      console.error(
+        "❌ Failed to create user activity:",
+        activityError.message,
+      );
     }
 
     // ======================================================
@@ -2878,7 +2851,7 @@ const register = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
-      }
+      },
     );
 
     // ======================================================
@@ -2887,7 +2860,8 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Registration successful. Please check your notifications for your verification code.",
+      message:
+        "Registration successful. Please check your notifications for your verification code.",
       requiresEmailVerification: true,
       emailSent: true,
       token,
@@ -2938,6 +2912,70 @@ const getAllNotifications = async (req, res) => {
   }
 };
 
+const bulkDeleteNotifications = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    // ============================================================
+    // VALIDATE IDS
+    // ============================================================
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an array of notification IDs",
+      });
+    }
+
+    // ============================================================
+    // VALIDATE MONGODB IDS
+    // ============================================================
+
+    const invalidIds = ids.filter((id) => !mongoose.Types.ObjectId.isValid(id));
+
+    if (invalidIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more notification IDs are invalid",
+        invalidIds,
+      });
+    }
+
+    // ============================================================
+    // DELETE SELECTED NOTIFICATIONS
+    // ============================================================
+
+    const result = await Notification.deleteMany({
+      _id: { $in: ids },
+    });
+
+    // ============================================================
+    // NOTHING DELETED
+    // ============================================================
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No notifications found to delete",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} notifications deleted successfully`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error("BULK DELETE NOTIFICATIONS ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete notifications",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
 // ======================================================
 // GET NOTIFICATIONS BY EMAIL
 // ======================================================
@@ -2953,7 +2991,9 @@ const getNotificationsByEmail = async (req, res) => {
       });
     }
 
-    const notifications = await Notification.find({ email }).sort({ createdAt: -1 });
+    const notifications = await Notification.find({ email }).sort({
+      createdAt: -1,
+    });
 
     return res.status(200).json({
       success: true,
@@ -3029,7 +3069,8 @@ const verifyEmail = async (req, res) => {
       userName: user.name,
       email: user.email,
       title: "Email Verified",
-      message: "Your email has been successfully verified. Your account is now active.",
+      message:
+        "Your email has been successfully verified. Your account is now active.",
       type: "email_verified",
     });
 
@@ -3044,11 +3085,17 @@ const verifyEmail = async (req, res) => {
         userEmail: user.email,
         action: "email_verified",
         description: `User ${user.name} verified their email address`,
-        ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
+        ipAddress:
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          null,
         userAgent: req.headers["user-agent"] || null,
       });
     } catch (activityError) {
-      console.error("❌ Failed to create verification activity:", activityError.message);
+      console.error(
+        "❌ Failed to create verification activity:",
+        activityError.message,
+      );
     }
 
     return res.status(200).json({
@@ -3162,6 +3209,131 @@ const resendVerificationCode = async (req, res) => {
   }
 };
 
+
+const markNotificationAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ============================================================
+    // VALIDATE ID
+    // ============================================================
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification ID",
+      });
+    }
+
+    // ============================================================
+    // FIND NOTIFICATION
+    // ============================================================
+
+    const notification = await Notification.findById(id);
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    // ============================================================
+    // MARK AS READ
+    // ============================================================
+
+    notification.isRead = true;
+    notification.status = "read";
+    notification.readAt = new Date();
+
+    await notification.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification marked as read",
+      data: notification,
+    });
+  } catch (error) {
+    console.error("MARK NOTIFICATION AS READ ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark notification as read",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+const bulkMarkNotificationsAsRead = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    // ============================================================
+    // BASE FILTER
+    // ============================================================
+
+    const filter = {
+      isRead: false,
+    };
+
+    // ============================================================
+    // IF IDS ARE PROVIDED
+    // MARK ONLY SELECTED NOTIFICATIONS
+    // ============================================================
+
+    if (Array.isArray(ids) && ids.length > 0) {
+      const invalidIds = ids.filter(
+        (id) => !mongoose.Types.ObjectId.isValid(id),
+      );
+
+      if (invalidIds.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "One or more notification IDs are invalid",
+          invalidIds,
+        });
+      }
+
+      filter._id = {
+        $in: ids,
+      };
+    }
+
+    // ============================================================
+    // MARK AS READ
+    // ============================================================
+
+    const result = await Notification.updateMany(filter, {
+      $set: {
+        isRead: true,
+        status: "read",
+        readAt: new Date(),
+      },
+    });
+
+    // ============================================================
+    // SUCCESS
+    // ============================================================
+
+    return res.status(200).json({
+      success: true,
+      message:
+        Array.isArray(ids) && ids.length > 0
+          ? "Selected notifications marked as read"
+          : "All notifications marked as read",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("BULK MARK NOTIFICATIONS AS READ ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark notifications as read",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
 // ======================================================
 // CHECK EMAIL VERIFICATION STATUS
 // ======================================================
@@ -3210,7 +3382,9 @@ const checkEmailVerification = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
-      .select("-password -confirmPassword -emailVerificationCode -emailVerificationExpires")
+      .select(
+        "-password -confirmPassword -emailVerificationCode -emailVerificationExpires",
+      )
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -3254,7 +3428,9 @@ const login = async (req, res) => {
     // FIND USER
     // ===========================
 
-    const user = await User.findOne({ email: normalizedEmail }).select("+password");
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password",
+    );
 
     if (!user) {
       return res.status(401).json({
@@ -3294,11 +3470,17 @@ const login = async (req, res) => {
         userEmail: user.email,
         action: "user_login",
         description: `User ${user.name} logged into their account`,
-        ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
+        ipAddress:
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          null,
         userAgent: req.headers["user-agent"] || null,
       });
     } catch (activityError) {
-      console.error("❌ Failed to create login activity:", activityError.message);
+      console.error(
+        "❌ Failed to create login activity:",
+        activityError.message,
+      );
     }
 
     // ===========================
@@ -3314,7 +3496,7 @@ const login = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "7d",
-      }
+      },
     );
 
     // ===========================
@@ -3443,7 +3625,7 @@ const forgotPassword = async (req, res) => {
     const resetToken = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET + user.password,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // ===========================
@@ -3476,7 +3658,8 @@ const forgotPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset request created. Check your notifications for the reset code.",
+      message:
+        "Password reset request created. Check your notifications for the reset code.",
       token: resetToken,
     });
   } catch (error) {
@@ -3575,11 +3758,17 @@ const resetPassword = async (req, res) => {
         userEmail: user.email,
         action: "password_reset",
         description: `User ${user.name} successfully reset their password`,
-        ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
+        ipAddress:
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          null,
         userAgent: req.headers["user-agent"] || null,
       });
     } catch (activityError) {
-      console.error("❌ Failed to create password reset activity:", activityError.message);
+      console.error(
+        "❌ Failed to create password reset activity:",
+        activityError.message,
+      );
     }
 
     return res.status(200).json({
@@ -3651,7 +3840,9 @@ const getUserByEmail = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: email.trim().toLowerCase() }).select("-password");
+    const user = await User.findOne({
+      email: email.trim().toLowerCase(),
+    }).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -3709,7 +3900,10 @@ const updateCurrentUser = async (req, res) => {
     // EMAIL CHANGE
     // ======================================================
 
-    if (email && email.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
+    if (
+      email &&
+      email.toLowerCase().trim() !== user.email.toLowerCase().trim()
+    ) {
       const normalizedEmail = email.toLowerCase().trim();
 
       const emailValidation = validateEmail(normalizedEmail);
@@ -3793,9 +3987,10 @@ const updateCurrentUser = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: email && !updatedUser.isEmailVerified
-        ? "Profile updated. Please verify your new email address from your notifications."
-        : "Profile updated successfully",
+      message:
+        email && !updatedUser.isEmailVerified
+          ? "Profile updated. Please verify your new email address from your notifications."
+          : "Profile updated successfully",
       user: updatedUser,
     });
   } catch (error) {
@@ -3841,7 +4036,9 @@ const getUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await User.findById(id).select("-password -emailVerificationCode");
+    const user = await User.findById(id).select(
+      "-password -emailVerificationCode",
+    );
 
     if (!user) {
       return res.status(404).json({
@@ -3871,7 +4068,8 @@ const getUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, password, statistics, isActive, role } = req.body;
+    const { name, email, phone, password, statistics, isActive, role } =
+      req.body;
 
     const user = await User.findById(id);
 
@@ -3886,7 +4084,10 @@ const updateUser = async (req, res) => {
     // EMAIL VALIDATION
     // ===========================
 
-    if (email && email.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
+    if (
+      email &&
+      email.toLowerCase().trim() !== user.email.toLowerCase().trim()
+    ) {
       const normalizedEmail = email.toLowerCase().trim();
 
       const emailValidation = validateEmail(normalizedEmail);
@@ -4006,11 +4207,17 @@ const deleteUser = async (req, res) => {
         userEmail: user.email,
         action: "user_deleted",
         description: `User ${user.name} was deleted`,
-        ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
+        ipAddress:
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          null,
         userAgent: req.headers["user-agent"] || null,
       });
     } catch (activityError) {
-      console.error("❌ Failed to create delete activity:", activityError.message);
+      console.error(
+        "❌ Failed to create delete activity:",
+        activityError.message,
+      );
     }
 
     await User.findByIdAndDelete(id);
@@ -4026,6 +4233,58 @@ const deleteUser = async (req, res) => {
       success: false,
       message: "Something went wrong while deleting the user",
       error: error.message,
+    });
+  }
+};
+
+const deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // ============================================================
+    // VALIDATE ID
+    // ============================================================
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification ID",
+      });
+    }
+
+    // ============================================================
+    // FIND NOTIFICATION
+    // ============================================================
+
+    const notification = await Notification.findById(id);
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+
+    // ============================================================
+    // DELETE
+    // ============================================================
+
+    await Notification.deleteOne({
+      _id: notification._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification deleted successfully",
+      data: notification,
+    });
+  } catch (error) {
+    console.error("DELETE NOTIFICATION ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete notification",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -4071,11 +4330,17 @@ const deleteCurrentUser = async (req, res) => {
         userEmail: user.email,
         action: "user_deleted",
         description: `User ${user.name} deleted their account`,
-        ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
+        ipAddress:
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          null,
         userAgent: req.headers["user-agent"] || null,
       });
     } catch (activityError) {
-      console.error("❌ Failed to create account deletion activity:", activityError.message);
+      console.error(
+        "❌ Failed to create account deletion activity:",
+        activityError.message,
+      );
     }
 
     await User.findByIdAndDelete(id);
@@ -4139,7 +4404,7 @@ const updateStatistics = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: updateData },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).select("-password -emailVerificationCode");
 
     return res.status(200).json({
@@ -4167,7 +4432,9 @@ const getUserStatistics = async (req, res) => {
     const activeUsers = await User.countDocuments({ isActive: true });
     const inactiveUsers = await User.countDocuments({ isActive: false });
     const verifiedUsers = await User.countDocuments({ isEmailVerified: true });
-    const unverifiedUsers = await User.countDocuments({ isEmailVerified: false });
+    const unverifiedUsers = await User.countDocuments({
+      isEmailVerified: false,
+    });
 
     // ===========================
     // USERS BY ROLE
@@ -4265,11 +4532,15 @@ module.exports = {
   deleteCurrentUser,
   updateStatistics,
   getUserStatistics,
+  bulkDeleteNotifications,
 
   // ===========================
   // Notifications
   // ===========================
 
   getAllNotifications,
+  bulkMarkNotificationsAsRead,
+  markNotificationAsRead,
+  deleteNotification,
   getNotificationsByEmail,
 };
