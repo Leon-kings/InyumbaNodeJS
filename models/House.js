@@ -225,6 +225,7 @@ houseSchema.virtual("notificationMessage").get(function () {
 houseSchema.virtual("statusBadge").get(function () {
   const badges = {
     available: { color: "success", label: "Available" },
+    booked: { color: "success", label: "Booked" },
     pending: { color: "warning", label: "Pending" },
     unavailable: { color: "danger", label: "Unavailable" },
     maintenance: { color: "secondary", label: "Maintenance" },

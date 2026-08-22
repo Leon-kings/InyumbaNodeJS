@@ -5,6 +5,7 @@ const notificationSchema = new mongoose.Schema(
     // =================================================
     // NOTIFICATION TYPE
     // =================================================
+
     // type: {
     //   type: String,
 
@@ -50,78 +51,153 @@ const notificationSchema = new mongoose.Schema(
     //     "contact_updated",
     //     "contact_deleted",
     //     "contact_replied",
+
+    //     // =================================================
+    //     // BOOKING NOTIFICATIONS
+    //     // =================================================
+    //     "booking_created",
+    //     "booking_updated",
+    //     "booking_cancelled",
+    //     "booking_confirmed",
+    //     "booking_rejected",
+    //     "booking_payment_pending",
+    //     "booking_payment_verified",
+    //     "booking_payment_failed",
+    //     "booking_completed",
+    //     "booking_checkin",
+    //     "booking_checkout",
     //   ],
 
     //   required: [true, "Notification type is required"],
 
     //   index: true,
     // },
+
     type: {
-  type: String,
+      type: String,
 
-  enum: [
-    // =================================================
-    // QUESTION NOTIFICATIONS
-    // =================================================
-    "question_created",
-    "question_answered",
-    "question_archived",
-    "question_updated",
-    "question_deleted",
-    "question_assigned",
-    "question_escalated",
-    "question_closed",
-    "question_reopened",
-    "question_replied",
+      enum: [
+        // =================================================
+        // QUESTION NOTIFICATIONS
+        // =================================================
+        "question_created",
+        "question_answered",
+        "question_archived",
+        "question_updated",
+        "question_deleted",
+        "question_assigned",
+        "question_escalated",
+        "question_closed",
+        "question_reopened",
+        "question_replied",
 
-    // =================================================
-    // COMMENT / STATUS NOTIFICATIONS
-    // =================================================
-    "comment_added",
-    "status_changed",
-    "priority_changed",
+        // =================================================
+        // COMMENT / STATUS NOTIFICATIONS
+        // =================================================
+        "comment_added",
+        "status_changed",
+        "priority_changed",
 
-    // =================================================
-    // USER / ACCOUNT NOTIFICATIONS
-    // =================================================
-    "user_created",
-    "email_verification",
+        // =================================================
+        // USER / ACCOUNT NOTIFICATIONS
+        // Based on User model
+        // =================================================
+        "user_created",
+        "user_updated",
+        "user_deleted",
+        "user_activated",
+        "user_deactivated",
+        "user_role_changed",
+        "email_verification",
+        "password_reset_requested",
+        "password_reset_completed",
+        "user_login",
+        "user_logout",
 
-    // =================================================
-    // SYSTEM NOTIFICATIONS
-    // =================================================
-    "system_notification",
-    "user_mentioned",
-    "reminder",
+        // =================================================
+        // SYSTEM NOTIFICATIONS
+        // =================================================
+        "system_notification",
+        "user_mentioned",
+        "reminder",
 
-    // =================================================
-    // CONTACT NOTIFICATIONS
-    // =================================================
-    "contact_created",
-    "contact_updated",
-    "contact_deleted",
-    "contact_replied",
+        // =================================================
+        // CONTACT NOTIFICATIONS
+        // Based on Contact model
+        // =================================================
+        "contact_created",
+        "contact_updated",
+        "contact_deleted",
+        "contact_replied",
+        "contact_read",
+        "contact_archived",
+        "contact_status_changed",
 
-    // =================================================
-    // BOOKING NOTIFICATIONS
-    // =================================================
-    "booking_created",
-    "booking_updated",
-    "booking_cancelled",
-    "booking_confirmed",
-    "booking_rejected",
-    "booking_payment_pending",
-    "booking_payment_verified",
-    "booking_payment_failed",
-    "booking_completed",
-    "booking_checkin",
-    "booking_checkout",
-  ],
+        // =================================================
+        // REQUEST NOTIFICATIONS
+        // Based on Request model
+        // =================================================
+        "request_created",
+        "request_updated",
+        "request_deleted",
+        "request_approved",
+        "request_rejected",
+        "request_completed",
+        "request_status_changed",
+        "request_replied",
 
-  required: [true, "Notification type is required"],
+        // =================================================
+        // REQUEST NOTIFICATION HISTORY
+        // =================================================
+        "request_notification_created",
+        "request_notification_updated",
 
-  index: true,
-},
+        // =================================================
+        // TESTIMONIAL NOTIFICATIONS
+        // Based on Testimonial model
+        // =================================================
+        "testimonial_created",
+        "testimonial_updated",
+        "testimonial_deleted",
+        "testimonial_approved",
+        "testimonial_rejected",
+        "testimonial_status_changed",
+        "testimonial_featured",
+
+        // =================================================
+        // HOUSE / ACCOMMODATION NOTIFICATIONS
+        // Based on House model
+        // =================================================
+        "house_created",
+        "house_updated",
+        "house_deleted",
+        "house_available",
+        "house_pending",
+        "house_booked",
+        "house_unavailable",
+        "house_maintenance",
+        "house_status_changed",
+
+        // =================================================
+        // BOOKING NOTIFICATIONS
+        // =================================================
+        "booking_created",
+        "booking_updated",
+        "booking_cancelled",
+        "booking_confirmed",
+        "booking_rejected",
+        "booking_payment_pending",
+        "booking_payment_verified",
+        "booking_payment_failed",
+        "booking_completed",
+        "booking_checkin",
+        "booking_checkout",
+      ],
+
+      required: [true, "Notification type is required"],
+
+      index: true,
+    },
 
     // =================================================
     // QUESTION REFERENCES
