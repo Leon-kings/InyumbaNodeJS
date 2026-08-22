@@ -132,7 +132,7 @@ const houseSchema = new mongoose.Schema(
         "unavailable",
         "maintenance",
       ],
-      default: "pending",
+      default: "available",
     },
 
     rating: {

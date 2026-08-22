@@ -5,57 +5,123 @@ const notificationSchema = new mongoose.Schema(
     // =================================================
     // NOTIFICATION TYPE
     // =================================================
+    // type: {
+    //   type: String,
+
+    //   enum: [
+    //     // =================================================
+    //     // QUESTION NOTIFICATIONS
+    //     // =================================================
+    //     "question_created",
+    //     "question_answered",
+    //     "question_archived",
+    //     "question_updated",
+    //     "question_deleted",
+    //     "question_assigned",
+    //     "question_escalated",
+    //     "question_closed",
+    //     "question_reopened",
+    //     "question_replied",
+
+    //     // =================================================
+    //     // COMMENT / STATUS NOTIFICATIONS
+    //     // =================================================
+    //     "comment_added",
+    //     "status_changed",
+    //     "priority_changed",
+
+    //     // =================================================
+    //     // USER / ACCOUNT NOTIFICATIONS
+    //     // =================================================
+    //     "user_created",
+    //     "email_verification",
+
+    //     // =================================================
+    //     // SYSTEM NOTIFICATIONS
+    //     // =================================================
+    //     "system_notification",
+    //     "user_mentioned",
+    //     "reminder",
+
+    //     // =================================================
+    //     // CONTACT NOTIFICATIONS
+    //     // =================================================
+    //     "contact_created",
+    //     "contact_updated",
+    //     "contact_deleted",
+    //     "contact_replied",
+    //   ],
+
+    //   required: [true, "Notification type is required"],
+
+    //   index: true,
+    // },
     type: {
-      type: String,
+  type: String,
 
-      enum: [
-        // =================================================
-        // QUESTION NOTIFICATIONS
-        // =================================================
-        "question_created",
-        "question_answered",
-        "question_archived",
-        "question_updated",
-        "question_deleted",
-        "question_assigned",
-        "question_escalated",
-        "question_closed",
-        "question_reopened",
-        "question_replied",
+  enum: [
+    // =================================================
+    // QUESTION NOTIFICATIONS
+    // =================================================
+    "question_created",
+    "question_answered",
+    "question_archived",
+    "question_updated",
+    "question_deleted",
+    "question_assigned",
+    "question_escalated",
+    "question_closed",
+    "question_reopened",
+    "question_replied",
 
-        // =================================================
-        // COMMENT / STATUS NOTIFICATIONS
-        // =================================================
-        "comment_added",
-        "status_changed",
-        "priority_changed",
+    // =================================================
+    // COMMENT / STATUS NOTIFICATIONS
+    // =================================================
+    "comment_added",
+    "status_changed",
+    "priority_changed",
 
-        // =================================================
-        // USER / ACCOUNT NOTIFICATIONS
-        // =================================================
-        "user_created",
-        "email_verification",
+    // =================================================
+    // USER / ACCOUNT NOTIFICATIONS
+    // =================================================
+    "user_created",
+    "email_verification",
 
-        // =================================================
-        // SYSTEM NOTIFICATIONS
-        // =================================================
-        "system_notification",
-        "user_mentioned",
-        "reminder",
+    // =================================================
+    // SYSTEM NOTIFICATIONS
+    // =================================================
+    "system_notification",
+    "user_mentioned",
+    "reminder",
 
-        // =================================================
-        // CONTACT NOTIFICATIONS
-        // =================================================
-        "contact_created",
-        "contact_updated",
-        "contact_deleted",
-        "contact_replied",
-      ],
+    // =================================================
+    // CONTACT NOTIFICATIONS
+    // =================================================
+    "contact_created",
+    "contact_updated",
+    "contact_deleted",
+    "contact_replied",
 
-      required: [true, "Notification type is required"],
+    // =================================================
+    // BOOKING NOTIFICATIONS
+    // =================================================
+    "booking_created",
+    "booking_updated",
+    "booking_cancelled",
+    "booking_confirmed",
+    "booking_rejected",
+    "booking_payment_pending",
+    "booking_payment_verified",
+    "booking_payment_failed",
+    "booking_completed",
+    "booking_checkin",
+    "booking_checkout",
+  ],
 
-      index: true,
-    },
+  required: [true, "Notification type is required"],
+
+  index: true,
+},
 
     // =================================================
     // QUESTION REFERENCES
