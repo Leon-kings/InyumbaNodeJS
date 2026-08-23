@@ -2764,9 +2764,82 @@ exports.updateHouseStatus = async (req, res) => {
 };
 
 // 8. Delete House
+// exports.deleteHouse = async (req, res) => {
+//   try {
+//     const house = await House.findById(req.params.id);
+
+//     if (!house) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "House not found",
+//       });
+//     }
+
+//     // ===========================
+//     // CREATE NOTIFICATIONS BEFORE DELETE
+//     // ===========================
+//     const userInfo = {
+//       userId: house.host.userId || null,
+//       email: house.host.email || "",
+//       name: house.host.name || "",
+//     };
+
+//     await createAllRoleNotifications(house, "house_deleted", userInfo);
+
+//     // ===========================
+//     // SEND EMAILS
+//     // ===========================
+//     await sendHouseEmails(house, "Deleted", userInfo);
+
+//     // ===========================
+//     // DELETE IMAGES FROM CLOUDINARY
+//     // ===========================
+//     for (const img of house.images) {
+//       await cloudinary.uploader.destroy(img.public_id);
+//     }
+
+//     await house.deleteOne();
+
+//     res.status(200).json({
+//       success: true,
+//       message: "House deleted successfully",
+//     });
+//   } catch (error) {
+//     console.error("Delete house error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to delete house",
+//     });
+//   }
+// };
+
 exports.deleteHouse = async (req, res) => {
   try {
-    const house = await House.findById(req.params.id);
+    const { id } = req.params;
+
+    // ==========================================================
+    // VALIDATE HOUSE ID
+    // ==========================================================
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "House ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid house ID",
+      });
+    }
+
+    // ==========================================================
+    // FIND HOUSE
+    // ==========================================================
+
+    const house = await House.findById(id);
 
     if (!house) {
       return res.status(404).json({
@@ -2775,40 +2848,169 @@ exports.deleteHouse = async (req, res) => {
       });
     }
 
-    // ===========================
-    // CREATE NOTIFICATIONS BEFORE DELETE
-    // ===========================
+    console.log("==================================================");
+    console.log("🗑️ DELETE HOUSE");
+    console.log("House ID:", house._id);
+    console.log("House ID:", house.houseId);
+    console.log("House Name:", house.name);
+    console.log("==================================================");
+
+    // ==========================================================
+    // SAVE INFORMATION BEFORE DELETE
+    // ==========================================================
+
     const userInfo = {
-      userId: house.host.userId || null,
-      email: house.host.email || "",
-      name: house.host.name || "",
+      // Safely support host if it exists
+      userId:
+        house.host?.userId ||
+        house.createdBy ||
+        null,
+
+      email:
+        house.host?.email ||
+        house.ownerEmail ||
+        house.createdByEmail ||
+        "",
+
+      name:
+        house.host?.name ||
+        house.ownerName ||
+        "",
     };
 
-    await createAllRoleNotifications(house, "house_deleted", userInfo);
+    console.log("👤 Delete user information:", {
+      userId: userInfo.userId,
+      email: userInfo.email,
+      name: userInfo.name,
+    });
 
-    // ===========================
-    // SEND EMAILS
-    // ===========================
-    await sendHouseEmails(house, "Deleted", userInfo);
+    // ==========================================================
+    // CREATE NOTIFICATIONS BEFORE DELETE
+    // ==========================================================
+    // Notification failure must NOT stop house deletion.
+    // ==========================================================
 
-    // ===========================
-    // DELETE IMAGES FROM CLOUDINARY
-    // ===========================
-    for (const img of house.images) {
-      await cloudinary.uploader.destroy(img.public_id);
+    try {
+      await createAllRoleNotifications(
+        house,
+        "house_deleted",
+        userInfo
+      );
+
+      console.log("✅ House deletion notifications created");
+    } catch (notificationError) {
+      console.error(
+        "❌ House notification failed:",
+        notificationError?.message || notificationError
+      );
     }
+
+    // ==========================================================
+    // SEND EMAILS
+    // ==========================================================
+    // Email failure must NOT stop house deletion.
+    // ==========================================================
+
+    try {
+      await sendHouseEmails(
+        house,
+        "Deleted",
+        userInfo
+      );
+
+      console.log("✅ House deletion emails processed");
+    } catch (emailError) {
+      console.error(
+        "❌ House deletion email failed:",
+        emailError?.message || emailError
+      );
+    }
+
+    // ==========================================================
+    // DELETE IMAGES FROM CLOUDINARY
+    // ==========================================================
+
+    if (Array.isArray(house.images) && house.images.length > 0) {
+      console.log(
+        `🖼️ Found ${house.images.length} house image(s)`
+      );
+
+      for (const img of house.images) {
+        try {
+          // Support different possible image structures
+          const publicId =
+            img?.public_id ||
+            img?.publicId ||
+            img?.publicID ||
+            null;
+
+          if (!publicId) {
+            console.warn(
+              "⚠️ Image has no Cloudinary public_id. Skipping."
+            );
+            continue;
+          }
+
+          await cloudinary.uploader.destroy(publicId);
+
+          console.log(
+            "✅ Cloudinary image deleted:",
+            publicId
+          );
+        } catch (cloudinaryError) {
+          console.error(
+            "❌ Failed to delete Cloudinary image:",
+            cloudinaryError?.message || cloudinaryError
+          );
+
+          // Continue deleting the other images
+          continue;
+        }
+      }
+    } else {
+      console.log("ℹ️ No house images to delete");
+    }
+
+    // ==========================================================
+    // DELETE HOUSE FROM MONGODB
+    // ==========================================================
 
     await house.deleteOne();
 
-    res.status(200).json({
+    console.log("✅ House deleted from MongoDB");
+
+    // ==========================================================
+    // SUCCESS RESPONSE
+    // ==========================================================
+
+    return res.status(200).json({
       success: true,
       message: "House deleted successfully",
+      data: {
+        _id: house._id,
+        houseId: house.houseId || null,
+        name: house.name || null,
+      },
     });
   } catch (error) {
-    console.error("Delete house error:", error);
-    res.status(500).json({
+    // ==========================================================
+    // MAIN ERROR
+    // ==========================================================
+
+    console.error("==================================================");
+    console.error("❌ DELETE HOUSE ERROR");
+    console.error("Message:", error?.message);
+    console.error("Stack:", error?.stack);
+    console.error("==================================================");
+
+    if (res.headersSent) {
+      return;
+    }
+
+    return res.status(500).json({
       success: false,
       message: "Failed to delete house",
+      error: error?.message || "Unknown error",
     });
   }
 };
