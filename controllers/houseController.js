@@ -2475,7 +2475,7 @@ exports.updateHouseStatus = async (req, res) => {
     const { id } = req.params;
 
     // Normalize status
-    const status = String(req.body?.status || "")
+    const status = String(req.body?.status || "available")
       .trim()
       .toLowerCase();
 
@@ -2549,17 +2549,17 @@ exports.updateHouseStatus = async (req, res) => {
     // CHECK SAME STATUS
     // ==========================================================
 
-    if (String(house.status).toLowerCase() === status) {
-      return res.status(400).json({
-        success: false,
-        message: `House is already ${status}`,
-        data: {
-          houseId: house.houseId,
-          currentStatus: house.status,
-          requestedStatus: status,
-        },
-      });
-    }
+    // if (String(house.status).toLowerCase() === status) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: `House is already ${status}`,
+    //     data: {
+    //       houseId: house.houseId,
+    //       currentStatus: house.status,
+    //       requestedStatus: status,
+    //     },
+    //   });
+    // }
 
     // ==========================================================
     // UPDATE STATUS
