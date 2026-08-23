@@ -2414,11 +2414,78 @@ exports.updateHouse = async (req, res) => {
 };
 
 // 7. Update House Status
+// exports.updateHouseStatus = async (req, res) => {
+//   try {
+//     const { status } = req.body;
+//     const house = await House.findById(req.params.id);
+
+//     if (!house) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "House not found",
+//       });
+//     }
+
+//     const oldStatus = house.status;
+//     house.status = status;
+//     await house.save();
+
+//     // ===========================
+//     // CREATE NOTIFICATIONS
+//     // ===========================
+//     const userInfo = {
+//       userId: house.host.userId || null,
+//       email: house.host.email || "",
+//       name: house.host.name || "",
+//       oldStatus: oldStatus,
+//     };
+
+//     const notificationType = status === "available" ? "house_approved" : "house_status_changed";
+//     await createAllRoleNotifications(house, notificationType, userInfo);
+
+//     // ===========================
+//     // SEND EMAILS
+//     // ===========================
+//     await sendHouseEmails(house, `Status Changed: ${oldStatus} → ${status}`, userInfo);
+
+//     res.status(200).json({
+//       success: true,
+//       message: "House status updated successfully",
+//       data: house,
+//     });
+//   } catch (error) {
+//     console.error("Update house status error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to update house status",
+//     });
+//   }
+// };
+
 exports.updateHouseStatus = async (req, res) => {
   try {
+    const { id } = req.params;
     const { status } = req.body;
-    const house = await House.findById(req.params.id);
 
+    // Validate status is provided
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required",
+      });
+    }
+
+    // Validate status value against enum
+    const validStatuses = ['available', 'pending', 'booked', 'unavailable', 'maintenance'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status value. Must be one of: available, pending, booked, unavailable, maintenance",
+      });
+    }
+
+    // Find the house
+    const house = await House.findById(id);
     if (!house) {
       return res.status(404).json({
         success: false,
@@ -2426,7 +2493,10 @@ exports.updateHouseStatus = async (req, res) => {
       });
     }
 
+    // Store old status for notification
     const oldStatus = house.status;
+
+    // Update status
     house.status = status;
     await house.save();
 
@@ -2458,6 +2528,7 @@ exports.updateHouseStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to update house status",
+      error: error.message,
     });
   }
 };
