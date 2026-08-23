@@ -2466,15 +2466,242 @@ exports.updateHouse = async (req, res) => {
 // UPDATE HOUSE STATUS
 // ============================================================
 
+// exports.updateHouseStatus = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { status } = req.body;
+
+//     // ==========================================================
+//     // VALIDATE STATUS
+//     // ==========================================================
+
+//     if (!status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Status is required",
+//       });
+//     }
+
+//     const validStatuses = [
+//       "available",
+//       "pending",
+//       "booked",
+//       "unavailable",
+//       "maintenance",
+//     ];
+
+//     if (!validStatuses.includes(status)) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "Invalid status value. Must be one of: available, pending, booked, unavailable, maintenance",
+//       });
+//     }
+
+//     // ==========================================================
+//     // VALIDATE HOUSE ID
+//     // ==========================================================
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid house ID",
+//       });
+//     }
+
+//     // ==========================================================
+//     // FIND EXISTING HOUSE
+//     // ==========================================================
+
+//     const existingHouse = await House.findById(id).lean();
+
+//     if (!existingHouse) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "House not found",
+//       });
+//     }
+
+//     // ==========================================================
+//     // STORE OLD STATUS
+//     // ==========================================================
+
+//     const oldStatus = existingHouse.status;
+
+//     // ==========================================================
+//     // NO CHANGE
+//     // ==========================================================
+
+//     if (oldStatus === status) {
+//       return res.status(200).json({
+//         success: true,
+//         message: `House is already ${status}`,
+//         data: existingHouse,
+//       });
+//     }
+
+//     // ==========================================================
+//     // UPDATE ONLY STATUS
+//     // ==========================================================
+//     //
+//     // IMPORTANT:
+//     // Do NOT use house.save() here.
+//     //
+//     // findByIdAndUpdate() changes only the requested field and
+//     // avoids re-validating unrelated required fields such as
+//     // houseType.
+//     //
+//     // ==========================================================
+
+//     const house = await House.findByIdAndUpdate(
+//       id,
+//       {
+//         $set: {
+//           status,
+//         },
+//       },
+//       {
+//         new: true,
+//         runValidators: true,
+//       }
+//     );
+
+//     if (!house) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "House not found",
+//       });
+//     }
+
+//     // ==========================================================
+//     // USER INFORMATION
+//     // ==========================================================
+
+//     const userInfo = {
+//       userId: existingHouse.createdBy || null,
+
+//       email:
+//         existingHouse.ownerEmail ||
+//         existingHouse.createdByEmail ||
+//         "",
+
+//       name:
+//         existingHouse.ownerName ||
+//         "",
+
+//       oldStatus,
+
+//       newStatus: status,
+//     };
+
+//     // ==========================================================
+//     // NOTIFICATION TYPE
+//     // ==========================================================
+
+//     let notificationType = "house_status_changed";
+
+//     if (status === "available") {
+//       notificationType = "house_available";
+//     }
+
+//     if (status === "unavailable") {
+//       notificationType = "house_unavailable";
+//     }
+
+//     if (status === "pending") {
+//       notificationType = "house_pending";
+//     }
+
+//     if (status === "booked") {
+//       notificationType = "house_booked";
+//     }
+
+//     if (status === "maintenance") {
+//       notificationType = "house_maintenance";
+//     }
+
+//     // ==========================================================
+//     // SEND RESPONSE IMMEDIATELY
+//     // ==========================================================
+
+//     res.status(200).json({
+//       success: true,
+//       message: "House status updated successfully",
+//       data: {
+//         _id: house._id,
+//         houseId: house.houseId,
+//         houseName: house.name,
+//         status: house.status,
+//         oldStatus,
+//         updatedAt: house.updatedAt,
+//       },
+//     });
+
+//     // ==========================================================
+//     // BACKGROUND NOTIFICATION
+//     // ==========================================================
+
+//     Promise.resolve()
+//       .then(async () => {
+//         try {
+//           await createAllRoleNotifications(
+//             house,
+//             notificationType,
+//             userInfo
+//           );
+//         } catch (notificationError) {
+//           console.error(
+//             "❌ Failed to create house notification:",
+//             notificationError.message
+//           );
+//         }
+//       });
+
+//     // ==========================================================
+//     // BACKGROUND EMAIL
+//     // ==========================================================
+
+//     Promise.resolve()
+//       .then(async () => {
+//         try {
+//           await sendHouseEmails(
+//             house,
+//             `Status Changed: ${oldStatus} → ${status}`,
+//             userInfo
+//           );
+//         } catch (emailError) {
+//           console.error(
+//             "❌ Failed to send house status email:",
+//             emailError.message
+//           );
+//         }
+//       });
+//   } catch (error) {
+//     console.error(
+//       "❌ Update house status error:",
+//       error.message
+//     );
+
+//     if (!res.headersSent) {
+//       return res.status(500).json({
+//         success: false,
+//         message: "Failed to update house status",
+//         error: error.message,
+//       });
+//     }
+//   }
+// };
+
 exports.updateHouseStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    // ==========================================================
-    // VALIDATE STATUS
-    // ==========================================================
+    console.log("=== STATUS UPDATE DEBUG ===");
+    console.log("House ID:", id);
+    console.log("Requested status:", status);
 
+    // Validate status
     if (!status) {
       return res.status(400).json({
         success: false,
@@ -2482,89 +2709,18 @@ exports.updateHouseStatus = async (req, res) => {
       });
     }
 
-    const validStatuses = [
-      "available",
-      "pending",
-      "booked",
-      "unavailable",
-      "maintenance",
-    ];
-
+    const validStatuses = ['available', 'pending', 'booked', 'unavailable', 'maintenance', 'inactive'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Invalid status value. Must be one of: available, pending, booked, unavailable, maintenance",
+        message: "Invalid status value",
       });
     }
 
-    // ==========================================================
-    // VALIDATE HOUSE ID
-    // ==========================================================
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid house ID",
-      });
-    }
-
-    // ==========================================================
-    // FIND EXISTING HOUSE
-    // ==========================================================
-
-    const existingHouse = await House.findById(id).lean();
-
-    if (!existingHouse) {
-      return res.status(404).json({
-        success: false,
-        message: "House not found",
-      });
-    }
-
-    // ==========================================================
-    // STORE OLD STATUS
-    // ==========================================================
-
-    const oldStatus = existingHouse.status;
-
-    // ==========================================================
-    // NO CHANGE
-    // ==========================================================
-
-    if (oldStatus === status) {
-      return res.status(200).json({
-        success: true,
-        message: `House is already ${status}`,
-        data: existingHouse,
-      });
-    }
-
-    // ==========================================================
-    // UPDATE ONLY STATUS
-    // ==========================================================
-    //
-    // IMPORTANT:
-    // Do NOT use house.save() here.
-    //
-    // findByIdAndUpdate() changes only the requested field and
-    // avoids re-validating unrelated required fields such as
-    // houseType.
-    //
-    // ==========================================================
-
-    const house = await House.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          status,
-        },
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    // Find the house
+    const house = await House.findById(id);
+    console.log("Found house:", house ? house.name : "NOT FOUND");
+    console.log("Current status:", house ? house.status : "N/A");
 
     if (!house) {
       return res.status(404).json({
@@ -2573,122 +2729,78 @@ exports.updateHouseStatus = async (req, res) => {
       });
     }
 
-    // ==========================================================
-    // USER INFORMATION
-    // ==========================================================
+    const oldStatus = house.status;
 
+    // Check if status is the same
+    if (house.status === status) {
+      return res.status(400).json({
+        success: false,
+        message: `House is already ${status}`,
+      });
+    }
+
+    // Update using findByIdAndUpdate
+    const updatedHouse = await House.findByIdAndUpdate(
+      id,
+      { $set: { status: status } },  // Use $set for clarity
+      { 
+        new: true,
+        runValidators: true
+      }
+    );
+
+    console.log("Updated house status:", updatedHouse ? updatedHouse.status : "UPDATE FAILED");
+
+    // Check if the update actually worked
+    if (!updatedHouse) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update house status",
+      });
+    }
+
+    // Verify the status was actually updated
+    if (updatedHouse.status !== status) {
+      console.error("Status mismatch! Expected:", status, "Got:", updatedHouse.status);
+      return res.status(500).json({
+        success: false,
+        message: "Status update failed - mismatch detected",
+        data: updatedHouse,
+      });
+    }
+
+    // ===========================
+    // CREATE NOTIFICATIONS
+    // ===========================
     const userInfo = {
-      userId: existingHouse.createdBy || null,
-
-      email:
-        existingHouse.ownerEmail ||
-        existingHouse.createdByEmail ||
-        "",
-
-      name:
-        existingHouse.ownerName ||
-        "",
-
-      oldStatus,
-
-      newStatus: status,
+      userId: updatedHouse.createdBy || null,
+      email: updatedHouse.ownerEmail || "",
+      name: updatedHouse.ownerName || "",
+      oldStatus: oldStatus,
     };
 
-    // ==========================================================
-    // NOTIFICATION TYPE
-    // ==========================================================
+    const notificationType = status === "available" ? "house_approved" : "house_status_changed";
+    await createAllRoleNotifications(updatedHouse, notificationType, userInfo);
 
-    let notificationType = "house_status_changed";
+    // ===========================
+    // SEND EMAILS
+    // ===========================
+    await sendHouseEmails(updatedHouse, `Status Changed: ${oldStatus} → ${status}`, userInfo);
 
-    if (status === "available") {
-      notificationType = "house_available";
-    }
-
-    if (status === "unavailable") {
-      notificationType = "house_unavailable";
-    }
-
-    if (status === "pending") {
-      notificationType = "house_pending";
-    }
-
-    if (status === "booked") {
-      notificationType = "house_booked";
-    }
-
-    if (status === "maintenance") {
-      notificationType = "house_maintenance";
-    }
-
-    // ==========================================================
-    // SEND RESPONSE IMMEDIATELY
-    // ==========================================================
+    console.log("Status update successful! New status:", updatedHouse.status);
 
     res.status(200).json({
       success: true,
       message: "House status updated successfully",
-      data: {
-        _id: house._id,
-        houseId: house.houseId,
-        houseName: house.name,
-        status: house.status,
-        oldStatus,
-        updatedAt: house.updatedAt,
-      },
+      data: updatedHouse,
     });
-
-    // ==========================================================
-    // BACKGROUND NOTIFICATION
-    // ==========================================================
-
-    Promise.resolve()
-      .then(async () => {
-        try {
-          await createAllRoleNotifications(
-            house,
-            notificationType,
-            userInfo
-          );
-        } catch (notificationError) {
-          console.error(
-            "❌ Failed to create house notification:",
-            notificationError.message
-          );
-        }
-      });
-
-    // ==========================================================
-    // BACKGROUND EMAIL
-    // ==========================================================
-
-    Promise.resolve()
-      .then(async () => {
-        try {
-          await sendHouseEmails(
-            house,
-            `Status Changed: ${oldStatus} → ${status}`,
-            userInfo
-          );
-        } catch (emailError) {
-          console.error(
-            "❌ Failed to send house status email:",
-            emailError.message
-          );
-        }
-      });
   } catch (error) {
-    console.error(
-      "❌ Update house status error:",
-      error.message
-    );
-
-    if (!res.headersSent) {
-      return res.status(500).json({
-        success: false,
-        message: "Failed to update house status",
-        error: error.message,
-      });
-    }
+    console.error("Update house status error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update house status",
+      error: error.message,
+    });
   }
 };
 
