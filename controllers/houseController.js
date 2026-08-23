@@ -2470,261 +2470,6 @@ exports.updateHouse = async (req, res) => {
 // UPDATE HOUSE STATUS
 // ============================================================
 
-// exports.updateHouseStatus = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     // Normalize status
-//     const status = String(req.body?.status || "available")
-//       .trim()
-//       .toLowerCase();
-
-//     // ==========================================================
-//     // DEBUG
-//     // ==========================================================
-
-//     console.log("=== STATUS UPDATE DEBUG ===");
-//     console.log("House ID:", id);
-//     console.log("Requested status:", status);
-//     console.log("Original body:", req.body);
-
-//     // ==========================================================
-//     // VALIDATE STATUS
-//     // ==========================================================
-
-//     if (!status) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Status is required",
-//       });
-//     }
-
-//     const validStatuses = [
-//       "available",
-//       "pending",
-//       "booked",
-//       "unavailable",
-//       "maintenance",
-//       "inactive",
-//     ];
-
-//     if (!validStatuses.includes(status)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `Invalid status value. Must be one of: ${validStatuses.join(
-//           ", "
-//         )}`,
-//       });
-//     }
-
-//     // ==========================================================
-//     // VALIDATE HOUSE ID
-//     // ==========================================================
-
-//     if (!mongoose.Types.ObjectId.isValid(id)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid house ID",
-//       });
-//     }
-
-//     // ==========================================================
-//     // FIND HOUSE
-//     // ==========================================================
-
-//     const house = await House.findById(id).lean();
-
-//     if (!house) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "House not found",
-//       });
-//     }
-
-//     console.log("House found:", house.name);
-//     console.log("Current status:", house.status);
-//     console.log("New status:", status);
-
-//     // ==========================================================
-//     // CHECK SAME STATUS
-//     // ==========================================================
-
-//     if (String(house.status).toLowerCase() === status) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `House is already ${status}`,
-//         data: {
-//           houseId: house.houseId,
-//           currentStatus: house.status,
-//           requestedStatus: status,
-//         },
-//       });
-//     }
-
-//     // ==========================================================
-//     // UPDATE STATUS
-//     // ==========================================================
-
-//     const updatedHouse = await House.findByIdAndUpdate(
-//       id,
-//       {
-//         $set: {
-//           status: status,
-//         },
-//       },
-//       {
-//         new: true,
-//         runValidators: true,
-//       }
-//     ).lean();
-
-//     if (!updatedHouse) {
-//       return res.status(500).json({
-//         success: false,
-//         message: "Failed to update house status",
-//       });
-//     }
-
-//     // ==========================================================
-//     // VERIFY UPDATE
-//     // ==========================================================
-
-//     if (updatedHouse.status !== status) {
-//       return res.status(500).json({
-//         success: false,
-//         message: "Status update failed",
-//         data: {
-//           currentStatus: updatedHouse.status,
-//           requestedStatus: status,
-//         },
-//       });
-//     }
-
-//     const oldStatus = house.status;
-
-//     // ==========================================================
-//     // SEND RESPONSE IMMEDIATELY
-//     // ==========================================================
-
-//     res.status(200).json({
-//       success: true,
-//       message: "House status updated successfully",
-//       data: {
-//         _id: updatedHouse._id,
-//         houseId: updatedHouse.houseId,
-//         name: updatedHouse.name,
-//         status: updatedHouse.status,
-//         oldStatus,
-//         updatedAt: updatedHouse.updatedAt,
-//       },
-//     });
-
-//     // ==========================================================
-//     // USER INFORMATION
-//     // ==========================================================
-
-//     const userInfo = {
-//       userId: updatedHouse.createdBy || null,
-//       email:
-//         updatedHouse.ownerEmail ||
-//         updatedHouse.createdByEmail ||
-//         "",
-//       name: updatedHouse.ownerName || "",
-//       oldStatus,
-//       newStatus: status,
-//     };
-
-//     // ==========================================================
-//     // NOTIFICATION TYPE
-//     // ==========================================================
-
-//     let notificationType = "house_status_changed";
-
-//     switch (status) {
-//       case "available":
-//         notificationType = "house_available";
-//         break;
-
-//       case "pending":
-//         notificationType = "house_pending";
-//         break;
-
-//       case "booked":
-//         notificationType = "house_booked";
-//         break;
-
-//       case "unavailable":
-//         notificationType = "house_unavailable";
-//         break;
-
-//       case "maintenance":
-//         notificationType = "house_maintenance";
-//         break;
-
-//       case "inactive":
-//         notificationType = "house_status_changed";
-//         break;
-
-//       default:
-//         notificationType = "house_status_changed";
-//     }
-
-//     // ==========================================================
-//     // BACKGROUND NOTIFICATION
-//     // ==========================================================
-
-//     Promise.resolve()
-//       .then(async () => {
-//         try {
-//           await createAllRoleNotifications(
-//             updatedHouse,
-//             notificationType,
-//             userInfo
-//           );
-//         } catch (notificationError) {
-//           console.error(
-//             "❌ House notification failed:",
-//             notificationError.message
-//           );
-//         }
-//       });
-
-//     // ==========================================================
-//     // BACKGROUND EMAIL
-//     // ==========================================================
-
-//     Promise.resolve()
-//       .then(async () => {
-//         try {
-//           await sendHouseEmails(
-//             updatedHouse,
-//             `Status Changed: ${oldStatus} → ${status}`,
-//             userInfo
-//           );
-//         } catch (emailError) {
-//           console.error(
-//             "❌ House status email failed:",
-//             emailError.message
-//           );
-//         }
-//       });
-
-//   } catch (error) {
-//     console.error(
-//       "❌ Update house status error:",
-//       error.message
-//     );
-
-//     if (!res.headersSent) {
-//       return res.status(500).json({
-//         success: false,
-//         message: "Failed to update house status",
-//         error: error.message,
-//       });
-//     }
-//   }
-// };
-
 exports.updateHouseStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -3003,118 +2748,6 @@ exports.updateHouseStatus = async (req, res) => {
     }
   }
 };
-
-// exports.updateHouseStatus = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { status } = req.body;
-
-//     console.log("=== STATUS UPDATE DEBUG ===");
-//     console.log("House ID:", id);
-//     console.log("Requested status:", status);
-
-//     // Validate status
-//     if (!status) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Status is required",
-//       });
-//     }
-
-//     const validStatuses = ['available', 'pending', 'booked', 'unavailable', 'maintenance', 'inactive'];
-//     if (!validStatuses.includes(status)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid status value",
-//       });
-//     }
-
-//     // Find the house
-//     const house = await House.findById(id);
-//     console.log("Found house:", house ? house.name : "NOT FOUND");
-//     console.log("Current status:", house ? house.status : "N/A");
-
-//     if (!house) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "House not found",
-//       });
-//     }
-
-//     const oldStatus = house.status;
-
-//     // Check if status is the same
-//     if (house.status === status) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `House is already ${status}`,
-//       });
-//     }
-
-//     // Update using findByIdAndUpdate
-//     const updatedHouse = await House.findByIdAndUpdate(
-//       id,
-//       { $set: { status: status } },  // Use $set for clarity
-//       { 
-//         new: true,
-//         runValidators: true
-//       }
-//     );
-
-//     console.log("Updated house status:", updatedHouse ? updatedHouse.status : "UPDATE FAILED");
-
-//     // Check if the update actually worked
-//     if (!updatedHouse) {
-//       return res.status(500).json({
-//         success: false,
-//         message: "Failed to update house status",
-//       });
-//     }
-
-//     // Verify the status was actually updated
-//     if (updatedHouse.status !== status) {
-//       console.error("Status mismatch! Expected:", status, "Got:", updatedHouse.status);
-//       return res.status(500).json({
-//         success: false,
-//         message: "Status update failed - mismatch detected",
-//         data: updatedHouse,
-//       });
-//     }
-
-//     // ===========================
-//     // CREATE NOTIFICATIONS
-//     // ===========================
-//     const userInfo = {
-//       userId: updatedHouse.createdBy || null,
-//       email: updatedHouse.ownerEmail || "",
-//       name: updatedHouse.ownerName || "",
-//       oldStatus: oldStatus,
-//     };
-
-//     const notificationType = status === "available" ? "house_approved" : "house_status_changed";
-//     await createAllRoleNotifications(updatedHouse, notificationType, userInfo);
-
-//     // ===========================
-//     // SEND EMAILS
-//     // ===========================
-//     await sendHouseEmails(updatedHouse, `Status Changed: ${oldStatus} → ${status}`, userInfo);
-
-//     console.log("Status update successful! New status:", updatedHouse.status);
-
-//     res.status(200).json({
-//       success: true,
-//       message: "House status updated successfully",
-//       data: updatedHouse,
-//     });
-//   } catch (error) {
-//     console.error("Update house status error:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to update house status",
-//       error: error.message,
-//     });
-//   }
-// };
 
 // 8. Delete House
 exports.deleteHouse = async (req, res) => {
@@ -3580,11 +3213,122 @@ exports.getUnreadNotificationCount = async (req, res) => {
   }
 };
 
-// 18. Delete Notification
+// // 18. Delete Notification
+// exports.deleteNotification = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const user = req.user;
+
+//     if (!id) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Notification ID is required",
+//       });
+//     }
+
+//     const notification = await Notification.findById(id);
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     // Check permission
+//     const hasPermission =
+//       user.role === "admin" ||
+//       notification.targetUserId?.toString() === user.id ||
+//       notification.userId?.toString() === user.id;
+
+//     if (!hasPermission) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "You don't have permission to delete this notification",
+//       });
+//     }
+
+//     await notification.deleteOne();
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Notification deleted successfully",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error("Delete notification error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to delete notification",
+//       error: process.env.NODE_ENV === "development" ? error.message : undefined,
+//     });
+//   }
+// };
+
+// // 19. Bulk Delete Notifications
+// exports.bulkDeleteNotifications = async (req, res) => {
+//   try {
+//     const { ids } = req.body;
+//     const user = req.user;
+
+//     if (!Array.isArray(ids) || ids.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Please provide an array of notification IDs",
+//       });
+//     }
+
+//     let query = {
+//       _id: { $in: ids },
+//       type: { $regex: /^house_/ },
+//     };
+
+//     // Non-admin users can only delete their own notifications
+//     if (user.role !== "admin") {
+//       query.$or = [
+//         { targetUserId: user.id },
+//         { userId: user.id },
+//         { targetUserEmail: user.email },
+//       ];
+//     }
+
+//     const result = await Notification.deleteMany(query);
+
+//     if (result.deletedCount === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No notifications found to delete",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `${result.deletedCount} notifications deleted successfully`,
+//       deletedCount: result.deletedCount,
+//     });
+//   } catch (error) {
+//     console.error("Bulk delete notifications error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to delete notifications",
+//       error: process.env.NODE_ENV === "development" ? error.message : undefined,
+//     });
+//   }
+// };
+
+// ============================================================
+// 18. DELETE NOTIFICATION
+// ============================================================
+
 exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;
+
+    // ==========================================================
+    // VALIDATE ID
+    // ==========================================================
 
     if (!id) {
       return res.status(400).json({
@@ -3592,6 +3336,17 @@ exports.deleteNotification = async (req, res) => {
         message: "Notification ID is required",
       });
     }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid notification ID",
+      });
+    }
+
+    // ==========================================================
+    // FIND NOTIFICATION
+    // ==========================================================
 
     const notification = await Notification.findById(id);
 
@@ -3602,42 +3357,54 @@ exports.deleteNotification = async (req, res) => {
       });
     }
 
-    // Check permission
-    const hasPermission =
-      user.role === "admin" ||
-      notification.targetUserId?.toString() === user.id ||
-      notification.userId?.toString() === user.id;
+    // ==========================================================
+    // DELETE NOTIFICATION
+    // ==========================================================
 
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to delete this notification",
-      });
-    }
+    await Notification.deleteOne({
+      _id: notification._id,
+    });
 
-    await notification.deleteOne();
+    // ==========================================================
+    // SUCCESS RESPONSE
+    // ==========================================================
 
     return res.status(200).json({
       success: true,
       message: "Notification deleted successfully",
-      data: notification,
+      data: {
+        _id: notification._id,
+      },
     });
   } catch (error) {
-    console.error("Delete notification error:", error);
+    console.error(
+      "❌ Delete notification error:",
+      error.message
+    );
 
     return res.status(500).json({
       success: false,
       message: "Failed to delete notification",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
 
-// 19. Bulk Delete Notifications
+
+// ============================================================
+// 19. BULK DELETE NOTIFICATIONS
+// ============================================================
+
 exports.bulkDeleteNotifications = async (req, res) => {
   try {
     const { ids } = req.body;
-    const user = req.user;
+
+    // ==========================================================
+    // VALIDATE IDS
+    // ==========================================================
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
@@ -3646,41 +3413,90 @@ exports.bulkDeleteNotifications = async (req, res) => {
       });
     }
 
-    let query = {
-      _id: { $in: ids },
-      type: { $regex: /^house_/ },
-    };
+    // ==========================================================
+    // REMOVE DUPLICATES
+    // ==========================================================
 
-    // Non-admin users can only delete their own notifications
-    if (user.role !== "admin") {
-      query.$or = [
-        { targetUserId: user.id },
-        { userId: user.id },
-        { targetUserEmail: user.email },
-      ];
+    const uniqueIds = [
+      ...new Set(
+        ids
+          .map((id) => String(id).trim())
+          .filter(Boolean)
+      ),
+    ];
+
+    if (uniqueIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid notification IDs provided",
+      });
     }
 
-    const result = await Notification.deleteMany(query);
+    // ==========================================================
+    // VALIDATE MONGODB IDS
+    // ==========================================================
+
+    const invalidIds = uniqueIds.filter(
+      (id) => !mongoose.Types.ObjectId.isValid(id)
+    );
+
+    if (invalidIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more notification IDs are invalid",
+        data: {
+          invalidIds,
+        },
+      });
+    }
+
+    // ==========================================================
+    // DELETE NOTIFICATIONS
+    // ==========================================================
+
+    const result = await Notification.deleteMany({
+      _id: {
+        $in: uniqueIds,
+      },
+    });
+
+    // ==========================================================
+    // NOTHING FOUND
+    // ==========================================================
 
     if (result.deletedCount === 0) {
       return res.status(404).json({
         success: false,
         message: "No notifications found to delete",
+        deletedCount: 0,
       });
     }
 
+    // ==========================================================
+    // SUCCESS
+    // ==========================================================
+
     return res.status(200).json({
       success: true,
-      message: `${result.deletedCount} notifications deleted successfully`,
+      message: `${result.deletedCount} notification${
+        result.deletedCount === 1 ? "" : "s"
+      } deleted successfully`,
       deletedCount: result.deletedCount,
+      requestedCount: uniqueIds.length,
     });
   } catch (error) {
-    console.error("Bulk delete notifications error:", error);
+    console.error(
+      "❌ Bulk delete notifications error:",
+      error.message
+    );
 
     return res.status(500).json({
       success: false,
       message: "Failed to delete notifications",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };

@@ -315,7 +315,7 @@ const startServer = async () => {
 
     console.log("❤️ Health: /health");
 
-    console.log("🗄️ MongoDB: CONNECTED");
+    console.log("✅ MongoDB: CONNECTED");
 
     console.log("================================================");
 
