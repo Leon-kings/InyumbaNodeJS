@@ -2851,16 +2851,18 @@ exports.deleteHouse = async (req, res) => {
     console.log("==================================================");
     console.log("🗑️ DELETE HOUSE");
     console.log("House ID:", house._id);
-    console.log("House ID:", house.houseId);
     console.log("House Name:", house.name);
+    console.log("Requested by user:", req.user?.id || "Unknown");
     console.log("==================================================");
 
     // ==========================================================
-    // SAVE INFORMATION BEFORE DELETE
+    // USER INFORMATION
+    // ==========================================================
+    // No ownership restriction is applied here.
+    // ANY user who can access this route can delete the house.
     // ==========================================================
 
     const userInfo = {
-      // Safely support host if it exists
       userId:
         house.host?.userId ||
         house.createdBy ||
@@ -2878,16 +2880,8 @@ exports.deleteHouse = async (req, res) => {
         "",
     };
 
-    console.log("👤 Delete user information:", {
-      userId: userInfo.userId,
-      email: userInfo.email,
-      name: userInfo.name,
-    });
-
     // ==========================================================
-    // CREATE NOTIFICATIONS BEFORE DELETE
-    // ==========================================================
-    // Notification failure must NOT stop house deletion.
+    // CREATE NOTIFICATIONS
     // ==========================================================
 
     try {
@@ -2908,8 +2902,6 @@ exports.deleteHouse = async (req, res) => {
     // ==========================================================
     // SEND EMAILS
     // ==========================================================
-    // Email failure must NOT stop house deletion.
-    // ==========================================================
 
     try {
       await sendHouseEmails(
@@ -2927,17 +2919,12 @@ exports.deleteHouse = async (req, res) => {
     }
 
     // ==========================================================
-    // DELETE IMAGES FROM CLOUDINARY
+    // DELETE CLOUDINARY IMAGES
     // ==========================================================
 
-    if (Array.isArray(house.images) && house.images.length > 0) {
-      console.log(
-        `🖼️ Found ${house.images.length} house image(s)`
-      );
-
+    if (Array.isArray(house.images)) {
       for (const img of house.images) {
         try {
-          // Support different possible image structures
           const publicId =
             img?.public_id ||
             img?.publicId ||
@@ -2946,7 +2933,7 @@ exports.deleteHouse = async (req, res) => {
 
           if (!publicId) {
             console.warn(
-              "⚠️ Image has no Cloudinary public_id. Skipping."
+              "⚠️ Image has no Cloudinary public ID. Skipping."
             );
             continue;
           }
@@ -2959,28 +2946,23 @@ exports.deleteHouse = async (req, res) => {
           );
         } catch (cloudinaryError) {
           console.error(
-            "❌ Failed to delete Cloudinary image:",
+            "❌ Cloudinary image deletion failed:",
             cloudinaryError?.message || cloudinaryError
           );
-
-          // Continue deleting the other images
-          continue;
         }
       }
-    } else {
-      console.log("ℹ️ No house images to delete");
     }
 
     // ==========================================================
-    // DELETE HOUSE FROM MONGODB
+    // DELETE HOUSE
     // ==========================================================
 
     await house.deleteOne();
 
-    console.log("✅ House deleted from MongoDB");
+    console.log("✅ House deleted successfully");
 
     // ==========================================================
-    // SUCCESS RESPONSE
+    // RESPONSE
     // ==========================================================
 
     return res.status(200).json({
@@ -2993,10 +2975,6 @@ exports.deleteHouse = async (req, res) => {
       },
     });
   } catch (error) {
-    // ==========================================================
-    // MAIN ERROR
-    // ==========================================================
-
     console.error("==================================================");
     console.error("❌ DELETE HOUSE ERROR");
     console.error("Message:", error?.message);
