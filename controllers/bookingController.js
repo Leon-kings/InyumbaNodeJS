@@ -1351,11 +1351,190 @@ const sendBookingEmails = async (booking, type) => {
 // ============================================================
 
 // CREATE BOOKING WITH CLOUDINARY SCREENSHOT
+// const createBooking = async (req, res) => {
+//   try {
+//     console.log("📦 Booking body:", req.body);
+//     console.log("📸 Uploaded file:", req.file);
+
+//     const {
+//       houseId,
+//       houseName,
+//       houseType,
+//       district,
+//       sector,
+//       cell,
+//       village,
+//       ownerName,
+//       ownerContact,
+//       ownerEmail,
+//       fullName,
+//       email,
+//       phone,
+//       idNumber,
+//       university,
+//       studentId,
+//       purpose,
+//       checkIn,
+//       checkOut,
+//       months,
+//       guests,
+//       specialRequests,
+//       monthlyRent,
+//       serviceFee,
+//       totalAmount,
+//       paymentMethod,
+//       momoNumber,
+//     } = req.body;
+
+//     // ==========================
+//     // Validate required fields
+//     // ==========================
+//     if (
+//       !fullName ||
+//       !email ||
+//       !phone ||
+//       !houseId ||
+//       !houseName ||
+//       !checkIn ||
+//       !checkOut ||
+//       !months ||
+//       !guests
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Please provide all required fields",
+//       });
+//     }
+
+//     // ==========================
+//     // Get user info from request
+//     // ==========================
+//     const userId = req.user?.id || null;
+//     const userRole = req.user?.role || "user";
+
+//     // ==========================
+//     // Cloudinary Image
+//     // ==========================
+//     let paymentScreenshot = {
+//       url: "",
+//       publicId: "",
+//     };
+
+//     if (req.file) {
+//       paymentScreenshot = {
+//         url: req.file.path,
+//         publicId: req.file.filename,
+//       };
+
+//       console.log("✅ Payment screenshot uploaded:", paymentScreenshot);
+//     } else {
+//       console.log("⚠️ No payment screenshot uploaded");
+//     }
+
+//     // ==========================
+//     // Create Booking
+//     // ==========================
+//     const booking = new Booking({
+//       userId,
+//       houseId,
+//       houseName,
+//       houseType,
+//       district,
+//       sector,
+//       cell,
+//       village,
+//       ownerName,
+//       ownerContact,
+//       ownerEmail,
+//       fullName,
+//       email,
+//       phone,
+//       idNumber,
+//       university,
+//       studentId,
+//       purpose,
+//       checkIn: new Date(checkIn),
+//       checkOut: new Date(checkOut),
+//       months: Number(months),
+//       guests: Number(guests),
+//       specialRequests,
+//       monthlyRent: Number(monthlyRent),
+//       serviceFee: Number(serviceFee),
+//       totalAmount: Number(totalAmount),
+//       paymentMethod: paymentMethod || "momo",
+//       momoNumber,
+//       paymentScreenshot,
+//       paymentStatus: "pending",
+//       status: "pending",
+//     });
+
+//     await booking.save();
+//     console.log(`✅ Booking created: ${booking.bookingId}`);
+
+//     // ==========================
+//     // SEND EMAILS
+//     // ==========================
+//     await sendBookingEmails(booking, "created");
+
+//     // ==========================
+//     // CREATE ROLE-BASED NOTIFICATIONS
+//     // ==========================
+//     const userInfo = {
+//       userId: userId,
+//       email: email,
+//       role: userRole,
+//     };
+//     await createAllRoleNotifications(booking, "created", userInfo);
+
+//     // ==========================
+//     // CREATE USER ACTIVITY
+//     // ==========================
+//     try {
+//       await UserActivity.create({
+//         userId: userId,
+//         userName: fullName,
+//         userEmail: email,
+//         action: "booking_created",
+//         description: `User ${fullName} created a booking for ${houseName}`,
+//         ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
+//         userAgent: req.headers["user-agent"] || null,
+//         metadata: {
+//           bookingId: booking.bookingId,
+//           houseId: booking.houseId,
+//           totalAmount: booking.totalAmount,
+//         },
+//       });
+//       console.log(`✅ User activity created for ${email}`);
+//     } catch (activityError) {
+//       console.error("❌ Failed to create user activity:", activityError.message);
+//     }
+
+//     // ==========================
+//     // Response
+//     // ==========================
+//     return res.status(201).json({
+//       success: true,
+//       message: "Booking created successfully. Notifications have been sent.",
+//       data: {
+//         bookingId: booking.bookingId,
+//         status: booking.status,
+//         paymentStatus: booking.paymentStatus,
+//         paymentScreenshot: booking.paymentScreenshot.url,
+//       },
+//     });
+
+//   } catch (error) {
+//     console.error("❌ Create booking error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message || "Failed to create booking",
+//     });
+//   }
+// };
+
 const createBooking = async (req, res) => {
   try {
-    console.log("📦 Booking body:", req.body);
-    console.log("📸 Uploaded file:", req.file);
-
     const {
       houseId,
       houseName,
@@ -1386,9 +1565,10 @@ const createBooking = async (req, res) => {
       momoNumber,
     } = req.body;
 
-    // ==========================
-    // Validate required fields
-    // ==========================
+    // ============================================================
+    // VALIDATE REQUIRED FIELDS
+    // ============================================================
+
     if (
       !fullName ||
       !email ||
@@ -1406,15 +1586,17 @@ const createBooking = async (req, res) => {
       });
     }
 
-    // ==========================
-    // Get user info from request
-    // ==========================
+    // ============================================================
+    // USER INFORMATION
+    // ============================================================
+
     const userId = req.user?.id || null;
     const userRole = req.user?.role || "user";
 
-    // ==========================
-    // Cloudinary Image
-    // ==========================
+    // ============================================================
+    // PAYMENT SCREENSHOT
+    // ============================================================
+
     let paymentScreenshot = {
       url: "",
       publicId: "",
@@ -1425,111 +1607,187 @@ const createBooking = async (req, res) => {
         url: req.file.path,
         publicId: req.file.filename,
       };
-
-      console.log("✅ Payment screenshot uploaded:", paymentScreenshot);
-    } else {
-      console.log("⚠️ No payment screenshot uploaded");
     }
 
-    // ==========================
-    // Create Booking
-    // ==========================
+    // ============================================================
+    // CREATE BOOKING
+    // ============================================================
+
     const booking = new Booking({
       userId,
+
       houseId,
       houseName,
       houseType,
+
       district,
       sector,
       cell,
       village,
+
       ownerName,
       ownerContact,
       ownerEmail,
+
       fullName,
       email,
       phone,
       idNumber,
+
       university,
       studentId,
       purpose,
+
       checkIn: new Date(checkIn),
       checkOut: new Date(checkOut),
+
       months: Number(months),
       guests: Number(guests),
+
       specialRequests,
-      monthlyRent: Number(monthlyRent),
-      serviceFee: Number(serviceFee),
-      totalAmount: Number(totalAmount),
+
+      monthlyRent: Number(monthlyRent) || 0,
+      serviceFee: Number(serviceFee) || 0,
+      totalAmount: Number(totalAmount) || 0,
+
       paymentMethod: paymentMethod || "momo",
       momoNumber,
+
       paymentScreenshot,
+
       paymentStatus: "pending",
       status: "pending",
     });
 
+    // ============================================================
+    // SAVE BOOKING FIRST
+    // ============================================================
+
     await booking.save();
-    console.log(`✅ Booking created: ${booking.bookingId}`);
 
-    // ==========================
-    // SEND EMAILS
-    // ==========================
-    await sendBookingEmails(booking, "created");
+    // ============================================================
+    // PREPARE RESPONSE DATA
+    // ============================================================
 
-    // ==========================
-    // CREATE ROLE-BASED NOTIFICATIONS
-    // ==========================
-    const userInfo = {
-      userId: userId,
-      email: email,
-      role: userRole,
+    const responseData = {
+      bookingId: booking.bookingId,
+      status: booking.status,
+      paymentStatus: booking.paymentStatus,
+      paymentScreenshot:
+        booking.paymentScreenshot?.url || "",
     };
-    await createAllRoleNotifications(booking, "created", userInfo);
 
-    // ==========================
-    // CREATE USER ACTIVITY
-    // ==========================
-    try {
-      await UserActivity.create({
-        userId: userId,
-        userName: fullName,
-        userEmail: email,
-        action: "booking_created",
-        description: `User ${fullName} created a booking for ${houseName}`,
-        ipAddress: req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null,
-        userAgent: req.headers["user-agent"] || null,
-        metadata: {
-          bookingId: booking.bookingId,
-          houseId: booking.houseId,
-          totalAmount: booking.totalAmount,
-        },
-      });
-      console.log(`✅ User activity created for ${email}`);
-    } catch (activityError) {
-      console.error("❌ Failed to create user activity:", activityError.message);
-    }
+    // ============================================================
+    // SEND RESPONSE IMMEDIATELY
+    // ============================================================
 
-    // ==========================
-    // Response
-    // ==========================
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
-      message: "Booking created successfully. Notifications have been sent.",
-      data: {
-        bookingId: booking.bookingId,
-        status: booking.status,
-        paymentStatus: booking.paymentStatus,
-        paymentScreenshot: booking.paymentScreenshot.url,
-      },
+      message: "Booking created successfully.",
+      data: responseData,
     });
+
+    // ============================================================
+    // EVERYTHING BELOW RUNS AFTER RESPONSE
+    // ============================================================
+
+    // ------------------------------------------------------------
+    // SEND EMAILS
+    // ------------------------------------------------------------
+
+    Promise.resolve()
+      .then(async () => {
+        try {
+          await sendBookingEmails(booking, "created");
+        } catch (emailError) {
+          console.error(
+            "❌ Failed to send booking emails:",
+            emailError.message
+          );
+        }
+      });
+
+    // ------------------------------------------------------------
+    // CREATE ROLE-BASED NOTIFICATIONS
+    // ------------------------------------------------------------
+
+    Promise.resolve()
+      .then(async () => {
+        try {
+          const userInfo = {
+            userId,
+            email,
+            role: userRole,
+          };
+
+          await createAllRoleNotifications(
+            booking,
+            "created",
+            userInfo
+          );
+        } catch (notificationError) {
+          console.error(
+            "❌ Failed to create booking notifications:",
+            notificationError.message
+          );
+        }
+      });
+
+    // ------------------------------------------------------------
+    // CREATE USER ACTIVITY
+    // ------------------------------------------------------------
+
+    Promise.resolve()
+      .then(async () => {
+        try {
+          const ipAddress =
+            req.headers["x-forwarded-for"]
+              ?.split(",")[0]
+              ?.trim() ||
+            req.socket.remoteAddress ||
+            null;
+
+          await UserActivity.create({
+            userId,
+            userName: fullName,
+            userEmail: email,
+            action: "booking_created",
+
+            description: `User ${fullName} created a booking for ${houseName}`,
+
+            ipAddress,
+
+            userAgent:
+              req.headers["user-agent"] || null,
+
+            metadata: {
+              bookingId: booking.bookingId,
+              houseId: booking.houseId,
+              totalAmount: booking.totalAmount,
+            },
+          });
+        } catch (activityError) {
+          console.error(
+            "❌ Failed to create user activity:",
+            activityError.message
+          );
+        }
+      });
 
   } catch (error) {
-    console.error("❌ Create booking error:", error);
+    console.error(
+      "❌ Create booking error:",
+      error.message
+    );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to create booking",
-    });
+    // Only send this if the response hasn't already been sent.
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message:
+          error.message || "Failed to create booking",
+      });
+    }
   }
 };
 
