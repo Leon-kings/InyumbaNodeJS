@@ -2488,7 +2488,7 @@ exports.updateHouseStatus = async (req, res) => {
     ];
 
     // ==========================================================
-    // GET REQUESTED STATUS
+    // GET REQUESTED STATUS ONLY
     // ==========================================================
 
     const status = String(req.body?.status || "")
@@ -2583,14 +2583,28 @@ exports.updateHouseStatus = async (req, res) => {
     }
 
     // ==========================================================
-    // UPDATE STATUS
+    // UPDATE STATUS ONLY
+    // ==========================================================
+    // IMPORTANT:
+    // Only "status" is included in $set.
+    //
+    // Even if req.body contains:
+    // {
+    //   status: "booked",
+    //   name: "Changed Name",
+    //   price: 999999,
+    //   description: "Changed description",
+    //   location: "Changed location"
+    // }
+    //
+    // NONE of those other fields will be updated.
     // ==========================================================
 
     const updatedHouse = await House.findByIdAndUpdate(
       id,
       {
         $set: {
-          status,
+          status: status,
         },
       },
       {
