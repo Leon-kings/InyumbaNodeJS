@@ -3091,6 +3091,302 @@ exports.updateHouse = async (req, res) => {
 // UPDATE HOUSE STATUS
 // ============================================================
 
+// exports.updateHouseStatus = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     // ==========================================================
+//     // VALID STATUS VALUES
+//     // ==========================================================
+
+//     const validStatuses = [
+//       "available",
+//       "pending",
+//       "booked",
+//       "unavailable",
+//       "maintenance",
+//       "inactive",
+//     ];
+
+//     // ==========================================================
+//     // GET REQUESTED STATUS ONLY
+//     // ==========================================================
+
+//     const status = String(req.body?.status || "")
+//       .trim()
+//       .toLowerCase();
+
+//     // ==========================================================
+//     // VALIDATE STATUS
+//     // ==========================================================
+
+//     if (!status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Status is required",
+//         data: {
+//           validStatuses,
+//         },
+//       });
+//     }
+
+//     if (!validStatuses.includes(status)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: `Invalid status value. Must be one of: ${validStatuses.join(
+//           ", "
+//         )}`,
+//         data: {
+//           requestedStatus: status,
+//           validStatuses,
+//         },
+//       });
+//     }
+
+//     // ==========================================================
+//     // VALIDATE HOUSE ID
+//     // ==========================================================
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid house ID",
+//       });
+//     }
+
+//     // ==========================================================
+//     // FIND HOUSE
+//     // ==========================================================
+
+//     const house = await House.findById(id).lean();
+
+//     if (!house) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "House not found",
+//       });
+//     }
+
+//     // ==========================================================
+//     // NORMALIZE CURRENT STATUS
+//     // ==========================================================
+
+//     const currentStatus = String(house.status || "")
+//       .trim()
+//       .toLowerCase();
+
+//     // ==========================================================
+//     // DEBUG
+//     // ==========================================================
+
+//     console.log("=== STATUS UPDATE ===");
+//     console.log("House ID:", id);
+//     console.log("House:", house.name);
+//     console.log("Current status:", currentStatus);
+//     console.log("Requested status:", status);
+
+//     // ==========================================================
+//     // CHECK SAME STATUS
+//     // ==========================================================
+
+//     if (currentStatus === status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: `House is already ${status}`,
+//         data: {
+//           _id: house._id,
+//           houseId: house.houseId,
+//           name: house.name,
+//           currentStatus,
+//           requestedStatus: status,
+//         },
+//       });
+//     }
+
+//     // ==========================================================
+//     // UPDATE STATUS ONLY
+//     // ==========================================================
+//     // IMPORTANT:
+//     // Only "status" is included in $set.
+//     //
+//     // Even if req.body contains:
+//     // {
+//     //   status: "booked",
+//     //   name: "Changed Name",
+//     //   price: 999999,
+//     //   description: "Changed description",
+//     //   location: "Changed location"
+//     // }
+//     //
+//     // NONE of those other fields will be updated.
+//     // ==========================================================
+
+//     const updatedHouse = await House.findByIdAndUpdate(
+//       id,
+//       {
+//         $set: {
+//           status: status,
+//         },
+//       },
+//       {
+//         new: true,
+//         runValidators: true,
+//       }
+//     ).lean();
+
+//     // ==========================================================
+//     // VERIFY UPDATE
+//     // ==========================================================
+
+//     if (!updatedHouse) {
+//       return res.status(500).json({
+//         success: false,
+//         message: "Failed to update house status",
+//       });
+//     }
+
+//     const updatedStatus = String(updatedHouse.status || "")
+//       .trim()
+//       .toLowerCase();
+
+//     if (updatedStatus !== status) {
+//       return res.status(500).json({
+//         success: false,
+//         message: "Status update failed",
+//         data: {
+//           houseId: updatedHouse.houseId,
+//           currentStatus: updatedStatus,
+//           requestedStatus: status,
+//         },
+//       });
+//     }
+
+//     // ==========================================================
+//     // OLD STATUS
+//     // ==========================================================
+
+//     const oldStatus = currentStatus;
+
+//     // ==========================================================
+//     // NOTIFICATION TYPE
+//     // ==========================================================
+
+//     let notificationType = "house_status_changed";
+
+//     switch (status) {
+//       case "available":
+//         notificationType = "house_available";
+//         break;
+
+//       case "pending":
+//         notificationType = "house_pending";
+//         break;
+
+//       case "booked":
+//         notificationType = "house_booked";
+//         break;
+
+//       case "unavailable":
+//         notificationType = "house_unavailable";
+//         break;
+
+//       case "maintenance":
+//         notificationType = "house_maintenance";
+//         break;
+
+//       case "inactive":
+//         notificationType = "house_status_changed";
+//         break;
+//     }
+
+//     // ==========================================================
+//     // USER INFORMATION
+//     // ==========================================================
+
+//     const userInfo = {
+//       userId: updatedHouse.createdBy || null,
+//       email:
+//         updatedHouse.ownerEmail ||
+//         updatedHouse.createdByEmail ||
+//         "",
+//       name: updatedHouse.ownerName || "",
+//       oldStatus,
+//       newStatus: status,
+//     };
+
+//     // ==========================================================
+//     // SEND RESPONSE IMMEDIATELY
+//     // ==========================================================
+
+//     res.status(200).json({
+//       success: true,
+//       message: "House status updated successfully",
+//       data: {
+//         _id: updatedHouse._id,
+//         houseId: updatedHouse.houseId,
+//         name: updatedHouse.name,
+//         status: updatedStatus,
+//         oldStatus,
+//         updatedAt: updatedHouse.updatedAt,
+//       },
+//     });
+
+//     // ==========================================================
+//     // BACKGROUND NOTIFICATIONS
+//     // ==========================================================
+
+//     Promise.resolve().then(async () => {
+//       try {
+//         await createAllRoleNotifications(
+//           updatedHouse,
+//           notificationType,
+//           userInfo
+//         );
+//       } catch (notificationError) {
+//         console.error(
+//           "❌ House notification failed:",
+//           notificationError.message
+//         );
+//       }
+//     });
+
+//     // ==========================================================
+//     // BACKGROUND EMAILS
+//     // ==========================================================
+
+//     Promise.resolve().then(async () => {
+//       try {
+//         await sendHouseEmails(
+//           updatedHouse,
+//           `Status Changed: ${oldStatus} → ${status}`,
+//           userInfo
+//         );
+//       } catch (emailError) {
+//         console.error(
+//           "❌ House status email failed:",
+//           emailError.message
+//         );
+//       }
+//     });
+//   } catch (error) {
+//     console.error(
+//       "❌ Update house status error:",
+//       error.message
+//     );
+
+//     if (!res.headersSent) {
+//       return res.status(500).json({
+//         success: false,
+//         message: "Failed to update house status",
+//         error: error.message,
+//       });
+//     }
+//   }
+// };
+// ============================================================
+// UPDATE HOUSE STATUS
+// ============================================================
+
 exports.updateHouseStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -3109,7 +3405,7 @@ exports.updateHouseStatus = async (req, res) => {
     ];
 
     // ==========================================================
-    // GET REQUESTED STATUS ONLY
+    // GET REQUESTED STATUS
     // ==========================================================
 
     const status = String(req.body?.status || "")
@@ -3168,64 +3464,24 @@ exports.updateHouseStatus = async (req, res) => {
     }
 
     // ==========================================================
-    // NORMALIZE CURRENT STATUS
+    // OLD STATUS
     // ==========================================================
 
-    const currentStatus = String(house.status || "")
+    const oldStatus = String(house.status || "")
       .trim()
       .toLowerCase();
 
     // ==========================================================
-    // DEBUG
+    // UPDATE STATUS
     // ==========================================================
-
-    console.log("=== STATUS UPDATE ===");
-    console.log("House ID:", id);
-    console.log("House:", house.name);
-    console.log("Current status:", currentStatus);
-    console.log("Requested status:", status);
-
-    // ==========================================================
-    // CHECK SAME STATUS
-    // ==========================================================
-
-    if (currentStatus === status) {
-      return res.status(400).json({
-        success: false,
-        message: `House is already ${status}`,
-        data: {
-          _id: house._id,
-          houseId: house.houseId,
-          name: house.name,
-          currentStatus,
-          requestedStatus: status,
-        },
-      });
-    }
-
-    // ==========================================================
-    // UPDATE STATUS ONLY
-    // ==========================================================
-    // IMPORTANT:
-    // Only "status" is included in $set.
+    // No check against oldStatus.
     //
-    // Even if req.body contains:
-    // {
-    //   status: "booked",
-    //   name: "Changed Name",
-    //   price: 999999,
-    //   description: "Changed description",
-    //   location: "Changed location"
-    // }
-    //
-    // NONE of those other fields will be updated.
-    // ==========================================================
 
     const updatedHouse = await House.findByIdAndUpdate(
       id,
       {
         $set: {
-          status: status,
+          status,
         },
       },
       {
@@ -3249,23 +3505,22 @@ exports.updateHouseStatus = async (req, res) => {
       .trim()
       .toLowerCase();
 
+    // ==========================================================
+    // VERIFY REQUESTED STATUS WAS SAVED
+    // ==========================================================
+
     if (updatedStatus !== status) {
       return res.status(500).json({
         success: false,
         message: "Status update failed",
         data: {
           houseId: updatedHouse.houseId,
-          currentStatus: updatedStatus,
+          oldStatus,
           requestedStatus: status,
+          currentStatus: updatedStatus,
         },
       });
     }
-
-    // ==========================================================
-    // OLD STATUS
-    // ==========================================================
-
-    const oldStatus = currentStatus;
 
     // ==========================================================
     // NOTIFICATION TYPE
@@ -3305,11 +3560,14 @@ exports.updateHouseStatus = async (req, res) => {
 
     const userInfo = {
       userId: updatedHouse.createdBy || null,
+
       email:
         updatedHouse.ownerEmail ||
         updatedHouse.createdByEmail ||
         "",
+
       name: updatedHouse.ownerName || "",
+
       oldStatus,
       newStatus: status,
     };
@@ -3325,8 +3583,16 @@ exports.updateHouseStatus = async (req, res) => {
         _id: updatedHouse._id,
         houseId: updatedHouse.houseId,
         name: updatedHouse.name,
+
+        // New status
         status: updatedStatus,
+
+        // Keep old status for information only
         oldStatus,
+
+        // Requested status
+        requestedStatus: status,
+
         updatedAt: updatedHouse.updatedAt,
       },
     });
@@ -3385,54 +3651,6 @@ exports.updateHouseStatus = async (req, res) => {
 };
 
 // 8. Delete House
-// exports.deleteHouse = async (req, res) => {
-//   try {
-//     const house = await House.findById(req.params.id);
-
-//     if (!house) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "House not found",
-//       });
-//     }
-
-//     // ===========================
-//     // CREATE NOTIFICATIONS BEFORE DELETE
-//     // ===========================
-//     const userInfo = {
-//       userId: house.host.userId || null,
-//       email: house.host.email || "",
-//       name: house.host.name || "",
-//     };
-
-//     await createAllRoleNotifications(house, "house_deleted", userInfo);
-
-//     // ===========================
-//     // SEND EMAILS
-//     // ===========================
-//     await sendHouseEmails(house, "Deleted", userInfo);
-
-//     // ===========================
-//     // DELETE IMAGES FROM CLOUDINARY
-//     // ===========================
-//     for (const img of house.images) {
-//       await cloudinary.uploader.destroy(img.public_id);
-//     }
-
-//     await house.deleteOne();
-
-//     res.status(200).json({
-//       success: true,
-//       message: "House deleted successfully",
-//     });
-//   } catch (error) {
-//     console.error("Delete house error:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to delete house",
-//     });
-//   }
-// };
 
 exports.deleteHouse = async (req, res) => {
   try {
