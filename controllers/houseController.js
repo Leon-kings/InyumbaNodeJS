@@ -1876,18 +1876,25 @@ const sendHouseEmails = async (house, type, userInfo = null) => {
 // ===========================================
 
 // 1. Create House
+
 // exports.createHouse = async (req, res) => {
 //   try {
-//     // ===========================
+//     // ============================================================
 //     // VALIDATION
-//     // ===========================
+//     // ============================================================
 
 //     const errors = validationResult(req);
 
 //     if (!errors.isEmpty()) {
 //       if (req.files?.length) {
 //         for (const file of req.files) {
-//           await cloudinary.uploader.destroy(file.filename || file.public_id);
+//           try {
+//             await cloudinary.uploader.destroy(
+//               file.filename || file.public_id
+//             );
+//           } catch (cleanupError) {
+//             // Ignore Cloudinary cleanup errors during validation failure
+//           }
 //         }
 //       }
 
@@ -1897,28 +1904,31 @@ const sendHouseEmails = async (house, type, userInfo = null) => {
 //       });
 //     }
 
-//     // ===========================
+//     // ============================================================
 //     // GET BODY DATA
-//     // ===========================
+//     // ============================================================
 
 //     const {
 //       houseId,
 //       name,
+//       houseType,
 //       description,
 //       location,
 //       university,
 //       pricePerMonth,
 //       bedrooms,
 //       bathrooms,
-//       maxGuests,
+//       guests,
 //       amenities,
-//       host,
+//       ownerName,
+//       ownerEmail,
+//       ownerContact,
 //       availability,
 //     } = req.body;
 
-//     // ===========================
+//     // ============================================================
 //     // CHECK IMAGES
-//     // ===========================
+//     // ============================================================
 
 //     if (!req.files || req.files.length === 0) {
 //       return res.status(400).json({
@@ -1927,42 +1937,127 @@ const sendHouseEmails = async (house, type, userInfo = null) => {
 //       });
 //     }
 
-//     // ===========================
+//     // ============================================================
 //     // PARSE JSON FIELDS
-//     // ===========================
+//     // ============================================================
 
 //     let locationObj = {};
-//     let hostObj = {};
 //     let availabilityObj = {};
 //     let amenitiesArray = [];
 
-//     try {
-//       locationObj = typeof location === "string" ? JSON.parse(location) : location || {};
-//     } catch (error) {
-//       locationObj = {};
-//     }
+//     // ------------------------------------------------------------
+//     // LOCATION
+//     // ------------------------------------------------------------
 
 //     try {
-//       hostObj = typeof host === "string" ? JSON.parse(host) : host || {};
+//       if (typeof location === "string") {
+//         locationObj = JSON.parse(location);
+//       } else if (location && typeof location === "object") {
+//         locationObj = location;
+//       }
 //     } catch (error) {
-//       hostObj = {};
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid location data",
+//       });
 //     }
+
+//     // ------------------------------------------------------------
+//     // AVAILABILITY
+//     // ------------------------------------------------------------
 
 //     try {
-//       availabilityObj = typeof availability === "string" ? JSON.parse(availability) : availability || {};
+//       if (typeof availability === "string") {
+//         availabilityObj = JSON.parse(availability);
+//       } else if (
+//         availability &&
+//         typeof availability === "object"
+//       ) {
+//         availabilityObj = availability;
+//       }
 //     } catch (error) {
-//       availabilityObj = {};
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid availability data",
+//       });
 //     }
+
+//     // ------------------------------------------------------------
+//     // AMENITIES
+//     // ------------------------------------------------------------
 
 //     try {
-//       amenitiesArray = typeof amenities === "string" ? JSON.parse(amenities) : amenities || [];
+//       if (typeof amenities === "string") {
+//         amenitiesArray = JSON.parse(amenities);
+//       } else if (Array.isArray(amenities)) {
+//         amenitiesArray = amenities;
+//       }
+
+//       if (!Array.isArray(amenitiesArray)) {
+//         amenitiesArray = [];
+//       }
 //     } catch (error) {
-//       amenitiesArray = [];
+//       // Support amenities[] from multipart/form-data
+//       if (Array.isArray(req.body["amenities[]"])) {
+//         amenitiesArray = req.body["amenities[]"];
+//       } else if (req.body["amenities[]"]) {
+//         amenitiesArray = [req.body["amenities[]"]];
+//       } else {
+//         amenitiesArray = [];
+//       }
 //     }
 
-//     // ===========================
+//     // ============================================================
+//     // NORMALIZE NUMERIC VALUES
+//     // ============================================================
+
+//     const numericPrice = Number(pricePerMonth);
+//     const numericBedrooms = Number(bedrooms);
+//     const numericBathrooms = Number(bathrooms);
+//     const numericGuests = Number(guests);
+
+//     // ============================================================
+//     // NUMERIC VALIDATION
+//     // ============================================================
+
+//     if (!Number.isFinite(numericPrice) || numericPrice < 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Monthly price must be a valid non-negative number",
+//       });
+//     }
+
+//     if (!Number.isInteger(numericPrice)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Monthly price must be a whole number",
+//       });
+//     }
+
+//     if (!Number.isFinite(numericBedrooms) || numericBedrooms < 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Bedrooms cannot be negative",
+//       });
+//     }
+
+//     if (!Number.isFinite(numericBathrooms) || numericBathrooms < 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Bathrooms cannot be negative",
+//       });
+//     }
+
+//     if (!Number.isFinite(numericGuests) || numericGuests < 1) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Guests must be at least 1",
+//       });
+//     }
+
+//     // ============================================================
 //     // GENERATE IMAGES
-//     // ===========================
+//     // ============================================================
 
 //     const images = req.files.map((file) => ({
 //       public_id: file.filename || file.public_id,
@@ -1970,21 +2065,34 @@ const sendHouseEmails = async (house, type, userInfo = null) => {
 //       secure_url: file.path,
 //     }));
 
-//     // ===========================
+//     // ============================================================
 //     // GENERATE HOUSE ID
-//     // ===========================
+//     // ============================================================
 
-//     const finalHouseId = houseId || `HSE-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+//     const finalHouseId =
+//       houseId ||
+//       `HSE-${crypto
+//         .randomBytes(4)
+//         .toString("hex")
+//         .toUpperCase()}`;
 
-//     // ===========================
-//     // CHECK DUPLICATE ID
-//     // ===========================
+//     // ============================================================
+//     // CHECK DUPLICATE HOUSE ID
+//     // ============================================================
 
-//     const existingHouse = await House.findOne({ houseId: finalHouseId });
+//     const existingHouse = await House.findOne({
+//       houseId: finalHouseId,
+//     });
 
 //     if (existingHouse) {
 //       for (const file of req.files) {
-//         await cloudinary.uploader.destroy(file.filename || file.public_id);
+//         try {
+//           await cloudinary.uploader.destroy(
+//             file.filename || file.public_id
+//           );
+//         } catch (cleanupError) {
+//           // Ignore cleanup error
+//         }
 //       }
 
 //       return res.status(400).json({
@@ -1993,133 +2101,279 @@ const sendHouseEmails = async (house, type, userInfo = null) => {
 //       });
 //     }
 
-//     // ===========================
-//     // GET USER INFO
-//     // ===========================
+//     // ============================================================
+//     // GET AUTHENTICATED USER
+//     // ============================================================
+
 //     const userId = req.user?.id || null;
 //     const userRole = req.user?.role || "user";
 
-//     // ===========================
+//     // ============================================================
 //     // CREATE HOUSE
-//     // ===========================
+//     // ============================================================
 
 //     const house = new House({
+//       // ----------------------------------------------------------
+//       // IDENTIFICATION
+//       // ----------------------------------------------------------
+
 //       houseId: finalHouseId,
-//       name,
-//       description,
+
+//       // ----------------------------------------------------------
+//       // BASIC INFORMATION
+//       // ----------------------------------------------------------
+
+//       name: name || "",
+//       houseType: houseType || "apartment",
+//       description: description || "",
+
+//       // ----------------------------------------------------------
+//       // IMAGES
+//       // ----------------------------------------------------------
+
 //       images,
+
+//       // ----------------------------------------------------------
+//       // LOCATION
+//       // ----------------------------------------------------------
+
 //       location: {
 //         province: locationObj.province || "",
 //         district: locationObj.district || "",
 //         sector: locationObj.sector || "",
 //         cell: locationObj.cell || "",
 //         village: locationObj.village || "",
+
 //         coordinates: {
-//           lat: locationObj.coordinates?.lat || null,
-//           lng: locationObj.coordinates?.lng || null,
+//           lat:
+//             locationObj.coordinates?.lat !== undefined
+//               ? Number(locationObj.coordinates.lat)
+//               : null,
+
+//           lng:
+//             locationObj.coordinates?.lng !== undefined
+//               ? Number(locationObj.coordinates.lng)
+//               : null,
 //         },
 //       },
-//       university,
-//       pricePerMonth: Number(pricePerMonth),
-//       bedrooms: Number(bedrooms),
-//       bathrooms: Number(bathrooms),
-//       maxGuests: Number(maxGuests),
+
+//       // ----------------------------------------------------------
+//       // UNIVERSITY
+//       // ----------------------------------------------------------
+
+//       university: university || "",
+
+//       // ----------------------------------------------------------
+//       // PRICE
+//       // ----------------------------------------------------------
+
+//       pricePerMonth: numericPrice,
+
+//       currency: "RWF",
+
+//       // ----------------------------------------------------------
+//       // CAPACITY
+//       // ----------------------------------------------------------
+
+//       bedrooms: numericBedrooms,
+//       bathrooms: numericBathrooms,
+//       guests: numericGuests,
+
+//       // ----------------------------------------------------------
+//       // AMENITIES
+//       // ----------------------------------------------------------
+
 //       amenities: amenitiesArray,
+
+//       // ----------------------------------------------------------
+//       // AVAILABILITY
+//       // ----------------------------------------------------------
+
+//       availability: availabilityObj,
+
+//       // ----------------------------------------------------------
+//       // STATUS
+//       // ----------------------------------------------------------
+
 //       status: "pending",
-//       rating: 4,
-//       totalReviews: 10,
-//       host: {
-//         userId: userId,
-//         name: hostObj.name || "",
-//         email: hostObj.email || "",
-//         phone: hostObj.phone || "",
-//         responseRate: 5,
-//         responseTime: "48 hours",
-//       },
+
+//       // ----------------------------------------------------------
+//       // OWNER
+//       // ----------------------------------------------------------
+
+//       ownerName: ownerName || "",
+//       ownerEmail: ownerEmail || "",
+//       ownerContact: ownerContact || "",
+
+//       // ----------------------------------------------------------
+//       // CREATED BY
+//       // ----------------------------------------------------------
+
+//       createdBy: userId,
+//       createdByEmail: ownerEmail || req.user?.email || "",
+
+//       // ----------------------------------------------------------
+//       // ACTIVE
+//       // ----------------------------------------------------------
+
 //       isActive: true,
+
+//       isFeatured: false,
 //     });
 
-//     await house.save();
-//     console.log(`✅ House created: ${house.houseId}`);
+//     // ============================================================
+//     // SAVE HOUSE
+//     // ============================================================
 
-//     // ===========================
-//     // CREATE ROLE-BASED NOTIFICATIONS
-//     // ===========================
+//     await house.save();
+
+//     // ============================================================
+//     // USER INFORMATION FOR NOTIFICATIONS
+//     // ============================================================
+
 //     const userInfo = {
-//       userId: userId,
-//       email: hostObj.email || "",
-//       name: hostObj.name || "",
+//       userId,
+//       email: ownerEmail || req.user?.email || "",
+//       name: ownerName || req.user?.name || "",
 //       role: userRole,
 //     };
-//     await createAllRoleNotifications(house, "house_created", userInfo);
 
-//     // ===========================
+//     // ============================================================
+//     // CREATE ROLE-BASED NOTIFICATIONS
+//     // ============================================================
+
+//     try {
+//       await createAllRoleNotifications(
+//         house,
+//         "house_created",
+//         userInfo
+//       );
+//     } catch (notificationError) {
+//       console.error(
+//         "House notification creation failed:",
+//         notificationError.message
+//       );
+//     }
+
+//     // ============================================================
 //     // SEND EMAILS
-//     // ===========================
-//     await sendHouseEmails(house, "Created", userInfo);
+//     // ============================================================
 
-//     // ===========================
+//     try {
+//       await sendHouseEmails(
+//         house,
+//         "Created",
+//         userInfo
+//       );
+//     } catch (emailError) {
+//       console.error(
+//         "House email notification failed:",
+//         emailError.message
+//       );
+//     }
+
+//     // ============================================================
 //     // RESPONSE
-//     // ===========================
+//     // ============================================================
 
 //     return res.status(201).json({
 //       success: true,
-//       message: "House created successfully and waiting for approval",
+//       message:
+//         "House created successfully and waiting for approval",
 //       data: house,
 //     });
 //   } catch (error) {
 //     console.error("Create house error:", error);
 
-//     // REMOVE CLOUDINARY FILES
+//     // ============================================================
+//     // CLOUDINARY CLEANUP
+//     // ============================================================
+
 //     if (req.files?.length) {
 //       for (const file of req.files) {
 //         try {
-//           await cloudinary.uploader.destroy(file.filename || file.public_id);
-//         } catch (err) {
-//           console.log("Cloudinary cleanup failed:", err.message);
+//           await cloudinary.uploader.destroy(
+//             file.filename || file.public_id
+//           );
+//         } catch (cleanupError) {
+//           console.error(
+//             "Cloudinary cleanup failed:",
+//             cleanupError.message
+//           );
 //         }
 //       }
 //     }
 
+//     // ============================================================
+//     // MONGOOSE VALIDATION ERROR
+//     // ============================================================
+
+//     if (error.name === "ValidationError") {
+//       const validationErrors = Object.values(error.errors).map(
+//         (err) => ({
+//           field: err.path,
+//           message: err.message,
+//         })
+//       );
+
+//       return res.status(400).json({
+//         success: false,
+//         message: "House validation failed",
+//         errors: validationErrors,
+//       });
+//     }
+
+//     // ============================================================
+//     // DUPLICATE KEY ERROR
+//     // ============================================================
+
+//     if (error.code === 11000) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "House ID already exists",
+//       });
+//     }
+
+//     // ============================================================
+//     // GENERAL ERROR
+//     // ============================================================
+
 //     return res.status(500).json({
 //       success: false,
 //       message: "Failed to create house",
-//       error: process.env.NODE_ENV === "development" ? error.message : undefined,
+//       error:
+//         process.env.NODE_ENV === "development"
+//           ? error.message
+//           : undefined,
 //     });
 //   }
 // };
 
+// ============================================================
+// CREATE HOUSE
+// ============================================================
 
 exports.createHouse = async (req, res) => {
+  let houseSaved = false;
+
   try {
-    // ============================================================
-    // VALIDATION
-    // ============================================================
+    // ==========================================================
+    // VALIDATION RESULT
+    // ==========================================================
 
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-      if (req.files?.length) {
-        for (const file of req.files) {
-          try {
-            await cloudinary.uploader.destroy(
-              file.filename || file.public_id
-            );
-          } catch (cleanupError) {
-            // Ignore Cloudinary cleanup errors during validation failure
-          }
-        }
-      }
-
       return res.status(400).json({
         success: false,
+        message: "Validation failed",
         errors: errors.array(),
       });
     }
 
-    // ============================================================
+    // ==========================================================
     // GET BODY DATA
-    // ============================================================
+    // ==========================================================
 
     const {
       houseId,
@@ -2137,11 +2391,30 @@ exports.createHouse = async (req, res) => {
       ownerEmail,
       ownerContact,
       availability,
+      status,
     } = req.body;
 
-    // ============================================================
+    // ==========================================================
+    // REQUIRED BASIC FIELDS
+    // ==========================================================
+
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "House name is required",
+      });
+    }
+
+    if (!houseType || !String(houseType).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "House type is required",
+      });
+    }
+
+    // ==========================================================
     // CHECK IMAGES
-    // ============================================================
+    // ==========================================================
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
@@ -2150,22 +2423,22 @@ exports.createHouse = async (req, res) => {
       });
     }
 
-    // ============================================================
-    // PARSE JSON FIELDS
-    // ============================================================
+    // ==========================================================
+    // PARSE LOCATION
+    // ==========================================================
 
     let locationObj = {};
-    let availabilityObj = {};
-    let amenitiesArray = [];
-
-    // ------------------------------------------------------------
-    // LOCATION
-    // ------------------------------------------------------------
 
     try {
       if (typeof location === "string") {
-        locationObj = JSON.parse(location);
-      } else if (location && typeof location === "object") {
+        if (location.trim()) {
+          locationObj = JSON.parse(location);
+        }
+      } else if (
+        location &&
+        typeof location === "object" &&
+        !Array.isArray(location)
+      ) {
         locationObj = location;
       }
     } catch (error) {
@@ -2175,16 +2448,30 @@ exports.createHouse = async (req, res) => {
       });
     }
 
-    // ------------------------------------------------------------
-    // AVAILABILITY
-    // ------------------------------------------------------------
+    // Make sure location is an object
+    if (
+      !locationObj ||
+      typeof locationObj !== "object" ||
+      Array.isArray(locationObj)
+    ) {
+      locationObj = {};
+    }
+
+    // ==========================================================
+    // PARSE AVAILABILITY
+    // ==========================================================
+
+    let availabilityObj = {};
 
     try {
       if (typeof availability === "string") {
-        availabilityObj = JSON.parse(availability);
+        if (availability.trim()) {
+          availabilityObj = JSON.parse(availability);
+        }
       } else if (
         availability &&
-        typeof availability === "object"
+        typeof availability === "object" &&
+        !Array.isArray(availability)
       ) {
         availabilityObj = availability;
       }
@@ -2195,374 +2482,758 @@ exports.createHouse = async (req, res) => {
       });
     }
 
-    // ------------------------------------------------------------
-    // AMENITIES
-    // ------------------------------------------------------------
+    // Make sure availability is an object
+    if (
+      !availabilityObj ||
+      typeof availabilityObj !== "object" ||
+      Array.isArray(availabilityObj)
+    ) {
+      availabilityObj = {};
+    }
+
+    // ==========================================================
+    // PARSE AMENITIES
+    // ==========================================================
+
+    let amenitiesArray = [];
 
     try {
       if (typeof amenities === "string") {
-        amenitiesArray = JSON.parse(amenities);
+        if (amenities.trim()) {
+          amenitiesArray = JSON.parse(amenities);
+        }
       } else if (Array.isArray(amenities)) {
         amenitiesArray = amenities;
       }
 
-      if (!Array.isArray(amenitiesArray)) {
-        amenitiesArray = [];
+      // Support multipart/form-data:
+      // amenities[]
+      if (
+        (!Array.isArray(amenitiesArray) ||
+          amenitiesArray.length === 0) &&
+        req.body["amenities[]"]
+      ) {
+        if (Array.isArray(req.body["amenities[]"])) {
+          amenitiesArray = req.body["amenities[]"];
+        } else {
+          amenitiesArray = [
+            req.body["amenities[]"],
+          ];
+        }
       }
     } catch (error) {
-      // Support amenities[] from multipart/form-data
       if (Array.isArray(req.body["amenities[]"])) {
         amenitiesArray = req.body["amenities[]"];
       } else if (req.body["amenities[]"]) {
-        amenitiesArray = [req.body["amenities[]"]];
+        amenitiesArray = [
+          req.body["amenities[]"],
+        ];
       } else {
-        amenitiesArray = [];
+        return res.status(400).json({
+          success: false,
+          message: "Invalid amenities data",
+        });
       }
     }
 
-    // ============================================================
+    // ==========================================================
+    // NORMALIZE AMENITIES
+    // ==========================================================
+
+    if (!Array.isArray(amenitiesArray)) {
+      amenitiesArray = [];
+    }
+
+    amenitiesArray = [
+      ...new Set(
+        amenitiesArray
+          .map((item) => {
+            if (
+              item === null ||
+              item === undefined
+            ) {
+              return "";
+            }
+
+            return String(item).trim();
+          })
+          .filter(Boolean),
+      ),
+    ];
+
+    // ==========================================================
     // NORMALIZE NUMERIC VALUES
-    // ============================================================
+    // ==========================================================
 
     const numericPrice = Number(pricePerMonth);
-    const numericBedrooms = Number(bedrooms);
-    const numericBathrooms = Number(bathrooms);
+
+    const numericBedrooms =
+      bedrooms === undefined ||
+      bedrooms === null ||
+      bedrooms === ""
+        ? 0
+        : Number(bedrooms);
+
+    const numericBathrooms =
+      bathrooms === undefined ||
+      bathrooms === null ||
+      bathrooms === ""
+        ? 0
+        : Number(bathrooms);
+
     const numericGuests = Number(guests);
 
-    // ============================================================
-    // NUMERIC VALIDATION
-    // ============================================================
+    // ==========================================================
+    // PRICE VALIDATION
+    // ==========================================================
 
-    if (!Number.isFinite(numericPrice) || numericPrice < 0) {
+    if (
+      !Number.isFinite(numericPrice) ||
+      numericPrice < 0
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Monthly price must be a valid non-negative number",
+        message:
+          "Monthly price must be a valid non-negative number",
       });
     }
 
     if (!Number.isInteger(numericPrice)) {
       return res.status(400).json({
         success: false,
-        message: "Monthly price must be a whole number",
+        message:
+          "Monthly price must be a whole number",
       });
     }
 
-    if (!Number.isFinite(numericBedrooms) || numericBedrooms < 0) {
+    // ==========================================================
+    // BEDROOM VALIDATION
+    // ==========================================================
+
+    if (
+      !Number.isFinite(numericBedrooms) ||
+      numericBedrooms < 0
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Bedrooms cannot be negative",
+        message:
+          "Bedrooms must be a valid non-negative number",
       });
     }
 
-    if (!Number.isFinite(numericBathrooms) || numericBathrooms < 0) {
+    if (!Number.isInteger(numericBedrooms)) {
       return res.status(400).json({
         success: false,
-        message: "Bathrooms cannot be negative",
+        message:
+          "Bedrooms must be a whole number",
       });
     }
 
-    if (!Number.isFinite(numericGuests) || numericGuests < 1) {
+    // ==========================================================
+    // BATHROOM VALIDATION
+    // ==========================================================
+
+    if (
+      !Number.isFinite(numericBathrooms) ||
+      numericBathrooms < 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Bathrooms must be a valid non-negative number",
+      });
+    }
+
+    if (!Number.isInteger(numericBathrooms)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Bathrooms must be a whole number",
+      });
+    }
+
+    // ==========================================================
+    // GUEST VALIDATION
+    // ==========================================================
+
+    if (
+      !Number.isFinite(numericGuests) ||
+      numericGuests < 1
+    ) {
       return res.status(400).json({
         success: false,
         message: "Guests must be at least 1",
       });
     }
 
-    // ============================================================
-    // GENERATE IMAGES
-    // ============================================================
-
-    const images = req.files.map((file) => ({
-      public_id: file.filename || file.public_id,
-      url: file.path,
-      secure_url: file.path,
-    }));
-
-    // ============================================================
-    // GENERATE HOUSE ID
-    // ============================================================
-
-    const finalHouseId =
-      houseId ||
-      `HSE-${crypto
-        .randomBytes(4)
-        .toString("hex")
-        .toUpperCase()}`;
-
-    // ============================================================
-    // CHECK DUPLICATE HOUSE ID
-    // ============================================================
-
-    const existingHouse = await House.findOne({
-      houseId: finalHouseId,
-    });
-
-    if (existingHouse) {
-      for (const file of req.files) {
-        try {
-          await cloudinary.uploader.destroy(
-            file.filename || file.public_id
-          );
-        } catch (cleanupError) {
-          // Ignore cleanup error
-        }
-      }
-
+    if (!Number.isInteger(numericGuests)) {
       return res.status(400).json({
         success: false,
-        message: "House ID already exists",
+        message:
+          "Guests must be a whole number",
       });
     }
 
-    // ============================================================
+    // ==========================================================
+    // NORMALIZE LOCATION
+    //
+    // House schema uses:
+    // province
+    // district
+    // sector
+    // cell
+    // village
+    // address
+    // latitude
+    // longitude
+    //
+    // NOT:
+    // coordinates.lat
+    // coordinates.lng
+    // ==========================================================
+
+    const normalizedLocation = {
+      province:
+        locationObj.province
+          ? String(locationObj.province).trim()
+          : "",
+
+      district:
+        locationObj.district
+          ? String(locationObj.district).trim()
+          : "",
+
+      sector:
+        locationObj.sector
+          ? String(locationObj.sector).trim()
+          : "",
+
+      cell:
+        locationObj.cell
+          ? String(locationObj.cell).trim()
+          : "",
+
+      village:
+        locationObj.village
+          ? String(locationObj.village).trim()
+          : "",
+
+      address:
+        locationObj.address
+          ? String(locationObj.address).trim()
+          : "",
+
+      latitude: null,
+
+      longitude: null,
+    };
+
+    // ==========================================================
+    // SUPPORT OLD coordinates FORMAT
+    // ==========================================================
+
+    const latitude =
+      locationObj.latitude ??
+      locationObj.coordinates?.lat ??
+      null;
+
+    const longitude =
+      locationObj.longitude ??
+      locationObj.coordinates?.lng ??
+      null;
+
+    // ==========================================================
+    // LATITUDE
+    // ==========================================================
+
+    if (
+      latitude !== null &&
+      latitude !== "" &&
+      latitude !== undefined
+    ) {
+      const numericLatitude =
+        Number(latitude);
+
+      if (
+        !Number.isFinite(numericLatitude) ||
+        numericLatitude < -90 ||
+        numericLatitude > 90
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Latitude must be between -90 and 90",
+        });
+      }
+
+      normalizedLocation.latitude =
+        numericLatitude;
+    }
+
+    // ==========================================================
+    // LONGITUDE
+    // ==========================================================
+
+    if (
+      longitude !== null &&
+      longitude !== "" &&
+      longitude !== undefined
+    ) {
+      const numericLongitude =
+        Number(longitude);
+
+      if (
+        !Number.isFinite(numericLongitude) ||
+        numericLongitude < -180 ||
+        numericLongitude > 180
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Longitude must be between -180 and 180",
+        });
+      }
+
+      normalizedLocation.longitude =
+        numericLongitude;
+    }
+
+    // ==========================================================
+    // NORMALIZE STATUS
+    // ==========================================================
+
+    const allowedStatuses = [
+      "available",
+      "unavailable",
+      "pending",
+      "booked",
+      "maintenance",
+      "inactive",
+    ];
+
+    const normalizedStatus =
+      status &&
+      allowedStatuses.includes(
+        String(status).trim().toLowerCase(),
+      )
+        ? String(status)
+            .trim()
+            .toLowerCase()
+        : "pending";
+
+    // ==========================================================
     // GET AUTHENTICATED USER
-    // ============================================================
+    // ==========================================================
 
-    const userId = req.user?.id || null;
-    const userRole = req.user?.role || "user";
+    const userId =
+      req.user?._id ||
+      req.user?.id ||
+      req.user?.userId ||
+      null;
 
-    // ============================================================
-    // CREATE HOUSE
-    // ============================================================
+    const userRole =
+      req.user?.role || "user";
 
-    const house = new House({
-      // ----------------------------------------------------------
-      // IDENTIFICATION
-      // ----------------------------------------------------------
+    // ==========================================================
+    // NORMALIZE EMAIL
+    // ==========================================================
 
-      houseId: finalHouseId,
+    const normalizedOwnerEmail =
+      ownerEmail
+        ? String(ownerEmail)
+            .trim()
+            .toLowerCase()
+        : "";
 
-      // ----------------------------------------------------------
-      // BASIC INFORMATION
-      // ----------------------------------------------------------
+    const normalizedCreatedByEmail =
+      req.user?.email
+        ? String(req.user.email)
+            .trim()
+            .toLowerCase()
+        : normalizedOwnerEmail;
 
-      name: name || "",
-      houseType: houseType || "apartment",
-      description: description || "",
+    // ==========================================================
+    // PREPARE CLOUDINARY IMAGES
+    // ==========================================================
 
-      // ----------------------------------------------------------
-      // IMAGES
-      // ----------------------------------------------------------
+    const images = req.files.map((file) => ({
+      public_id:
+        file.public_id ||
+        file.filename ||
+        "",
+
+      secure_url:
+        file.secure_url ||
+        file.path ||
+        "",
+
+      url:
+        file.url ||
+        file.path ||
+        "",
+
+      original_filename:
+        file.originalname ||
+        "",
+    }));
+
+    // ==========================================================
+    // CREATE HOUSE DATA
+    //
+    // IMPORTANT:
+    // We DO NOT generate houseId here.
+    //
+    // House.js pre-save middleware generates it.
+    // ==========================================================
+
+    const houseData = {
+      name: String(name).trim(),
+
+      houseType: String(houseType)
+        .trim()
+        .toLowerCase(),
+
+      description:
+        description
+          ? String(description).trim()
+          : "",
 
       images,
 
-      // ----------------------------------------------------------
-      // LOCATION
-      // ----------------------------------------------------------
+      location: normalizedLocation,
 
-      location: {
-        province: locationObj.province || "",
-        district: locationObj.district || "",
-        sector: locationObj.sector || "",
-        cell: locationObj.cell || "",
-        village: locationObj.village || "",
-
-        coordinates: {
-          lat:
-            locationObj.coordinates?.lat !== undefined
-              ? Number(locationObj.coordinates.lat)
-              : null,
-
-          lng:
-            locationObj.coordinates?.lng !== undefined
-              ? Number(locationObj.coordinates.lng)
-              : null,
-        },
-      },
-
-      // ----------------------------------------------------------
-      // UNIVERSITY
-      // ----------------------------------------------------------
-
-      university: university || "",
-
-      // ----------------------------------------------------------
-      // PRICE
-      // ----------------------------------------------------------
+      university:
+        university
+          ? String(university).trim()
+          : "",
 
       pricePerMonth: numericPrice,
 
       currency: "RWF",
 
-      // ----------------------------------------------------------
-      // CAPACITY
-      // ----------------------------------------------------------
-
       bedrooms: numericBedrooms,
-      bathrooms: numericBathrooms,
-      guests: numericGuests,
 
-      // ----------------------------------------------------------
-      // AMENITIES
-      // ----------------------------------------------------------
+      bathrooms: numericBathrooms,
+
+      guests: numericGuests,
 
       amenities: amenitiesArray,
 
-      // ----------------------------------------------------------
-      // AVAILABILITY
-      // ----------------------------------------------------------
-
       availability: availabilityObj,
 
-      // ----------------------------------------------------------
-      // STATUS
-      // ----------------------------------------------------------
+      status: normalizedStatus,
 
-      status: "pending",
+      ownerName:
+        ownerName
+          ? String(ownerName).trim()
+          : "",
 
-      // ----------------------------------------------------------
-      // OWNER
-      // ----------------------------------------------------------
+      ownerEmail:
+        normalizedOwnerEmail,
 
-      ownerName: ownerName || "",
-      ownerEmail: ownerEmail || "",
-      ownerContact: ownerContact || "",
-
-      // ----------------------------------------------------------
-      // CREATED BY
-      // ----------------------------------------------------------
+      ownerContact:
+        ownerContact
+          ? String(ownerContact).trim()
+          : "",
 
       createdBy: userId,
-      createdByEmail: ownerEmail || req.user?.email || "",
 
-      // ----------------------------------------------------------
-      // ACTIVE
-      // ----------------------------------------------------------
+      createdByEmail:
+        normalizedCreatedByEmail,
 
       isActive: true,
 
       isFeatured: false,
-    });
+    };
 
-    // ============================================================
+    // ==========================================================
+    // OPTIONAL MANUAL HOUSE ID
+    //
+    // If the frontend/admin supplied a houseId,
+    // allow it.
+    //
+    // Otherwise House.js generates it automatically.
+    // ==========================================================
+
+    if (houseId && String(houseId).trim()) {
+      houseData.houseId = String(houseId)
+        .trim()
+        .toUpperCase();
+    }
+
+    // ==========================================================
+    // CHECK MANUAL HOUSE ID DUPLICATE
+    // ==========================================================
+
+    if (houseData.houseId) {
+      const existingHouse =
+        await House.findOne({
+          houseId: houseData.houseId,
+        }).lean();
+
+      if (existingHouse) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "House ID already exists",
+          data: {
+            houseId: houseData.houseId,
+          },
+        });
+      }
+    }
+
+    // ==========================================================
+    // CREATE MONGOOSE DOCUMENT
+    // ==========================================================
+
+    const house = new House(
+      houseData,
+    );
+
+    // ==========================================================
     // SAVE HOUSE
-    // ============================================================
+    //
+    // House.js handles houseId generation.
+    //
+    // NO next()
+    // ==========================================================
 
     await house.save();
 
-    // ============================================================
+    houseSaved = true;
+
+    // ==========================================================
     // USER INFORMATION FOR NOTIFICATIONS
-    // ============================================================
+    // ==========================================================
 
     const userInfo = {
       userId,
-      email: ownerEmail || req.user?.email || "",
-      name: ownerName || req.user?.name || "",
+
+      email:
+        normalizedOwnerEmail ||
+        normalizedCreatedByEmail,
+
+      name:
+        ownerName
+          ? String(ownerName).trim()
+          : req.user?.name || "",
+
       role: userRole,
     };
 
-    // ============================================================
+    // ==========================================================
     // CREATE ROLE-BASED NOTIFICATIONS
-    // ============================================================
+    // ==========================================================
 
     try {
       await createAllRoleNotifications(
         house,
         "house_created",
-        userInfo
+        userInfo,
       );
     } catch (notificationError) {
       console.error(
         "House notification creation failed:",
-        notificationError.message
+        notificationError?.message ||
+          notificationError,
       );
     }
 
-    // ============================================================
+    // ==========================================================
     // SEND EMAILS
-    // ============================================================
+    // ==========================================================
 
     try {
       await sendHouseEmails(
         house,
         "Created",
-        userInfo
+        userInfo,
       );
     } catch (emailError) {
       console.error(
         "House email notification failed:",
-        emailError.message
+        emailError?.message ||
+          emailError,
       );
     }
 
-    // ============================================================
+    // ==========================================================
     // RESPONSE
-    // ============================================================
+    // ==========================================================
 
     return res.status(201).json({
       success: true,
+
       message:
         "House created successfully and waiting for approval",
+
       data: house,
     });
   } catch (error) {
-    console.error("Create house error:", error);
+    // ==========================================================
+    // LOG REAL ERROR
+    // ==========================================================
 
-    // ============================================================
+    console.error(
+      "==================================================",
+    );
+
+    console.error(
+      "❌ CREATE HOUSE ERROR",
+    );
+
+    console.error(
+      "Error name:",
+      error?.name,
+    );
+
+    console.error(
+      "Error message:",
+      error?.message,
+    );
+
+    console.error(
+      "Error code:",
+      error?.code,
+    );
+
+    if (error?.errors) {
+      console.error(
+        "Validation errors:",
+        Object.fromEntries(
+          Object.entries(error.errors).map(
+            ([field, err]) => [
+              field,
+              err.message,
+            ],
+          ),
+        ),
+      );
+    }
+
+    console.error(
+      "==================================================",
+    );
+
+    // ==========================================================
     // CLOUDINARY CLEANUP
-    // ============================================================
+    //
+    // ONLY CLEAN UP IF HOUSE WAS NOT SAVED.
+    // ==========================================================
 
-    if (req.files?.length) {
+    if (
+      !houseSaved &&
+      req.files?.length
+    ) {
       for (const file of req.files) {
         try {
-          await cloudinary.uploader.destroy(
-            file.filename || file.public_id
-          );
+          const publicId =
+            file.public_id ||
+            file.filename;
+
+          if (publicId) {
+            await cloudinary.uploader.destroy(
+              publicId,
+            );
+          }
         } catch (cleanupError) {
           console.error(
             "Cloudinary cleanup failed:",
-            cleanupError.message
+            cleanupError?.message ||
+              cleanupError,
           );
         }
       }
     }
 
-    // ============================================================
+    // ==========================================================
     // MONGOOSE VALIDATION ERROR
-    // ============================================================
+    // ==========================================================
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err) => ({
+    if (
+      error?.name ===
+      "ValidationError"
+    ) {
+      const validationErrors =
+        Object.values(
+          error.errors || {},
+        ).map((err) => ({
           field: err.path,
           message: err.message,
-        })
-      );
+          value: err.value,
+        }));
 
       return res.status(400).json({
         success: false,
-        message: "House validation failed",
-        errors: validationErrors,
+
+        message:
+          "House validation failed",
+
+        errors:
+          validationErrors,
       });
     }
 
-    // ============================================================
+    // ==========================================================
+    // CAST ERROR
+    // ==========================================================
+
+    if (
+      error?.name ===
+      "CastError"
+    ) {
+      return res.status(400).json({
+        success: false,
+
+        message:
+          `Invalid value for ${error.path}`,
+
+        error:
+          error.message,
+      });
+    }
+
+    // ==========================================================
     // DUPLICATE KEY ERROR
-    // ============================================================
+    // ==========================================================
 
-    if (error.code === 11000) {
-      return res.status(400).json({
+    if (
+      error?.code === 11000
+    ) {
+      return res.status(409).json({
         success: false,
-        message: "House ID already exists",
+
+        message:
+          "House with this unique value already exists",
+
+        duplicateFields:
+          error.keyValue || {},
       });
     }
 
-    // ============================================================
+    // ==========================================================
     // GENERAL ERROR
-    // ============================================================
+    // ==========================================================
 
     return res.status(500).json({
       success: false,
-      message: "Failed to create house",
+
+      message:
+        "Failed to create house",
+
       error:
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : undefined,
+        error?.message ||
+        "Unknown server error",
+
+      errorName:
+        error?.name || "Error",
+
+      errorCode:
+        error?.code || null,
     });
   }
 };
-
-
 
 // 2. Get All Houses
 exports.getAllHouses = async (req, res) => {
