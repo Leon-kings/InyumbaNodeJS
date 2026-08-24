@@ -1,664 +1,603 @@
+
+// // ============================================================
+// // MODELS / HOUSE.JS
+// // ============================================================
+
 // const mongoose = require("mongoose");
+
+// // ============================================================
+// // IMAGE SCHEMA
+// // ============================================================
+
+// const imageSchema = new mongoose.Schema(
+//   {
+//     public_id: {
+//       type: String,
+//       trim: true,
+//       default: "",
+//     },
+
+//     secure_url: {
+//       type: String,
+//       trim: true,
+//       default: "",
+//     },
+
+//     url: {
+//       type: String,
+//       trim: true,
+//       default: "",
+//     },
+
+//     original_filename: {
+//       type: String,
+//       trim: true,
+//       default: "",
+//     },
+//   },
+//   {
+//     _id: false,
+//   },
+// );
+
+// // ============================================================
+// // LOCATION SCHEMA
+// // ============================================================
+
+// const locationSchema = new mongoose.Schema(
+//   {
+//     province: {
+//       type: String,
+//       trim: true,
+//       maxlength: 100,
+//       default: "",
+//     },
+
+//     district: {
+//       type: String,
+//       trim: true,
+//       maxlength: 100,
+//       default: "",
+//     },
+
+//     sector: {
+//       type: String,
+//       trim: true,
+//       maxlength: 100,
+//       default: "",
+//     },
+
+//     cell: {
+//       type: String,
+//       trim: true,
+//       maxlength: 100,
+//       default: "",
+//     },
+
+//     village: {
+//       type: String,
+//       trim: true,
+//       maxlength: 100,
+//       default: "",
+//     },
+
+//     address: {
+//       type: String,
+//       trim: true,
+//       maxlength: 500,
+//       default: "",
+//     },
+
+//     latitude: {
+//       type: Number,
+//       default: null,
+//     },
+
+//     longitude: {
+//       type: Number,
+//       default: null,
+//     },
+//   },
+//   {
+//     _id: false,
+//   },
+// );
+
+// // ============================================================
+// // AVAILABILITY SCHEMA
+// // ============================================================
+
+// const availabilitySchema = new mongoose.Schema(
+//   {
+//     startDate: {
+//       type: Date,
+//       default: Date.now,
+//     },
+
+//     endDate: {
+//       type: Date,
+//       default: () => {
+//         const date = new Date();
+//         date.setFullYear(date.getFullYear() + 1);
+//         return date;
+//       },
+//     },
+//   },
+//   {
+//     _id: false,
+//   },
+// );
+
+// // ============================================================
+// // HOUSE SCHEMA
+// // ============================================================
 
 // const houseSchema = new mongoose.Schema(
 //   {
+//     // ==========================================================
+//     // HOUSE IDENTIFICATION
+//     // ==========================================================
+
 //     houseId: {
 //       type: String,
-//       required: [true, "House ID is required"],
 //       unique: true,
+//       index: true,
 //       trim: true,
+//       uppercase: true,
 //     },
+
+//     // ==========================================================
+//     // BASIC HOUSE INFORMATION
+//     // ==========================================================
 
 //     name: {
 //       type: String,
 //       required: [true, "House name is required"],
 //       trim: true,
-//       minlength: [3, "House name must be at least 3 characters"],
-//       maxlength: [100, "House name cannot exceed 100 characters"],
+//       minlength: [2, "House name must be at least 2 characters"],
+//       maxlength: [200, "House name cannot exceed 200 characters"],
+//     },
+
+//     houseType: {
+//       type: String,
+//       required: [true, "House type is required"],
+//       trim: true,
+//       lowercase: true,
+//       maxlength: [100, "House type cannot exceed 100 characters"],
 //     },
 
 //     description: {
 //       type: String,
-//       required: [true, "Description is required"],
 //       trim: true,
-//       minlength: [20, "Description must be at least 20 characters"],
-//       maxlength: [2000, "Description cannot exceed 2000 characters"],
+//       maxlength: [5000, "Description cannot exceed 5000 characters"],
+//       default: "",
 //     },
 
-//     images: [
-//       {
-//         public_id: {
-//           type: String,
-//           required: true,
-//         },
+//     // ==========================================================
+//     // OWNER INFORMATION
+//     // ==========================================================
 
-//         url: {
-//           type: String,
-//           required: true,
-//         },
+//     ownerName: {
+//       type: String,
+//       trim: true,
+//       maxlength: 200,
+//       default: "",
+//     },
 
-//         secure_url: {
-//           type: String,
-//           required: true,
-//         },
-//       },
-//     ],
+//     ownerContact: {
+//       type: String,
+//       trim: true,
+//       maxlength: 50,
+//       default: "",
+//     },
+
+//     ownerEmail: {
+//       type: String,
+//       trim: true,
+//       lowercase: true,
+//       maxlength: 200,
+//       default: "",
+//     },
+
+//     // ==========================================================
+//     // LOCATION
+//     // ==========================================================
 
 //     location: {
-//       province: {
-//         type: String,
-//         required: [true, "Province is required"],
-//         trim: true,
-//       },
-
-//       district: {
-//         type: String,
-//         required: [true, "District is required"],
-//         trim: true,
-//       },
-
-//       sector: {
-//         type: String,
-//         required: [true, "Sector is required"],
-//         trim: true,
-//       },
-
-//       cell: {
-//         type: String,
-//         required: [true, "Cell is required"],
-//         trim: true,
-//       },
-
-//       village: {
-//         type: String,
-//         required: [true, "Village is required"],
-//         trim: true,
-//       },
-
-//       coordinates: {
-//         lat: {
-//           type: Number,
-//           default: null,
-//         },
-
-//         lng: {
-//           type: Number,
-//           default: null,
-//         },
-//       },
+//       type: locationSchema,
+//       default: () => ({}),
 //     },
+
+//     // ==========================================================
+//     // UNIVERSITY
+//     // ==========================================================
 
 //     university: {
 //       type: String,
-//       required: [true, "University is required"],
 //       trim: true,
+//       maxlength: 200,
+//       default: "",
 //     },
+
+//     // ==========================================================
+//     // PRICE
+//     // ==========================================================
 
 //     pricePerMonth: {
 //       type: Number,
-//       required: [true, "Price per month is required"],
-//       min: [0, "Price must be greater than or equal to 0"],
+//       required: [true, "Monthly price is required"],
+//       min: [0, "Monthly price cannot be negative"],
+//       validate: {
+//         validator: Number.isInteger,
+//         message: "Monthly price must be a whole number",
+//       },
 //     },
+
+//     currency: {
+//       type: String,
+//       trim: true,
+//       uppercase: true,
+//       default: "RWF",
+//     },
+
+//     // ==========================================================
+//     // HOUSE CAPACITY
+//     // ==========================================================
 
 //     bedrooms: {
 //       type: Number,
-//       required: [true, "Number of bedrooms is required"],
-//       min: [0, "Bedrooms must be at least 0"],
+//       min: [0, "Bedrooms cannot be negative"],
+//       default: 0,
 //     },
 
 //     bathrooms: {
 //       type: Number,
-//       required: [true, "Number of bathrooms is required"],
-//       min: [0, "Bathrooms must be at least 0"],
+//       min: [0, "Bathrooms cannot be negative"],
+//       default: 0,
 //     },
 
-//     maxGuests: {
+//     guests: {
 //       type: Number,
-//       required: [true, "Maximum guests is required"],
-//       min: [1, "Maximum guests must be at least 1"],
+//       min: [1, "Guests must be at least 1"],
+//       default: 1,
 //     },
+
+//     // ==========================================================
+//     // AMENITIES
+//     // ==========================================================
 
 //     amenities: {
 //       type: [String],
 //       default: [],
 //     },
 
+//     // ==========================================================
+//     // IMAGES
+//     // ==========================================================
+
+//     images: {
+//       type: [imageSchema],
+//       default: [],
+//     },
+
+//     // ==========================================================
+//     // AVAILABILITY
+//     // ==========================================================
+
+//     availability: {
+//       type: availabilitySchema,
+//       default: () => ({}),
+//     },
+
+//     // ==========================================================
+//     // STATUS
+//     // ==========================================================
+
 //     status: {
 //       type: String,
-//       enum: [
-//         "available",
-//         "pending",
-//         "booked",
-//         "unavailable",
-//         "maintenance",
-//       ],
-//       default: "available",
-//     },
-
-//     rating: {
-//       type: Number,
-//       default: 5,
-//       min: 0,
-//       max: 5,
-//     },
-
-//     totalReviews: {
-//       type: Number,
-//       default: 10,
-//       min: 0,
-//     },
-
-//     host: {
-//       name: {
-//         type: String,
-//         required: [true, "Host name is required"],
-//         trim: true,
-//       },
-
-//       email: {
-//         type: String,
-//         required: [true, "Host email is required"],
-//         lowercase: true,
-//         trim: true,
-//         match: [
-//           /^\S+@\S+\.\S+$/,
-//           "Please enter a valid email",
+//       enum: {
+//         values: [
+//           "available",
+//           "unavailable",
+//           "pending",
+//           "booked",
+//           "maintenance",
+//           "inactive",
 //         ],
+//         message: "{VALUE} is not a valid house status",
 //       },
-
-//       phone: {
-//         type: String,
-//         trim: true,
-//       },
-
-//       responseRate: {
-//         type: Number,
-//         default: 100,
-//         min: 0,
-//         max: 100,
-//       },
-
-//       responseTime: {
-//         type: String,
-//         default: "24 hours",
-//       },
+//       default: "available",
+//       index: true,
 //     },
+
+//     // ==========================================================
+//     // ACTIVE FLAG
+//     // ==========================================================
 
 //     isActive: {
 //       type: Boolean,
 //       default: true,
+//       index: true,
+//     },
+
+//     // ==========================================================
+//     // FEATURED
+//     // ==========================================================
+
+//     isFeatured: {
+//       type: Boolean,
+//       default: false,
+//       index: true,
+//     },
+
+//     // ==========================================================
+//     // CREATED BY
+//     // ==========================================================
+
+//     createdBy: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//       default: null,
+//     },
+
+//     createdByEmail: {
+//       type: String,
+//       trim: true,
+//       lowercase: true,
+//       default: "",
 //     },
 //   },
 //   {
 //     timestamps: true,
-//     toJSON: { virtuals: true },
-//     toObject: { virtuals: true },
-//   }
+
+//     toJSON: {
+//       virtuals: true,
+//     },
+
+//     toObject: {
+//       virtuals: true,
+//     },
+//   },
 // );
 
-// // ===========================
-// // VIRTUALS
-// // ===========================
+// // ============================================================
+// // VIRTUAL: LOCATION STRING
+// // ============================================================
 
-// // Virtual for full location string
 // houseSchema.virtual("locationString").get(function () {
-//   return `${this.location.province}, ${this.location.district}, ${this.location.sector}`;
+//   const parts = [
+//     this.location?.village,
+//     this.location?.cell,
+//     this.location?.sector,
+//     this.location?.district,
+//     this.location?.province,
+//   ].filter(Boolean);
+
+//   return parts.join(", ");
 // });
 
-// // Virtual for short location (province, district)
-// houseSchema.virtual("shortLocation").get(function () {
-//   return `${this.location.province}, ${this.location.district}`;
-// });
+// // ============================================================
+// // VIRTUAL: FORMATTED PRICE
+// // ============================================================
 
-// // Virtual for location with village
-// houseSchema.virtual("fullLocation").get(function () {
-//   return `${this.location.village}, ${this.location.sector}, ${this.location.district}, ${this.location.province}`;
-// });
-
-// // Virtual for notification message
-// houseSchema.virtual("notificationMessage").get(function () {
-//   return `🏠 New house "${this.name}" has been listed in ${this.locationString}`;
-// });
-
-// // Virtual for status badge
-// houseSchema.virtual("statusBadge").get(function () {
-//   const badges = {
-//     available: { color: "success", label: "Available" },
-//     booked: { color: "success", label: "Booked" },
-//     pending: { color: "warning", label: "Pending" },
-//     unavailable: { color: "danger", label: "Unavailable" },
-//     maintenance: { color: "secondary", label: "Maintenance" },
-//   };
-//   return badges[this.status] || { color: "secondary", label: this.status };
-// });
-
-// // Virtual for price formatted
 // houseSchema.virtual("priceFormatted").get(function () {
-//   return new Intl.NumberFormat("rw-RW", {
-//     style: "currency",
-//     currency: "RWF",
-//     minimumFractionDigits: 0,
-//   }).format(this.pricePerMonth);
+//   const price = Number(this.pricePerMonth || 0);
+
+//   return `${price.toLocaleString("en-US")} ${this.currency || "RWF"}`;
 // });
 
-// // Virtual for days remaining on availability
-// houseSchema.virtual("daysRemaining").get(function () {
-//   if (!this.availability?.endDate) return null;
-//   const now = new Date();
-//   const end = new Date(this.availability.endDate);
-//   const diffTime = end - now;
-//   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-//   return diffDays > 0 ? diffDays : 0;
-// });
+// // ============================================================
+// // VIRTUAL: IS AVAILABLE
+// // ============================================================
 
-// // Virtual for isAvailable
 // houseSchema.virtual("isAvailable").get(function () {
-//   return this.status === "available" && this.isActive === true;
-// });
+//   if (!this.isActive) {
+//     return false;
+//   }
 
-// // ===========================
-// // INDEXES
-// // ===========================
+//   if (this.status !== "available") {
+//     return false;
+//   }
 
-// houseSchema.index({
-//   status: 1,
-//   createdAt: -1,
-// });
+//   if (
+//     !this.availability ||
+//     !this.availability.startDate ||
+//     !this.availability.endDate
+//   ) {
+//     return true;
+//   }
 
-// houseSchema.index({
-//   university: 1,
-//   status: 1,
-// });
-
-// houseSchema.index({
-//   "location.province": 1,
-//   status: 1,
-// });
-
-// houseSchema.index({
-//   "location.district": 1,
-//   status: 1,
-// });
-
-// houseSchema.index({
-//   pricePerMonth: 1,
-// });
-
-// // Compound index for search
-// houseSchema.index({
-//   name: "text",
-//   description: "text",
-//   university: "text",
-// });
-
-// // ===========================
-// // STATIC METHODS
-// // ===========================
-
-// houseSchema.statics.getStatistics = async function () {
-//   const stats = await this.aggregate([
-//     {
-//       $facet: {
-//         total: [
-//           {
-//             $count: "count",
-//           },
-//         ],
-
-//         available: [
-//           {
-//             $match: {
-//               status: "available",
-//             },
-//           },
-//           {
-//             $count: "count",
-//           },
-//         ],
-
-//         pending: [
-//           {
-//             $match: {
-//               status: "pending",
-//             },
-//           },
-//           {
-//             $count: "count",
-//           },
-//         ],
-
-//         unavailable: [
-//           {
-//             $match: {
-//               status: "unavailable",
-//             },
-//           },
-//           {
-//             $count: "count",
-//           },
-//         ],
-
-//         maintenance: [
-//           {
-//             $match: {
-//               status: "maintenance",
-//             },
-//           },
-//           {
-//             $count: "count",
-//           },
-//         ],
-
-//         byUniversity: [
-//           {
-//             $group: {
-//               _id: "$university",
-//               count: {
-//                 $sum: 1,
-//               },
-//             },
-//           },
-//           {
-//             $sort: {
-//               count: -1,
-//             },
-//           },
-//           {
-//             $limit: 10,
-//           },
-//         ],
-
-//         byProvince: [
-//           {
-//             $group: {
-//               _id: "$location.province",
-//               count: {
-//                 $sum: 1,
-//               },
-//             },
-//           },
-//           {
-//             $sort: {
-//               count: -1,
-//             },
-//           },
-//         ],
-
-//         byDistrict: [
-//           {
-//             $group: {
-//               _id: "$location.district",
-//               count: {
-//                 $sum: 1,
-//               },
-//             },
-//           },
-//           {
-//             $sort: {
-//               count: -1,
-//             },
-//           },
-//           {
-//             $limit: 10,
-//           },
-//         ],
-
-//         avgPrice: [
-//           {
-//             $group: {
-//               _id: null,
-//               avg: {
-//                 $avg: "$pricePerMonth",
-//               },
-//             },
-//           },
-//         ],
-
-//         minPrice: [
-//           {
-//             $group: {
-//               _id: null,
-//               min: {
-//                 $min: "$pricePerMonth",
-//               },
-//             },
-//           },
-//         ],
-
-//         maxPrice: [
-//           {
-//             $group: {
-//               _id: null,
-//               max: {
-//                 $max: "$pricePerMonth",
-//               },
-//             },
-//           },
-//         ],
-
-//         avgRating: [
-//           {
-//             $group: {
-//               _id: null,
-//               avg: {
-//                 $avg: "$rating",
-//               },
-//             },
-//           },
-//         ],
-
-//         totalBedrooms: [
-//           {
-//             $group: {
-//               _id: null,
-//               total: {
-//                 $sum: "$bedrooms",
-//               },
-//             },
-//           },
-//         ],
-
-//         recent: [
-//           {
-//             $sort: {
-//               createdAt: -1,
-//             },
-//           },
-//           {
-//             $limit: 5,
-//           },
-//           {
-//             $project: {
-//               name: 1,
-//               houseId: 1,
-//               location: 1,
-//               pricePerMonth: 1,
-//               status: 1,
-//               createdAt: 1,
-//             },
-//           },
-//         ],
-//       },
-//     },
-//   ]);
-
-//   const result = stats[0];
-
-//   return {
-//     total: result.total[0]?.count || 0,
-//     available: result.available[0]?.count || 0,
-//     pending: result.pending[0]?.count || 0,
-//     unavailable: result.unavailable[0]?.count || 0,
-//     maintenance: result.maintenance[0]?.count || 0,
-//     byUniversity: result.byUniversity,
-//     byProvince: result.byProvince,
-//     byDistrict: result.byDistrict,
-//     avgPrice: result.avgPrice[0]?.avg || 0,
-//     minPrice: result.minPrice[0]?.min || 0,
-//     maxPrice: result.maxPrice[0]?.max || 0,
-//     avgRating: result.avgRating[0]?.avg || 0,
-//     totalBedrooms: result.totalBedrooms[0]?.total || 0,
-//     recent: result.recent || [],
-//   };
-// };
-
-// // ===========================
-// // INSTANCE METHODS
-// // ===========================
-
-// // Check if house is available for booking
-// houseSchema.methods.isAvailableForBooking = function () {
 //   const now = new Date();
-//   const start = new Date(this.availability.startDate);
-//   const end = new Date(this.availability.endDate);
-//   return (
-//     this.status === "available" &&
-//     this.isActive === true &&
-//     now >= start &&
-//     now <= end
-//   );
-// };
 
-// // Get availability status
+//   const start = new Date(this.availability.startDate);
+
+//   const end = new Date(this.availability.endDate);
+
+//   return now >= start && now <= end;
+// });
+
+// // ============================================================
+// // GET AVAILABILITY STATUS
+// // ============================================================
+
 // houseSchema.methods.getAvailabilityStatus = function () {
+//   if (!this.isActive) {
+//     return "inactive";
+//   }
+
+//   if (this.status !== "available") {
+//     return this.status;
+//   }
+
+//   if (
+//     !this.availability ||
+//     !this.availability.startDate ||
+//     !this.availability.endDate
+//   ) {
+//     return "available_now";
+//   }
+
 //   const now = new Date();
+
 //   const start = new Date(this.availability.startDate);
+
 //   const end = new Date(this.availability.endDate);
 
-//   if (this.status !== "available") return this.status;
-//   if (now < start) return "coming_soon";
-//   if (now > end) return "expired";
+//   if (now < start) {
+//     return "coming_soon";
+//   }
+
+//   if (now > end) {
+//     return "expired";
+//   }
+
 //   return "available_now";
 // };
 
-// // Get formatted address
+// // ============================================================
+// // GET FORMATTED ADDRESS
+// // ============================================================
+
 // houseSchema.methods.getFormattedAddress = function () {
-//   return `${this.location.village}, ${this.location.sector}, ${this.location.district}, ${this.location.province}`;
+//   return [
+//     this.location?.village,
+//     this.location?.cell,
+//     this.location?.sector,
+//     this.location?.district,
+//     this.location?.province,
+//   ]
+//     .filter(Boolean)
+//     .join(", ");
 // };
 
-// // Get notification data for frontend
+// // ============================================================
+// // HOUSE NOTIFICATION DATA
+// // ============================================================
+// //
+// // IMPORTANT:
+// // houseId = MongoDB _id
+// // houseReference = custom HSE-... ID
+// //
+// // Do NOT define houseId twice.
+// // ============================================================
+
 // houseSchema.methods.getNotificationData = function (type, metadata = {}) {
 //   return {
-//     type: type,
+//     type,
+
+//     // MongoDB ObjectId
 //     houseId: this._id,
+
+//     // Custom house identifier
+//     houseReference: this.houseId,
+
 //     houseName: this.name,
-//     houseId: this.houseId,
+
 //     location: {
-//       province: this.location.province,
-//       district: this.location.district,
-//       sector: this.location.sector,
+//       province: this.location?.province || "",
+//       district: this.location?.district || "",
+//       sector: this.location?.sector || "",
+//       cell: this.location?.cell || "",
+//       village: this.location?.village || "",
 //     },
+
 //     locationString: this.locationString,
+
 //     price: this.priceFormatted,
+
+//     pricePerMonth: this.pricePerMonth,
+
+//     currency: this.currency,
+
 //     status: this.status,
+
 //     isAvailable: this.isAvailable,
+
 //     message: this.getNotificationMessage(type),
-//     metadata: metadata,
-//     image: this.images[0]?.secure_url || null,
+
+//     metadata,
+
+//     image: this.images?.[0]?.secure_url || this.images?.[0]?.url || null,
+
 //     createdAt: new Date(),
 //   };
 // };
 
-// // Get notification message based on type
+// // ============================================================
+// // HOUSE NOTIFICATION MESSAGE
+// // ============================================================
+
 // houseSchema.methods.getNotificationMessage = function (type) {
 //   const messages = {
 //     house_created: `🏠 New house "${this.name}" has been listed in ${this.locationString}`,
+
 //     house_updated: `📝 House "${this.name}" has been updated in ${this.locationString}`,
+
 //     house_deleted: `🗑️ House "${this.name}" has been removed from ${this.locationString}`,
+
 //     house_status_changed: `🔄 House "${this.name}" status changed in ${this.locationString}`,
+
 //     house_available: `✅ House "${this.name}" is now available in ${this.locationString}`,
+
 //     house_unavailable: `❌ House "${this.name}" is no longer available in ${this.locationString}`,
+
+//     house_pending: `⏳ House "${this.name}" is pending approval in ${this.locationString}`,
+
+//     house_booked: `🏠 House "${this.name}" has been booked in ${this.locationString}`,
+
+//     house_maintenance: `🔧 House "${this.name}" is under maintenance in ${this.locationString}`,
 //   };
-//   return messages[type] || `📢 Update for house "${this.name}" in ${this.locationString}`;
+
+//   return (
+//     messages[type] ||
+//     `📢 Update for house "${this.name}" in ${this.locationString}`
+//   );
 // };
 
-// // ===========================
-// // PRE-SAVE MIDDLEWARE
-// // ===========================
+// // ============================================================
+// // PRE-SAVE: GENERATE HOUSE ID
+// // ============================================================
+// //
+// // Generates:
+// // HSE-26-0001-123
+// //
+// // Uses the document count only as the sequence source.
+// // ============================================================
 
-// // // Auto-generate houseId if not provided
-// // houseSchema.pre("save", async function (next) {
-// //   if (!this.houseId) {
-// //     const count = await this.constructor.countDocuments();
-// //     const year = new Date().getFullYear().toString().slice(-2);
-// //     const random = Math.floor(Math.random() * 1000)
-// //       .toString()
-// //       .padStart(3, "0");
-// //     this.houseId = `HSE-${year}-${String(count + 1).padStart(4, "0")}-${random}`;
-// //   }
-// //   next();
-// // });
-
-// // // ===========================
-// // // QUERY HELPERS
-// // // ===========================
-
-// // // Add query helper for available houses
-// // houseSchema.query.available = function () {
-// //   return this.where("status").equals("available").where("isActive").equals(true);
-// // };
-
-// // // Add query helper by location
-// // houseSchema.query.byLocation = function (province, district) {
-// //   let query = this;
-// //   if (province) query = query.where("location.province").equals(province);
-// //   if (district) query = query.where("location.district").equals(district);
-// //   return query;
-// // };
-
-// // // Add query helper by price range
-// // houseSchema.query.byPriceRange = function (min, max) {
-// //   let query = this;
-// //   if (min) query = query.where("pricePerMonth").gte(min);
-// //   if (max) query = query.where("pricePerMonth").lte(max);
-// //   return query;
-// // };
-
-// // // Add query helper by university
-// // houseSchema.query.byUniversity = function (university) {
-// //   return this.where("university").regex(new RegExp(university, "i"));
-// // };
-
-// // module.exports =
-// //   mongoose.models.House ||
-// //   mongoose.model("House", houseSchema);
-
-// // ===========================
-// // PRE-SAVE MIDDLEWARE
-// // ===========================
-
-// // Auto-generate houseId if not provided
 // houseSchema.pre("save", async function () {
-//   if (!this.houseId) {
-//     const count = await this.constructor.countDocuments();
-
-//     const year = new Date()
-//       .getFullYear()
-//       .toString()
-//       .slice(-2);
-
-//     const random = Math.floor(Math.random() * 1000)
-//       .toString()
-//       .padStart(3, "0");
-
-//     this.houseId = `HSE-${year}-${String(count + 1).padStart(4, "0")}-${random}`;
+//   if (this.houseId) {
+//     return;
 //   }
+
+//   const count = await this.constructor.countDocuments();
+
+//   const year = new Date().getFullYear().toString().slice(-2);
+
+//   const random = Math.floor(Math.random() * 1000)
+//     .toString()
+//     .padStart(3, "0");
+
+//   this.houseId = `HSE-${year}-${String(count + 1).padStart(4, "0")}-${random}`;
 // });
 
-// // ===========================
+// // ============================================================
 // // QUERY HELPERS
-// // ===========================
+// // ============================================================
 
-// // Add query helper for available houses
+// // Available houses
 // houseSchema.query.available = function () {
-//   return this
-//     .where("status")
+//   return this.where("status")
 //     .equals("available")
 //     .where("isActive")
 //     .equals(true);
 // };
 
-// // Add query helper by location
+// // Active houses
+// houseSchema.query.active = function () {
+//   return this.where("isActive").equals(true);
+// };
+
+// // Filter by location
 // houseSchema.query.byLocation = function (province, district) {
 //   let query = this;
 
@@ -673,34 +612,74 @@
 //   return query;
 // };
 
-// // Add query helper by price range
+// // Filter by price range
 // houseSchema.query.byPriceRange = function (min, max) {
 //   let query = this;
 
-//   if (min) {
-//     query = query.where("pricePerMonth").gte(min);
+//   if (min !== undefined && min !== null) {
+//     query = query.where("pricePerMonth").gte(Number(min));
 //   }
 
-//   if (max) {
-//     query = query.where("pricePerMonth").lte(max);
+//   if (max !== undefined && max !== null) {
+//     query = query.where("pricePerMonth").lte(Number(max));
 //   }
 
 //   return query;
 // };
 
-// // Add query helper by university
+// // Filter by university
 // houseSchema.query.byUniversity = function (university) {
-//   return this.where("university")
-//     .regex(new RegExp(university, "i"));
+//   if (!university) {
+//     return this;
+//   }
+
+//   return this.where("university").regex(new RegExp(university, "i"));
 // };
 
-// // ===========================
-// // MODEL EXPORT
-// // ===========================
+// // ============================================================
+// // INDEXES
+// // ============================================================
 
-// module.exports =
-//   mongoose.models.House ||
-//   mongoose.model("House", houseSchema);
+// houseSchema.index({
+//   status: 1,
+//   isActive: 1,
+// });
+
+// houseSchema.index({
+//   "location.province": 1,
+//   "location.district": 1,
+// });
+
+// houseSchema.index({
+//   "location.district": 1,
+//   "location.sector": 1,
+// });
+
+// houseSchema.index({
+//   university: 1,
+// });
+
+// houseSchema.index({
+//   pricePerMonth: 1,
+// });
+
+// houseSchema.index({
+//   createdAt: -1,
+// });
+
+// // ============================================================
+// // MODEL
+// // ============================================================
+
+// module.exports = mongoose.models.House || mongoose.model("House", houseSchema);
+
+
+
+
+
+
+
+
 
 // ============================================================
 // MODELS / HOUSE.JS
@@ -752,52 +731,56 @@ const locationSchema = new mongoose.Schema(
     province: {
       type: String,
       trim: true,
-      maxlength: 100,
+      maxlength: [100, "Province cannot exceed 100 characters"],
       default: "",
     },
 
     district: {
       type: String,
       trim: true,
-      maxlength: 100,
+      maxlength: [100, "District cannot exceed 100 characters"],
       default: "",
     },
 
     sector: {
       type: String,
       trim: true,
-      maxlength: 100,
+      maxlength: [100, "Sector cannot exceed 100 characters"],
       default: "",
     },
 
     cell: {
       type: String,
       trim: true,
-      maxlength: 100,
+      maxlength: [100, "Cell cannot exceed 100 characters"],
       default: "",
     },
 
     village: {
       type: String,
       trim: true,
-      maxlength: 100,
+      maxlength: [100, "Village cannot exceed 100 characters"],
       default: "",
     },
 
     address: {
       type: String,
       trim: true,
-      maxlength: 500,
+      maxlength: [500, "Address cannot exceed 500 characters"],
       default: "",
     },
 
     latitude: {
       type: Number,
+      min: [-90, "Latitude cannot be less than -90"],
+      max: [90, "Latitude cannot be greater than 90"],
       default: null,
     },
 
     longitude: {
       type: Number,
+      min: [-180, "Longitude cannot be less than -180"],
+      max: [180, "Longitude cannot be greater than 180"],
       default: null,
     },
   },
@@ -872,7 +855,10 @@ const houseSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [5000, "Description cannot exceed 5000 characters"],
+      maxlength: [
+        5000,
+        "Description cannot exceed 5000 characters",
+      ],
       default: "",
     },
 
@@ -883,14 +869,20 @@ const houseSchema = new mongoose.Schema(
     ownerName: {
       type: String,
       trim: true,
-      maxlength: 200,
+      maxlength: [
+        200,
+        "Owner name cannot exceed 200 characters",
+      ],
       default: "",
     },
 
     ownerContact: {
       type: String,
       trim: true,
-      maxlength: 50,
+      maxlength: [
+        50,
+        "Owner contact cannot exceed 50 characters",
+      ],
       default: "",
     },
 
@@ -898,8 +890,20 @@ const houseSchema = new mongoose.Schema(
       type: String,
       trim: true,
       lowercase: true,
-      maxlength: 200,
+      maxlength: [
+        200,
+        "Owner email cannot exceed 200 characters",
+      ],
       default: "",
+      validate: {
+        validator: function (value) {
+          if (!value) return true;
+
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        },
+
+        message: "Please provide a valid owner email",
+      },
     },
 
     // ==========================================================
@@ -918,7 +922,10 @@ const houseSchema = new mongoose.Schema(
     university: {
       type: String,
       trim: true,
-      maxlength: 200,
+      maxlength: [
+        200,
+        "University cannot exceed 200 characters",
+      ],
       default: "",
     },
 
@@ -930,6 +937,7 @@ const houseSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Monthly price is required"],
       min: [0, "Monthly price cannot be negative"],
+
       validate: {
         validator: Number.isInteger,
         message: "Monthly price must be a whole number",
@@ -949,20 +957,47 @@ const houseSchema = new mongoose.Schema(
 
     bedrooms: {
       type: Number,
+
       min: [0, "Bedrooms cannot be negative"],
+
       default: 0,
+
+      validate: {
+        validator: Number.isInteger,
+        message: "Bedrooms must be a whole number",
+      },
     },
 
     bathrooms: {
       type: Number,
+
       min: [0, "Bathrooms cannot be negative"],
+
       default: 0,
+
+      validate: {
+        validator: Number.isInteger,
+        message: "Bathrooms must be a whole number",
+      },
     },
+
+    // IMPORTANT:
+    // This field is "guests".
+    // Do NOT use "maxGuests".
 
     guests: {
       type: Number,
+
+      required: [true, "Number of guests is required"],
+
       min: [1, "Guests must be at least 1"],
+
       default: 1,
+
+      validate: {
+        validator: Number.isInteger,
+        message: "Guests must be a whole number",
+      },
     },
 
     // ==========================================================
@@ -970,7 +1005,17 @@ const houseSchema = new mongoose.Schema(
     // ==========================================================
 
     amenities: {
-      type: [String],
+      type: [
+        {
+          type: String,
+          trim: true,
+          maxlength: [
+            100,
+            "Amenity cannot exceed 100 characters",
+          ],
+        },
+      ],
+
       default: [],
     },
 
@@ -980,6 +1025,7 @@ const houseSchema = new mongoose.Schema(
 
     images: {
       type: [imageSchema],
+
       default: [],
     },
 
@@ -989,7 +1035,18 @@ const houseSchema = new mongoose.Schema(
 
     availability: {
       type: availabilitySchema,
-      default: () => ({}),
+
+      default: () => ({
+        startDate: new Date(),
+
+        endDate: (() => {
+          const date = new Date();
+
+          date.setFullYear(date.getFullYear() + 1);
+
+          return date;
+        })(),
+      }),
     },
 
     // ==========================================================
@@ -998,6 +1055,7 @@ const houseSchema = new mongoose.Schema(
 
     status: {
       type: String,
+
       enum: {
         values: [
           "available",
@@ -1007,9 +1065,12 @@ const houseSchema = new mongoose.Schema(
           "maintenance",
           "inactive",
         ],
+
         message: "{VALUE} is not a valid house status",
       },
+
       default: "available",
+
       index: true,
     },
 
@@ -1019,7 +1080,9 @@ const houseSchema = new mongoose.Schema(
 
     isActive: {
       type: Boolean,
+
       default: true,
+
       index: true,
     },
 
@@ -1029,7 +1092,9 @@ const houseSchema = new mongoose.Schema(
 
     isFeatured: {
       type: Boolean,
+
       default: false,
+
       index: true,
     },
 
@@ -1039,19 +1104,36 @@ const houseSchema = new mongoose.Schema(
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
+
       ref: "User",
+
       default: null,
     },
 
     createdByEmail: {
       type: String,
+
       trim: true,
+
       lowercase: true,
+
+      maxlength: [
+        200,
+        "Created by email cannot exceed 200 characters",
+      ],
+
       default: "",
     },
   },
+
+  // ==========================================================
+  // SCHEMA OPTIONS
+  // ==========================================================
+
   {
     timestamps: true,
+
+    strict: true,
 
     toJSON: {
       virtuals: true,
@@ -1086,7 +1168,9 @@ houseSchema.virtual("locationString").get(function () {
 houseSchema.virtual("priceFormatted").get(function () {
   const price = Number(this.pricePerMonth || 0);
 
-  return `${price.toLocaleString("en-US")} ${this.currency || "RWF"}`;
+  return `${price.toLocaleString("en-US")} ${
+    this.currency || "RWF"
+  }`;
 });
 
 // ============================================================
@@ -1094,14 +1178,17 @@ houseSchema.virtual("priceFormatted").get(function () {
 // ============================================================
 
 houseSchema.virtual("isAvailable").get(function () {
+  // House must be active
   if (!this.isActive) {
     return false;
   }
 
+  // House must have available status
   if (this.status !== "available") {
     return false;
   }
 
+  // No availability dates means currently available
   if (
     !this.availability ||
     !this.availability.startDate ||
@@ -1112,15 +1199,19 @@ houseSchema.virtual("isAvailable").get(function () {
 
   const now = new Date();
 
-  const start = new Date(this.availability.startDate);
+  const start = new Date(
+    this.availability.startDate
+  );
 
-  const end = new Date(this.availability.endDate);
+  const end = new Date(
+    this.availability.endDate
+  );
 
   return now >= start && now <= end;
 });
 
 // ============================================================
-// GET AVAILABILITY STATUS
+// METHOD: GET AVAILABILITY STATUS
 // ============================================================
 
 houseSchema.methods.getAvailabilityStatus = function () {
@@ -1142,9 +1233,13 @@ houseSchema.methods.getAvailabilityStatus = function () {
 
   const now = new Date();
 
-  const start = new Date(this.availability.startDate);
+  const start = new Date(
+    this.availability.startDate
+  );
 
-  const end = new Date(this.availability.endDate);
+  const end = new Date(
+    this.availability.endDate
+  );
 
   if (now < start) {
     return "coming_soon";
@@ -1158,50 +1253,61 @@ houseSchema.methods.getAvailabilityStatus = function () {
 };
 
 // ============================================================
-// GET FORMATTED ADDRESS
+// METHOD: GET FORMATTED ADDRESS
 // ============================================================
 
 houseSchema.methods.getFormattedAddress = function () {
-  return [
+  const parts = [
+    this.location?.address,
     this.location?.village,
     this.location?.cell,
     this.location?.sector,
     this.location?.district,
     this.location?.province,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  ].filter(Boolean);
+
+  return parts.join(", ");
 };
 
 // ============================================================
-// HOUSE NOTIFICATION DATA
-// ============================================================
-//
-// IMPORTANT:
-// houseId = MongoDB _id
-// houseReference = custom HSE-... ID
-//
-// Do NOT define houseId twice.
+// METHOD: GET NOTIFICATION DATA
 // ============================================================
 
-houseSchema.methods.getNotificationData = function (type, metadata = {}) {
+houseSchema.methods.getNotificationData = function (
+  type,
+  metadata = {},
+) {
   return {
     type,
 
     // MongoDB ObjectId
     houseId: this._id,
 
-    // Custom house identifier
+    // Custom HSE identifier
     houseReference: this.houseId,
 
     houseName: this.name,
 
+    houseType: this.houseType,
+
     location: {
-      province: this.location?.province || "",
-      district: this.location?.district || "",
-      sector: this.location?.sector || "",
-      cell: this.location?.cell || "",
-      village: this.location?.village || "",
+      province:
+        this.location?.province || "",
+
+      district:
+        this.location?.district || "",
+
+      sector:
+        this.location?.sector || "",
+
+      cell:
+        this.location?.cell || "",
+
+      village:
+        this.location?.village || "",
+
+      address:
+        this.location?.address || "",
     },
 
     locationString: this.locationString,
@@ -1212,7 +1318,15 @@ houseSchema.methods.getNotificationData = function (type, metadata = {}) {
 
     currency: this.currency,
 
+    guests: this.guests,
+
+    bedrooms: this.bedrooms,
+
+    bathrooms: this.bathrooms,
+
     status: this.status,
+
+    isActive: this.isActive,
 
     isAvailable: this.isAvailable,
 
@@ -1220,74 +1334,172 @@ houseSchema.methods.getNotificationData = function (type, metadata = {}) {
 
     metadata,
 
-    image: this.images?.[0]?.secure_url || this.images?.[0]?.url || null,
+    image:
+      this.images?.[0]?.secure_url ||
+      this.images?.[0]?.url ||
+      null,
 
     createdAt: new Date(),
   };
 };
 
 // ============================================================
-// HOUSE NOTIFICATION MESSAGE
+// METHOD: GET NOTIFICATION MESSAGE
 // ============================================================
 
 houseSchema.methods.getNotificationMessage = function (type) {
+  const location =
+    this.locationString || "the listed location";
+
   const messages = {
-    house_created: `🏠 New house "${this.name}" has been listed in ${this.locationString}`,
+    house_created:
+      `🏠 New house "${this.name}" has been listed in ${location}`,
 
-    house_updated: `📝 House "${this.name}" has been updated in ${this.locationString}`,
+    house_updated:
+      `📝 House "${this.name}" has been updated in ${location}`,
 
-    house_deleted: `🗑️ House "${this.name}" has been removed from ${this.locationString}`,
+    house_deleted:
+      `🗑️ House "${this.name}" has been removed from ${location}`,
 
-    house_status_changed: `🔄 House "${this.name}" status changed in ${this.locationString}`,
+    house_status_changed:
+      `🔄 House "${this.name}" status has changed in ${location}`,
 
-    house_available: `✅ House "${this.name}" is now available in ${this.locationString}`,
+    house_available:
+      `✅ House "${this.name}" is now available in ${location}`,
 
-    house_unavailable: `❌ House "${this.name}" is no longer available in ${this.locationString}`,
+    house_unavailable:
+      `❌ House "${this.name}" is no longer available in ${location}`,
 
-    house_pending: `⏳ House "${this.name}" is pending approval in ${this.locationString}`,
+    house_pending:
+      `⏳ House "${this.name}" is pending approval in ${location}`,
 
-    house_booked: `🏠 House "${this.name}" has been booked in ${this.locationString}`,
+    house_booked:
+      `🏠 House "${this.name}" has been booked in ${location}`,
 
-    house_maintenance: `🔧 House "${this.name}" is under maintenance in ${this.locationString}`,
+    house_maintenance:
+      `🔧 House "${this.name}" is under maintenance in ${location}`,
   };
 
   return (
     messages[type] ||
-    `📢 Update for house "${this.name}" in ${this.locationString}`
+    `📢 Update for house "${this.name}" in ${location}`
   );
 };
+
+// ============================================================
+// PRE-VALIDATE: NORMALIZE DATA
+// ============================================================
+
+houseSchema.pre("validate", function (next) {
+  // ----------------------------------------------------------
+  // HOUSE ID
+  // ----------------------------------------------------------
+
+  if (this.houseId) {
+    this.houseId = this.houseId
+      .trim()
+      .toUpperCase();
+  }
+
+  // ----------------------------------------------------------
+  // OWNER EMAIL
+  // ----------------------------------------------------------
+
+  if (this.ownerEmail) {
+    this.ownerEmail = this.ownerEmail
+      .trim()
+      .toLowerCase();
+  }
+
+  // ----------------------------------------------------------
+  // CREATED BY EMAIL
+  // ----------------------------------------------------------
+
+  if (this.createdByEmail) {
+    this.createdByEmail = this.createdByEmail
+      .trim()
+      .toLowerCase();
+  }
+
+  // ----------------------------------------------------------
+  // CURRENCY
+  // ----------------------------------------------------------
+
+  if (this.currency) {
+    this.currency = this.currency
+      .trim()
+      .toUpperCase();
+  }
+
+  // ----------------------------------------------------------
+  // AMENITIES
+  // ----------------------------------------------------------
+
+  if (Array.isArray(this.amenities)) {
+    this.amenities = [
+      ...new Set(
+        this.amenities
+          .map((amenity) =>
+            typeof amenity === "string"
+              ? amenity.trim()
+              : "",
+          )
+          .filter(Boolean),
+      ),
+    ];
+  }
+
+  next();
+});
 
 // ============================================================
 // PRE-SAVE: GENERATE HOUSE ID
 // ============================================================
 //
-// Generates:
+// Format:
+//
 // HSE-26-0001-123
 //
-// Uses the document count only as the sequence source.
+// Example:
+//
+// HSE-26-0001-583
+//
+// IMPORTANT:
+// This generates the ID only when one was not supplied.
 // ============================================================
 
-houseSchema.pre("save", async function () {
+houseSchema.pre("save", async function (next) {
   if (this.houseId) {
-    return;
+    return next();
   }
 
-  const count = await this.constructor.countDocuments();
+  try {
+    const count = await this.constructor.countDocuments();
 
-  const year = new Date().getFullYear().toString().slice(-2);
+    const year = new Date()
+      .getFullYear()
+      .toString()
+      .slice(-2);
 
-  const random = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, "0");
+    const random = Math.floor(
+      Math.random() * 1000,
+    )
+      .toString()
+      .padStart(3, "0");
 
-  this.houseId = `HSE-${year}-${String(count + 1).padStart(4, "0")}-${random}`;
+    this.houseId =
+      `HSE-${year}-${String(count + 1).padStart(4, "0")}-${random}`;
+
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ============================================================
-// QUERY HELPERS
+// QUERY HELPER: AVAILABLE
 // ============================================================
 
-// Available houses
 houseSchema.query.available = function () {
   return this.where("status")
     .equals("available")
@@ -1295,83 +1507,210 @@ houseSchema.query.available = function () {
     .equals(true);
 };
 
-// Active houses
+// ============================================================
+// QUERY HELPER: ACTIVE
+// ============================================================
+
 houseSchema.query.active = function () {
   return this.where("isActive").equals(true);
 };
 
-// Filter by location
-houseSchema.query.byLocation = function (province, district) {
+// ============================================================
+// QUERY HELPER: BY LOCATION
+// ============================================================
+
+houseSchema.query.byLocation = function (
+  province,
+  district,
+) {
   let query = this;
 
   if (province) {
-    query = query.where("location.province").equals(province);
+    query = query
+      .where("location.province")
+      .equals(province);
   }
 
   if (district) {
-    query = query.where("location.district").equals(district);
+    query = query
+      .where("location.district")
+      .equals(district);
   }
 
   return query;
 };
 
-// Filter by price range
-houseSchema.query.byPriceRange = function (min, max) {
+// ============================================================
+// QUERY HELPER: BY PRICE RANGE
+// ============================================================
+
+houseSchema.query.byPriceRange = function (
+  min,
+  max,
+) {
   let query = this;
 
-  if (min !== undefined && min !== null) {
-    query = query.where("pricePerMonth").gte(Number(min));
+  if (
+    min !== undefined &&
+    min !== null &&
+    min !== ""
+  ) {
+    query = query
+      .where("pricePerMonth")
+      .gte(Number(min));
   }
 
-  if (max !== undefined && max !== null) {
-    query = query.where("pricePerMonth").lte(Number(max));
+  if (
+    max !== undefined &&
+    max !== null &&
+    max !== ""
+  ) {
+    query = query
+      .where("pricePerMonth")
+      .lte(Number(max));
   }
 
   return query;
 };
 
-// Filter by university
-houseSchema.query.byUniversity = function (university) {
+// ============================================================
+// QUERY HELPER: BY UNIVERSITY
+// ============================================================
+
+houseSchema.query.byUniversity = function (
+  university,
+) {
   if (!university) {
     return this;
   }
 
-  return this.where("university").regex(new RegExp(university, "i"));
+  return this.where("university").regex(
+    new RegExp(
+      university.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&",
+      ),
+      "i",
+    ),
+  );
+};
+
+// ============================================================
+// QUERY HELPER: BY GUEST CAPACITY
+// ============================================================
+
+houseSchema.query.byGuests = function (
+  guests,
+) {
+  if (
+    guests === undefined ||
+    guests === null ||
+    guests === ""
+  ) {
+    return this;
+  }
+
+  const numberOfGuests = Number(guests);
+
+  if (
+    !Number.isFinite(numberOfGuests) ||
+    numberOfGuests < 1
+  ) {
+    return this;
+  }
+
+  return this.where("guests").gte(
+    Math.floor(numberOfGuests),
+  );
+};
+
+// ============================================================
+// QUERY HELPER: BY HOUSE TYPE
+// ============================================================
+
+houseSchema.query.byHouseType = function (
+  houseType,
+) {
+  if (!houseType) {
+    return this;
+  }
+
+  return this.where("houseType").equals(
+    String(houseType).trim().toLowerCase(),
+  );
+};
+
+// ============================================================
+// QUERY HELPER: BY STATUS
+// ============================================================
+
+houseSchema.query.byStatus = function (status) {
+  if (!status) {
+    return this;
+  }
+
+  return this.where("status").equals(status);
 };
 
 // ============================================================
 // INDEXES
 // ============================================================
 
+// Status + active
 houseSchema.index({
   status: 1,
   isActive: 1,
 });
 
+// Province + district
 houseSchema.index({
   "location.province": 1,
   "location.district": 1,
 });
 
+// District + sector
 houseSchema.index({
   "location.district": 1,
   "location.sector": 1,
 });
 
+// University
 houseSchema.index({
   university: 1,
 });
 
+// Price
 houseSchema.index({
   pricePerMonth: 1,
 });
 
+// Creation date
 houseSchema.index({
   createdAt: -1,
 });
 
+// Created by user
+houseSchema.index({
+  createdBy: 1,
+});
+
+// Owner email
+houseSchema.index({
+  ownerEmail: 1,
+});
+
+// Guest capacity
+houseSchema.index({
+  guests: 1,
+});
+
 // ============================================================
-// MODEL
+// MODEL EXPORT
 // ============================================================
 
-module.exports = mongoose.models.House || mongoose.model("House", houseSchema);
+const House =
+  mongoose.models.House ||
+  mongoose.model("House", houseSchema);
+
+module.exports = House;
+
