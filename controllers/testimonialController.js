@@ -1057,54 +1057,153 @@ exports.getFeaturedTestimonials = async (req, res) => {
 };
 
 // 6. Update Testimonial Status (Approve/Reject)
+// exports.updateTestimonialStatus = async (req, res) => {
+//   try {
+//     const { status, verified } = req.body;
+//     const testimonial = await Testimonial.findById(req.params.id);
+
+//     if (!testimonial) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Testimonial not found'
+//       });
+//     }
+
+//     const oldStatus = testimonial.status;
+    
+//     if (status) testimonial.status = status;
+//     if (verified !== undefined) testimonial.verified = verified;
+
+//     await testimonial.save();
+
+//     // =====================
+//     // CREATE NOTIFICATIONS FOR STATUS CHANGE
+//     // =====================
+//     if (status && status !== oldStatus) {
+//       const userInfo = {
+//         userId: testimonial.userId || null,
+//         email: testimonial.email || '',
+//         role: "user",
+//         oldStatus: oldStatus,
+//       };
+
+//       const notificationType = status === 'approved' ? 'testimonial_approved' : 
+//                                status === 'rejected' ? 'testimonial_rejected' : 'testimonial_updated';
+      
+//       await createAllRoleNotifications(testimonial, notificationType, userInfo);
+//       await sendTestimonialEmails(testimonial, notificationType, userInfo);
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: 'Testimonial updated successfully',
+//       data: testimonial
+//     });
+
+//   } catch (error) {
+//     console.error('Update testimonial status error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to update testimonial'
+//     });
+//   }
+// };
+
+// ============================================================
+// UPDATE TESTIMONIAL STATUS
+// ============================================================
+
 exports.updateTestimonialStatus = async (req, res) => {
   try {
-    const { status, verified } = req.body;
+    const { status } = req.body;
+
+    // ==========================================================
+    // VALID STATUS VALUES
+    // ==========================================================
+
+    const validStatuses = [
+      "pending",
+      "approved",
+      "rejected",
+    ];
+
+    // ==========================================================
+    // VALIDATE STATUS
+    // ==========================================================
+
+    const requestedStatus = String(status || "")
+      .trim()
+      .toLowerCase();
+
+    if (!requestedStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required",
+        data: {
+          validStatuses,
+        },
+      });
+    }
+
+    if (!validStatuses.includes(requestedStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Must be one of: ${validStatuses.join(
+          ", "
+        )}`,
+        data: {
+          requestedStatus,
+          validStatuses,
+        },
+      });
+    }
+
+    // ==========================================================
+    // FIND TESTIMONIAL
+    // ==========================================================
+
     const testimonial = await Testimonial.findById(req.params.id);
 
     if (!testimonial) {
       return res.status(404).json({
         success: false,
-        message: 'Testimonial not found'
+        message: "Testimonial not found",
       });
     }
 
-    const oldStatus = testimonial.status;
-    
-    if (status) testimonial.status = status;
-    if (verified !== undefined) testimonial.verified = verified;
+    // ==========================================================
+    // UPDATE STATUS DIRECTLY
+    // ==========================================================
+    // No old-status comparison.
+    // No user information.
+    // No verified field.
+    // No notification.
+    // No email.
+    // ==========================================================
+
+    testimonial.status = requestedStatus;
 
     await testimonial.save();
 
-    // =====================
-    // CREATE NOTIFICATIONS FOR STATUS CHANGE
-    // =====================
-    if (status && status !== oldStatus) {
-      const userInfo = {
-        userId: testimonial.userId || null,
-        email: testimonial.email || '',
-        role: "user",
-        oldStatus: oldStatus,
-      };
+    // ==========================================================
+    // RESPONSE
+    // ==========================================================
 
-      const notificationType = status === 'approved' ? 'testimonial_approved' : 
-                               status === 'rejected' ? 'testimonial_rejected' : 'testimonial_updated';
-      
-      await createAllRoleNotifications(testimonial, notificationType, userInfo);
-      await sendTestimonialEmails(testimonial, notificationType, userInfo);
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: 'Testimonial updated successfully',
-      data: testimonial
+      message: "Testimonial status updated successfully",
+      data: testimonial,
     });
-
   } catch (error) {
-    console.error('Update testimonial status error:', error);
-    res.status(500).json({
+    console.error(
+      "❌ Update testimonial status error:",
+      error.message
+    );
+
+    return res.status(500).json({
       success: false,
-      message: 'Failed to update testimonial'
+      message: "Failed to update testimonial status",
+      error: error.message,
     });
   }
 };
