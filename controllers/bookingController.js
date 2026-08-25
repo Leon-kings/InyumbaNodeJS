@@ -1174,119 +1174,474 @@ const getHostNotificationEmail = (booking) => ({
 // ===========================================
 
 // Create notification for specific role
-const createRoleNotification = async (booking, type, role, userInfo = null) => {
+// const createRoleNotification = async (booking, type, role, userInfo = null) => {
+//   try {
+//     let title = "";
+//     let message = "";
+//     let priority = "normal";
+//     let targetUserId = null;
+//     let targetUserEmail = "";
+//     let targetUserRole = role;
+
+//     switch (type) {
+//       case "created":
+//         title = "📩 New Booking Created";
+//         message = `New booking ${booking.bookingId} from ${booking.fullName} for ${booking.houseName}`;
+//         priority = "high";
+//         targetUserId = booking.userId || null;
+//         targetUserEmail = booking.email;
+//         break;
+//       case "request":
+//         title = "📩 New Booking Request";
+//         message = `New booking request ${booking.bookingId} from ${booking.fullName} for ${booking.houseName}`;
+//         priority = "high";
+//         targetUserId = booking.userId || null;
+//         targetUserEmail = booking.email;
+//         break;
+//       case "review":
+//         title = "📋 Booking Review Required";
+//         message = `Booking ${booking.bookingId} requires review`;
+//         priority = "high";
+//         break;
+//       case "confirmed":
+//         title = "✅ Booking Confirmed";
+//         message = `Booking ${booking.bookingId} has been confirmed`;
+//         priority = "high";
+//         break;
+//       case "cancelled":
+//         title = "❌ Booking Cancelled";
+//         message = `Booking ${booking.bookingId} has been cancelled`;
+//         priority = "high";
+//         break;
+//       case "completed":
+//         title = "✅ Booking Completed";
+//         message = `Booking ${booking.bookingId} has been completed`;
+//         priority = "normal";
+//         break;
+//       case "payment_verified":
+//         title = "💰 Payment Verified";
+//         message = `Payment for booking ${booking.bookingId} has been verified`;
+//         priority = "high";
+//         break;
+//       case "payment_failed":
+//         title = "⚠️ Payment Failed";
+//         message = `Payment for booking ${booking.bookingId} has failed`;
+//         priority = "urgent";
+//         break;
+//       case "updated":
+//         title = "📝 Booking Updated";
+//         message = `Booking ${booking.bookingId} has been updated`;
+//         priority = "normal";
+//         break;
+//       default:
+//         title = "📩 Booking Notification";
+//         message = `Update for booking ${booking.bookingId}`;
+//     }
+
+//     // If userInfo is provided, use that for targeting
+//     if (userInfo) {
+//       targetUserId = userInfo.userId || targetUserId;
+//       targetUserEmail = userInfo.email || targetUserEmail;
+//       targetUserRole = userInfo.role || role;
+//     }
+
+//     const notification = new Notification({
+//       type: `booking_${type}`,
+//       userId: booking.userId || null,
+//       userName: booking.fullName || "User",
+//       userEmail: booking.email || "",
+//       userRole: role,
+//       title,
+//       message,
+//       isRead: false,
+//       status: "new",
+//       targetRoles: [role],
+//       targetUserId: targetUserId,
+//       targetUserEmail: targetUserEmail,
+//       targetUserRole: targetUserRole,
+//       // bookingId: booking.bookingId,
+//       bookingId: booking._id,
+//       bookingReference: booking.bookingId || "",
+//       bookingDetails: {
+//         houseName: booking.houseName,
+//         checkIn: booking.checkIn,
+//         checkOut: booking.checkOut,
+//         totalAmount: booking.totalAmount,
+//         status: booking.status,
+//         paymentStatus: booking.paymentStatus,
+//       },
+//       priority,
+//       isGlobal: false,
+//       metadata: {
+//         bookingId: booking.bookingId,
+//         houseName: booking.houseName,
+//         fullName: booking.fullName,
+//         email: booking.email,
+//         phone: booking.phone,
+//         totalAmount: booking.totalAmount,
+//         status: booking.status,
+//         paymentStatus: booking.paymentStatus,
+//       },
+//     });
+
+//     await notification.save();
+//     console.log(`✅ ${role} notification created: ${message}`);
+//     return notification;
+//   } catch (error) {
+//     console.error(`❌ Error creating ${role} notification:`, error.message);
+//     return null;
+//   }
+// };
+
+const createRoleNotification = async (
+  booking,
+  type,
+  role,
+  userInfo = null
+) => {
   try {
-    let title = "";
-    let message = "";
+    // ============================================================
+    // VALIDATION
+    // ============================================================
+
+    if (!booking) {
+      console.error("❌ Cannot create booking notification: booking is missing");
+      return null;
+    }
+
+    if (!booking._id) {
+      console.error(
+        "❌ Cannot create booking notification: booking._id is missing"
+      );
+      return null;
+    }
+
+    if (!role) {
+      console.error(
+        "❌ Cannot create booking notification: notification role is missing"
+      );
+      return null;
+    }
+
+    // ============================================================
+    // NOTIFICATION DATA
+    // ============================================================
+
+    let notificationType = "booking_status_changed";
+    let title = "📩 Booking Notification";
+    let message = `Update for booking ${
+      booking.bookingId || booking._id
+    }`;
     let priority = "normal";
-    let targetUserId = null;
-    let targetUserEmail = "";
+
+    // ============================================================
+    // TARGET USER
+    // ============================================================
+
+    let targetUserId = booking.userId || null;
+    let targetUserEmail = booking.email || "";
     let targetUserRole = role;
 
+    // ============================================================
+    // BOOKING REFERENCE
+    // ============================================================
+
+    const bookingReference =
+      booking.bookingId || booking._id.toString();
+
+    // ============================================================
+    // NOTIFICATION TYPE
+    // ============================================================
+
     switch (type) {
+      // ==========================================================
+      // BOOKING CREATED
+      // ==========================================================
+
       case "created":
+      case "booking_created":
+        notificationType = "booking_created";
         title = "📩 New Booking Created";
-        message = `New booking ${booking.bookingId} from ${booking.fullName} for ${booking.houseName}`;
+        message = `New booking ${bookingReference} from ${
+          booking.fullName || "User"
+        } for ${booking.houseName || "House"}`;
         priority = "high";
-        targetUserId = booking.userId || null;
-        targetUserEmail = booking.email;
         break;
+
+      // ==========================================================
+      // BOOKING REQUEST
+      // ==========================================================
+
       case "request":
+      case "booking_request":
+        notificationType = "booking_created";
         title = "📩 New Booking Request";
-        message = `New booking request ${booking.bookingId} from ${booking.fullName} for ${booking.houseName}`;
+        message = `New booking request ${bookingReference} from ${
+          booking.fullName || "User"
+        } for ${booking.houseName || "House"}`;
         priority = "high";
-        targetUserId = booking.userId || null;
-        targetUserEmail = booking.email;
         break;
+
+      // ==========================================================
+      // BOOKING REVIEW
+      // ==========================================================
+
       case "review":
+      case "booking_review":
+        notificationType = "booking_updated";
         title = "📋 Booking Review Required";
-        message = `Booking ${booking.bookingId} requires review`;
+        message = `Booking ${bookingReference} requires review`;
         priority = "high";
         break;
+
+      // ==========================================================
+      // BOOKING CONFIRMED
+      // ==========================================================
+
       case "confirmed":
+      case "booking_confirmed":
+        notificationType = "booking_confirmed";
         title = "✅ Booking Confirmed";
-        message = `Booking ${booking.bookingId} has been confirmed`;
+        message = `Booking ${bookingReference} has been confirmed`;
         priority = "high";
         break;
+
+      // ==========================================================
+      // BOOKING CANCELLED
+      // ==========================================================
+
       case "cancelled":
+      case "booking_cancelled":
+        notificationType = "booking_cancelled";
         title = "❌ Booking Cancelled";
-        message = `Booking ${booking.bookingId} has been cancelled`;
+        message = `Booking ${bookingReference} has been cancelled`;
         priority = "high";
         break;
+
+      // ==========================================================
+      // BOOKING COMPLETED
+      // ==========================================================
+
       case "completed":
+      case "booking_completed":
+        notificationType = "booking_completed";
         title = "✅ Booking Completed";
-        message = `Booking ${booking.bookingId} has been completed`;
+        message = `Booking ${bookingReference} has been completed`;
         priority = "normal";
         break;
+
+      // ==========================================================
+      // BOOKING UPDATED
+      // ==========================================================
+
+      case "updated":
+      case "booking_updated":
+        notificationType = "booking_updated";
+        title = "📝 Booking Updated";
+        message = `Booking ${bookingReference} has been updated`;
+        priority = "normal";
+        break;
+
+      // ==========================================================
+      // BOOKING STATUS CHANGED
+      // ==========================================================
+
+      case "status_changed":
+      case "booking_status_changed":
+        notificationType = "booking_status_changed";
+        title = "🔄 Booking Status Changed";
+        message = `The status of booking ${bookingReference} has changed to ${
+          booking.status || "updated"
+        }`;
+        priority = "normal";
+        break;
+
+      // ==========================================================
+      // PAYMENT VERIFIED
+      // ==========================================================
+
       case "payment_verified":
+      case "booking_payment_verified":
+        notificationType = "booking_payment_verified";
         title = "💰 Payment Verified";
-        message = `Payment for booking ${booking.bookingId} has been verified`;
+        message = `Payment for booking ${bookingReference} has been verified`;
         priority = "high";
         break;
+
+      // ==========================================================
+      // PAYMENT FAILED
+      // ==========================================================
+
       case "payment_failed":
+      case "booking_payment_failed":
+        notificationType = "booking_payment_failed";
         title = "⚠️ Payment Failed";
-        message = `Payment for booking ${booking.bookingId} has failed`;
+        message = `Payment for booking ${bookingReference} has failed`;
         priority = "urgent";
         break;
-      case "updated":
-        title = "📝 Booking Updated";
-        message = `Booking ${booking.bookingId} has been updated`;
+
+      // ==========================================================
+      // PAYMENT PENDING
+      // ==========================================================
+
+      case "payment_pending":
+      case "booking_payment_pending":
+        notificationType = "booking_payment_pending";
+        title = "⏳ Booking Payment Pending";
+        message = `Payment for booking ${bookingReference} is pending`;
+        priority = "high";
+        break;
+
+      // ==========================================================
+      // PAYMENT REJECTED
+      // ==========================================================
+
+      case "payment_rejected":
+      case "booking_payment_rejected":
+        notificationType = "booking_payment_rejected";
+        title = "❌ Booking Payment Rejected";
+        message = `Payment for booking ${bookingReference} has been rejected`;
+        priority = "high";
+        break;
+
+      // ==========================================================
+      // PAYMENT RECEIVED
+      // ==========================================================
+
+      case "payment_received":
+      case "booking_payment_received":
+        notificationType = "booking_payment_received";
+        title = "💰 Booking Payment Received";
+        message = `Payment for booking ${bookingReference} has been received`;
+        priority = "high";
+        break;
+
+      // ==========================================================
+      // PAYMENT COMPLETED
+      // ==========================================================
+
+      case "payment_completed":
+      case "booking_payment_completed":
+        notificationType = "booking_payment_completed";
+        title = "✅ Booking Payment Completed";
+        message = `Payment for booking ${bookingReference} has been completed`;
         priority = "normal";
         break;
+
+      // ==========================================================
+      // DEFAULT
+      // ==========================================================
+
       default:
+        notificationType = "booking_status_changed";
         title = "📩 Booking Notification";
-        message = `Update for booking ${booking.bookingId}`;
+        message = `Update for booking ${bookingReference}`;
+        priority = "normal";
+        break;
     }
 
-    // If userInfo is provided, use that for targeting
+    // ============================================================
+    // USER INFO OVERRIDE
+    // ============================================================
+
     if (userInfo) {
-      targetUserId = userInfo.userId || targetUserId;
-      targetUserEmail = userInfo.email || targetUserEmail;
-      targetUserRole = userInfo.role || role;
+      if (userInfo.userId) {
+        targetUserId = userInfo.userId;
+      }
+
+      if (userInfo.email) {
+        targetUserEmail = userInfo.email;
+      }
+
+      if (userInfo.role) {
+        targetUserRole = userInfo.role;
+      }
     }
+
+    // ============================================================
+    // CREATE NOTIFICATION
+    // ============================================================
 
     const notification = new Notification({
-      type: `booking_${type}`,
+      // ----------------------------------------------------------
+      // Notification type
+      // ----------------------------------------------------------
+      type: notificationType,
+
+      // ----------------------------------------------------------
+      // User who caused the action
+      // ----------------------------------------------------------
       userId: booking.userId || null,
       userName: booking.fullName || "User",
       userEmail: booking.email || "",
-      userRole: role,
+
+      // ----------------------------------------------------------
+      // Notification content
+      // ----------------------------------------------------------
       title,
       message,
+
+      // ----------------------------------------------------------
+      // Target
+      // ----------------------------------------------------------
+      targetRoles: [role],
+      targetUserId,
+      targetUserEmail,
+
+      // ----------------------------------------------------------
+      // Booking references
+      //
+      // bookingId MUST be MongoDB ObjectId
+      // bookingReference contains BK20260818-8205
+      // ----------------------------------------------------------
+      bookingId: booking._id,
+      bookingReference,
+
+      // ----------------------------------------------------------
+      // Priority
+      // ----------------------------------------------------------
+      priority,
+
+      // ----------------------------------------------------------
+      // Read status
+      // ----------------------------------------------------------
       isRead: false,
       status: "new",
-      targetRoles: [role],
-      targetUserId: targetUserId,
-      targetUserEmail: targetUserEmail,
-      targetUserRole: targetUserRole,
-      bookingId: booking.bookingId,
-      bookingDetails: {
-        houseName: booking.houseName,
-        checkIn: booking.checkIn,
-        checkOut: booking.checkOut,
-        totalAmount: booking.totalAmount,
-        status: booking.status,
-        paymentStatus: booking.paymentStatus,
-      },
-      priority,
-      isGlobal: false,
+
+      // ----------------------------------------------------------
+      // Metadata
+      // ----------------------------------------------------------
       metadata: {
-        bookingId: booking.bookingId,
-        houseName: booking.houseName,
-        fullName: booking.fullName,
-        email: booking.email,
-        phone: booking.phone,
-        totalAmount: booking.totalAmount,
-        status: booking.status,
-        paymentStatus: booking.paymentStatus,
+        bookingId: bookingReference,
+        bookingMongoId: booking._id,
+        houseName: booking.houseName || "",
+        fullName: booking.fullName || "",
+        email: booking.email || "",
+        phone: booking.phone || "",
+        totalAmount: booking.totalAmount || 0,
+        status: booking.status || "",
+        paymentStatus: booking.paymentStatus || "",
+        targetRole: targetUserRole,
       },
     });
 
+    // ============================================================
+    // SAVE
+    // ============================================================
+
     await notification.save();
-    console.log(`✅ ${role} notification created: ${message}`);
+
+    console.log(
+      `✅ ${role} booking notification created: ${notificationType}`
+    );
+
     return notification;
   } catch (error) {
-    console.error(`❌ Error creating ${role} notification:`, error.message);
+    console.error(
+      `❌ Error creating ${role} notification:`,
+      error.message
+    );
+
     return null;
   }
 };
@@ -2053,10 +2408,71 @@ const updateBooking = async (req, res) => {
 };
 
 // UPDATE BOOKING STATUS
+// const updateBookingStatus = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { status, notes } = req.body;
+
+//     if (!status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Status is required",
+//       });
+//     }
+
+//     const booking = await Booking.findById(id);
+
+//     if (!booking) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Booking not found",
+//       });
+//     }
+
+//     const oldStatus = booking.status;
+//     booking.status = status;
+
+//     if (notes) {
+//       booking.notes = notes;
+//     }
+
+//     await booking.save();
+
+//     // Create notification based on status
+//     let notificationType = "updated";
+//     if (status === "confirmed") notificationType = "confirmed";
+//     else if (status === "cancelled") notificationType = "cancelled";
+//     else if (status === "completed") notificationType = "completed";
+
+//     await createAllRoleNotifications(booking, notificationType);
+
+//     // Send email confirmation for status change
+//     if (status === "confirmed" || status === "cancelled") {
+//       await sendBookingEmails(booking, status);
+//     }
+
+//     res.json({
+//       success: true,
+//       message: "Booking status updated",
+//       data: booking,
+//     });
+//   } catch (error) {
+//     console.error("❌ Update booking status error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
 const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, notes } = req.body;
+
+    // ============================================================
+    // VALIDATE STATUS
+    // ============================================================
 
     if (!status) {
       return res.status(400).json({
@@ -2064,6 +2480,10 @@ const updateBookingStatus = async (req, res) => {
         message: "Status is required",
       });
     }
+
+    // ============================================================
+    // FIND BOOKING
+    // ============================================================
 
     const booking = await Booking.findById(id);
 
@@ -2074,36 +2494,86 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
+    // ============================================================
+    // SAVE OLD STATUS
+    // ============================================================
+
     const oldStatus = booking.status;
+
+    // ============================================================
+    // UPDATE STATUS
+    // ============================================================
+
     booking.status = status;
 
-    if (notes) {
+    if (notes !== undefined) {
       booking.notes = notes;
     }
 
     await booking.save();
 
-    // Create notification based on status
-    let notificationType = "updated";
-    if (status === "confirmed") notificationType = "confirmed";
-    else if (status === "cancelled") notificationType = "cancelled";
-    else if (status === "completed") notificationType = "completed";
+    // ============================================================
+    // CREATE NOTIFICATION TYPE
+    // ============================================================
 
-    await createAllRoleNotifications(booking, notificationType);
+    let notificationType = "booking_status_changed";
 
-    // Send email confirmation for status change
-    if (status === "confirmed" || status === "cancelled") {
-      await sendBookingEmails(booking, status);
+    if (status === "confirmed") {
+      notificationType = "booking_confirmed";
+    } else if (status === "cancelled") {
+      notificationType = "booking_cancelled";
+    } else if (status === "completed") {
+      notificationType = "booking_completed";
+    } else if (status === "pending") {
+      notificationType = "booking_status_changed";
+    } else if (status === "booked") {
+      notificationType = "booking_status_changed";
     }
 
-    res.json({
+    // ============================================================
+    // CREATE NOTIFICATIONS FOR ALL ROLES
+    // ============================================================
+
+    await createAllRoleNotifications(
+      booking,
+      notificationType
+    );
+
+    // ============================================================
+    // SEND EMAIL FOR CONFIRMED / CANCELLED
+    // ============================================================
+
+    if (
+      status === "confirmed" ||
+      status === "cancelled"
+    ) {
+      await sendBookingEmails(
+        booking,
+        status
+      );
+    }
+
+    // ============================================================
+    // RESPONSE
+    // ============================================================
+
+    return res.status(200).json({
       success: true,
-      message: "Booking status updated",
-      data: booking,
+      message: "Booking status updated successfully",
+      data: {
+        booking,
+        oldStatus,
+        newStatus: status,
+        notificationType,
+      },
     });
   } catch (error) {
-    console.error("❌ Update booking status error:", error);
-    res.status(500).json({
+    console.error(
+      "❌ Update booking status error:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
