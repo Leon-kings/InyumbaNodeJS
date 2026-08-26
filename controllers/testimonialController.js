@@ -1,4 +1,3 @@
-
 // const Testimonial = require('../models/Testimonial');
 // const { cloudinary } = require('../cloudinary/cloudinary');
 // const { validationResult } = require('express-validator');
@@ -123,7 +122,7 @@
 // exports.getTestimonialById = async (req, res) => {
 //   try {
 //     const testimonial = await Testimonial.findById(req.params.id);
-    
+
 //     if (!testimonial) {
 //       return res.status(404).json({
 //         success: false,
@@ -154,7 +153,7 @@
 //     const skip = (page - 1) * limit;
 
 //     const [testimonials, total] = await Promise.all([
-//       Testimonial.find({ 
+//       Testimonial.find({
 //         university: { $regex: university, $options: 'i' },
 //         status: 'approved'
 //       })
@@ -162,7 +161,7 @@
 //         .skip(skip)
 //         .limit(limit)
 //         .lean(),
-//       Testimonial.countDocuments({ 
+//       Testimonial.countDocuments({
 //         university: { $regex: university, $options: 'i' },
 //         status: 'approved'
 //       })
@@ -192,7 +191,7 @@
 // exports.getFeaturedTestimonials = async (req, res) => {
 //   try {
 //     const limit = parseInt(req.query.limit) || 6;
-    
+
 //     const testimonials = await Testimonial.find({
 //       featured: true,
 //       status: 'approved'
@@ -343,7 +342,7 @@
 //     if (req.file) {
 //       // Delete old image from Cloudinary
 //       await cloudinary.uploader.destroy(testimonial.image.public_id);
-      
+
 //       testimonial.image = {
 //         public_id: req.file.filename,
 //         url: req.file.path,
@@ -372,7 +371,7 @@
 // exports.getTestimonialStatistics = async (req, res) => {
 //   try {
 //     const stats = await Testimonial.getStatistics();
-    
+
 //     res.status(200).json({
 //       success: true,
 //       data: stats
@@ -391,7 +390,7 @@
 // exports.getTopRated = async (req, res) => {
 //   try {
 //     const limit = parseInt(req.query.limit) || 10;
-    
+
 //     const testimonials = await Testimonial.find({
 //       status: 'approved'
 //     })
@@ -417,7 +416,7 @@
 // exports.getRecentTestimonials = async (req, res) => {
 //   try {
 //     const limit = parseInt(req.query.limit) || 10;
-    
+
 //     const testimonials = await Testimonial.find({
 //       status: 'approved'
 //     })
@@ -439,20 +438,13 @@
 //   }
 // };
 
-
-
-
-
-
-
-
-const Testimonial = require('../models/Testimonial');
-const Notification = require('../models/Notification');
-const User = require('../models/User');
-const cloudinary = require('cloudinary').v2;
-const { validationResult } = require('express-validator');
-const { sendEmail } = require('../services/emailTransporter');
-const mongoose = require('mongoose');
+const Testimonial = require("../models/Testimonial");
+const Notification = require("../models/Notification");
+const User = require("../models/User");
+const cloudinary = require("cloudinary").v2;
+const { validationResult } = require("express-validator");
+const { sendEmail } = require("../services/emailTransporter");
+const mongoose = require("mongoose");
 
 // ===================== CLOUDINARY CONFIG =====================
 
@@ -485,10 +477,10 @@ const getTestimonialConfirmationEmail = (testimonial) => ({
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
           <h3 style="margin: 0 0 15px; color: #667eea;">Your Testimonial</h3>
           <p style="margin: 5px 0;"><strong>Name:</strong> ${testimonial.name}</p>
-          ${testimonial.university ? `<p style="margin: 5px 0;"><strong>University:</strong> ${testimonial.university}</p>` : ''}
-          ${testimonial.houseName ? `<p style="margin: 5px 0;"><strong>House:</strong> ${testimonial.houseName}</p>` : ''}
-          <p style="margin: 5px 0;"><strong>Rating:</strong> ${'⭐'.repeat(testimonial.rating)}</p>
-          ${testimonial.title ? `<p style="margin: 5px 0;"><strong>Title:</strong> ${testimonial.title}</p>` : ''}
+          ${testimonial.university ? `<p style="margin: 5px 0;"><strong>University:</strong> ${testimonial.university}</p>` : ""}
+          ${testimonial.houseName ? `<p style="margin: 5px 0;"><strong>House:</strong> ${testimonial.houseName}</p>` : ""}
+          <p style="margin: 5px 0;"><strong>Rating:</strong> ${"⭐".repeat(testimonial.rating)}</p>
+          ${testimonial.title ? `<p style="margin: 5px 0;"><strong>Title:</strong> ${testimonial.title}</p>` : ""}
           <p style="margin: 15px 0 5px;"><strong>Your Story:</strong></p>
           <p style="background: #f1f3f5; padding: 15px; border-radius: 5px; margin: 5px 0 0;">${testimonial.content}</p>
         </div>
@@ -533,23 +525,27 @@ const getAdminTestimonialNotificationEmail = (testimonial) => ({
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
           <h3 style="margin: 0 0 15px; color: #f5576c;">Testimonial Details</h3>
           <p style="margin: 5px 0;"><strong>Name:</strong> ${testimonial.name}</p>
-          ${testimonial.email ? `<p style="margin: 5px 0;"><strong>Email:</strong> ${testimonial.email}</p>` : ''}
-          ${testimonial.university ? `<p style="margin: 5px 0;"><strong>University:</strong> ${testimonial.university}</p>` : ''}
-          ${testimonial.houseName ? `<p style="margin: 5px 0;"><strong>House:</strong> ${testimonial.houseName}</p>` : ''}
-          <p style="margin: 5px 0;"><strong>Rating:</strong> ${'⭐'.repeat(testimonial.rating)}</p>
+          ${testimonial.email ? `<p style="margin: 5px 0;"><strong>Email:</strong> ${testimonial.email}</p>` : ""}
+          ${testimonial.university ? `<p style="margin: 5px 0;"><strong>University:</strong> ${testimonial.university}</p>` : ""}
+          ${testimonial.houseName ? `<p style="margin: 5px 0;"><strong>House:</strong> ${testimonial.houseName}</p>` : ""}
+          <p style="margin: 5px 0;"><strong>Rating:</strong> ${"⭐".repeat(testimonial.rating)}</p>
           <p style="margin: 5px 0;"><strong>Submitted:</strong> ${new Date(testimonial.createdAt).toLocaleString()}</p>
-          ${testimonial.title ? `<p style="margin: 5px 0;"><strong>Title:</strong> ${testimonial.title}</p>` : ''}
+          ${testimonial.title ? `<p style="margin: 5px 0;"><strong>Title:</strong> ${testimonial.title}</p>` : ""}
           <p style="margin: 15px 0 5px;"><strong>Content:</strong></p>
           <p style="background: #f1f3f5; padding: 15px; border-radius: 5px; margin: 5px 0 0;">${testimonial.content}</p>
-          ${testimonial.image?.secure_url ? `
+          ${
+            testimonial.image?.secure_url
+              ? `
             <p style="margin: 15px 0 5px;"><strong>Image:</strong></p>
             <img src="${testimonial.image.secure_url}" style="max-width: 100%; border-radius: 5px; max-height: 300px;" />
-          ` : ''}
+          `
+              : ""
+          }
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
           <p style="margin: 0; text-align: center;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/testimonials/${testimonial._id}" 
+            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/admin/testimonials/${testimonial._id}" 
                style="display: inline-block; background: #667eea; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px;">
               Review & Approve
             </a>
@@ -577,7 +573,7 @@ const getTestimonialStatusUpdateEmail = (testimonial, status) => ({
       <title>Testimonial ${status}</title>
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: ${status === 'approved' ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'}; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+      <div style="background: ${status === "approved" ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)" : "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"}; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 24px;">Testimonial ${status.charAt(0).toUpperCase() + status.slice(1)}</h1>
       </div>
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef; border-top: none;">
@@ -586,24 +582,30 @@ const getTestimonialStatusUpdateEmail = (testimonial, status) => ({
           Your testimonial has been <strong>${status}</strong> by our team.
         </p>
         
-        ${status === 'approved' ? `
+        ${
+          status === "approved"
+            ? `
           <div style="background: #d4edda; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
             <p style="margin: 0; color: #155724;">
               ✅ Congratulations! Your testimonial is now live and visible to the public.
             </p>
           </div>
-        ` : status === 'rejected' ? `
+        `
+            : status === "rejected"
+              ? `
           <div style="background: #f8d7da; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;">
             <p style="margin: 0; color: #721c24;">
               ❌ Unfortunately, your testimonial was not approved. Please contact support for more information.
             </p>
           </div>
-        ` : ''}
+        `
+              : ""
+        }
         
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
           <h3 style="margin: 0 0 15px; color: #667eea;">Your Testimonial</h3>
-          <p style="margin: 5px 0;"><strong>Rating:</strong> ${'⭐'.repeat(testimonial.rating)}</p>
-          ${testimonial.title ? `<p style="margin: 5px 0;"><strong>Title:</strong> ${testimonial.title}</p>` : ''}
+          <p style="margin: 5px 0;"><strong>Rating:</strong> ${"⭐".repeat(testimonial.rating)}</p>
+          ${testimonial.title ? `<p style="margin: 5px 0;"><strong>Title:</strong> ${testimonial.title}</p>` : ""}
           <p style="margin: 15px 0 5px;"><strong>Content:</strong></p>
           <p style="background: #f1f3f5; padding: 15px; border-radius: 5px; margin: 5px 0 0;">${testimonial.content}</p>
         </div>
@@ -621,7 +623,12 @@ const getTestimonialStatusUpdateEmail = (testimonial, status) => ({
 // ===================== NOTIFICATION FUNCTIONS =====================
 
 // Create notification for specific role
-const createRoleNotification = async (testimonial, type, role, userInfo = null) => {
+const createRoleNotification = async (
+  testimonial,
+  type,
+  role,
+  userInfo = null,
+) => {
   try {
     let title = "";
     let message = "";
@@ -679,25 +686,59 @@ const createRoleNotification = async (testimonial, type, role, userInfo = null) 
       targetUserRole = userInfo.role || role;
     }
 
+    // const notification = new Notification({
+    //   type: type,
+    //   testimonialId: testimonial._id,
+    //   testimonialName: testimonial.name,
+    //   testimonialEmail: testimonial.email || "",
+    //   userId: testimonial.userId || null,
+    //   userName: testimonial.name,
+    //   userEmail: testimonial.email || "",
+    //   userRole: role,
+    //   title,
+    //   message,
+    //   isRead: false,
+    //   status: "new",
+    //   targetRoles: [role],
+    //   targetUserId: targetUserId,
+    //   targetUserEmail: targetUserEmail,
+    //   targetUserRole: targetUserRole,
+    //   priority,
+    //   isGlobal: type === "testimonial_created" || type === "testimonial_approved",
+    //   metadata: {
+    //     testimonialName: testimonial.name,
+    //     university: testimonial.university,
+    //     rating: testimonial.rating,
+    //     houseName: testimonial.houseName,
+    //     status: testimonial.status,
+    //     featured: testimonial.featured,
+    //     verified: testimonial.verified,
+    //   },
+    // });
+
     const notification = new Notification({
-      type: type,
+      type: notificationType,
+
       testimonialId: testimonial._id,
       testimonialName: testimonial.name,
       testimonialEmail: testimonial.email || "",
+
       userId: testimonial.userId || null,
       userName: testimonial.name,
       userEmail: testimonial.email || "",
-      userRole: role,
+
       title,
       message,
+
       isRead: false,
       status: "new",
+
       targetRoles: [role],
-      targetUserId: targetUserId,
-      targetUserEmail: targetUserEmail,
-      targetUserRole: targetUserRole,
+      targetUserId,
+      targetUserEmail,
+
       priority,
-      isGlobal: type === "testimonial_created" || type === "testimonial_approved",
+
       metadata: {
         testimonialName: testimonial.name,
         university: testimonial.university,
@@ -719,12 +760,21 @@ const createRoleNotification = async (testimonial, type, role, userInfo = null) 
 };
 
 // Create notifications for all roles
-const createAllRoleNotifications = async (testimonial, type, userInfo = null) => {
+const createAllRoleNotifications = async (
+  testimonial,
+  type,
+  userInfo = null,
+) => {
   const roles = ["admin", "manager", "host", "user"];
   const notifications = [];
 
   for (const role of roles) {
-    const notification = await createRoleNotification(testimonial, type, role, userInfo);
+    const notification = await createRoleNotification(
+      testimonial,
+      type,
+      role,
+      userInfo,
+    );
     if (notification) {
       notifications.push(notification);
     }
@@ -749,15 +799,18 @@ const sendTestimonialEmails = async (testimonial, type, userInfo = null) => {
       });
       if (result.success) {
         emailsSent.push({ to: testimonial.email, role: "user" });
-        console.log(`✅ Testimonial confirmation email sent to ${testimonial.email}`);
+        console.log(
+          `✅ Testimonial confirmation email sent to ${testimonial.email}`,
+        );
       }
     }
 
     // Send notification to admin
     if (type === "testimonial_created") {
-      const adminEmailTemplate = getAdminTestimonialNotificationEmail(testimonial);
+      const adminEmailTemplate =
+        getAdminTestimonialNotificationEmail(testimonial);
       const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
-      
+
       if (adminEmail) {
         const result = await sendEmail({
           to: adminEmail,
@@ -775,7 +828,7 @@ const sendTestimonialEmails = async (testimonial, type, userInfo = null) => {
     if (type === "testimonial_approved" || type === "testimonial_rejected") {
       const statusEmailTemplate = getTestimonialStatusUpdateEmail(
         testimonial,
-        type === "testimonial_approved" ? "approved" : "rejected"
+        type === "testimonial_approved" ? "approved" : "rejected",
       );
       const result = await sendEmail({
         to: testimonial.email,
@@ -824,14 +877,23 @@ exports.submitTestimonial = async (req, res) => {
       }
       return res.status(400).json({
         success: false,
-        errors: errors.array().map(e => ({
+        errors: errors.array().map((e) => ({
           field: e.path,
-          message: e.msg
-        }))
+          message: e.msg,
+        })),
       });
     }
 
-    const { name, university, location, rating, title, content, houseName, email } = req.body;
+    const {
+      name,
+      university,
+      location,
+      rating,
+      title,
+      content,
+      houseName,
+      email,
+    } = req.body;
 
     // Get user info from request
     const userId = req.user?.id || null;
@@ -841,7 +903,7 @@ exports.submitTestimonial = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Image is required'
+        message: "Image is required",
       });
     }
 
@@ -855,14 +917,14 @@ exports.submitTestimonial = async (req, res) => {
       title,
       content,
       houseName,
-      email: email || '',
+      email: email || "",
       image: {
         public_id: req.file.filename,
         url: req.file.path,
-        secure_url: req.file.path
+        secure_url: req.file.path,
       },
       verified: false,
-      status: 'pending',
+      status: "pending",
       featured: false,
     });
 
@@ -874,14 +936,18 @@ exports.submitTestimonial = async (req, res) => {
     // =====================
     const userInfo = {
       userId: userId,
-      email: email || '',
+      email: email || "",
       role: userRole,
     };
 
     // =====================
     // CREATE ROLE-BASED NOTIFICATIONS
     // =====================
-    await createAllRoleNotifications(testimonial, "testimonial_created", userInfo);
+    await createAllRoleNotifications(
+      testimonial,
+      "testimonial_created",
+      userInfo,
+    );
 
     // =====================
     // SEND EMAILS
@@ -890,26 +956,25 @@ exports.submitTestimonial = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Testimonial submitted successfully',
+      message: "Testimonial submitted successfully",
       data: {
         id: testimonial._id,
         name: testimonial.name,
         university: testimonial.university,
         rating: testimonial.rating,
         status: testimonial.status,
-        image: testimonial.image.secure_url
-      }
+        image: testimonial.image.secure_url,
+      },
     });
-
   } catch (error) {
-    console.error('Submit testimonial error:', error);
+    console.error("Submit testimonial error:", error);
     // If there's an uploaded image, delete it from Cloudinary
     if (req.file) {
       await cloudinary.uploader.destroy(req.file.filename);
     }
     res.status(500).json({
       success: false,
-      message: 'Failed to submit testimonial'
+      message: "Failed to submit testimonial",
     });
   }
 };
@@ -926,8 +991,8 @@ exports.getAllTestimonials = async (req, res) => {
 
     let query = {};
     if (status) query.status = status;
-    if (university) query.university = { $regex: university, $options: 'i' };
-    if (featured !== undefined) query.featured = featured === 'true';
+    if (university) query.university = { $regex: university, $options: "i" };
+    if (featured !== undefined) query.featured = featured === "true";
 
     const [testimonials, total] = await Promise.all([
       Testimonial.find(query)
@@ -935,7 +1000,7 @@ exports.getAllTestimonials = async (req, res) => {
         .skip(skip)
         .limit(limit)
         .lean(),
-      Testimonial.countDocuments(query)
+      Testimonial.countDocuments(query),
     ]);
 
     res.status(200).json({
@@ -945,17 +1010,16 @@ exports.getAllTestimonials = async (req, res) => {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
-
   } catch (error) {
     console.error("Get all testimonials error:", error);
 
     res.status(500).json({
       success: false,
       message: "Failed to fetch testimonials",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -964,24 +1028,23 @@ exports.getAllTestimonials = async (req, res) => {
 exports.getTestimonialById = async (req, res) => {
   try {
     const testimonial = await Testimonial.findById(req.params.id);
-    
+
     if (!testimonial) {
       return res.status(404).json({
         success: false,
-        message: 'Testimonial not found'
+        message: "Testimonial not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      data: testimonial
+      data: testimonial,
     });
-
   } catch (error) {
-    console.error('Get testimonial by ID error:', error);
+    console.error("Get testimonial by ID error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch testimonial'
+      message: "Failed to fetch testimonial",
     });
   }
 };
@@ -995,18 +1058,18 @@ exports.getTestimonialsByUniversity = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [testimonials, total] = await Promise.all([
-      Testimonial.find({ 
-        university: { $regex: university, $options: 'i' },
-        status: 'approved'
+      Testimonial.find({
+        university: { $regex: university, $options: "i" },
+        status: "approved",
       })
         .sort({ rating: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      Testimonial.countDocuments({ 
-        university: { $regex: university, $options: 'i' },
-        status: 'approved'
-      })
+      Testimonial.countDocuments({
+        university: { $regex: university, $options: "i" },
+        status: "approved",
+      }),
     ]);
 
     res.status(200).json({
@@ -1016,15 +1079,14 @@ exports.getTestimonialsByUniversity = async (req, res) => {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
-
   } catch (error) {
-    console.error('Get testimonials by university error:', error);
+    console.error("Get testimonials by university error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch testimonials'
+      message: "Failed to fetch testimonials",
     });
   }
 };
@@ -1033,10 +1095,10 @@ exports.getTestimonialsByUniversity = async (req, res) => {
 exports.getFeaturedTestimonials = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 6;
-    
+
     const testimonials = await Testimonial.find({
       featured: true,
-      status: 'approved'
+      status: "approved",
     })
       .sort({ createdAt: -1 })
       .limit(limit)
@@ -1044,14 +1106,13 @@ exports.getFeaturedTestimonials = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: testimonials
+      data: testimonials,
     });
-
   } catch (error) {
-    console.error('Get featured testimonials error:', error);
+    console.error("Get featured testimonials error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch featured testimonials'
+      message: "Failed to fetch featured testimonials",
     });
   }
 };
@@ -1157,15 +1218,11 @@ exports.getFeaturedTestimonials = async (req, res) => {
 //   }
 // };
 
-const updateTestimonialStatus = async (req, res) => {
+exports.updateTestimonialStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    const validStatuses = [
-      "pending",
-      "approved",
-      "rejected",
-    ];
+    const validStatuses = ["pending", "approved", "rejected"];
 
     const requestedStatus = String(status || "")
       .trim()
@@ -1184,9 +1241,7 @@ const updateTestimonialStatus = async (req, res) => {
     if (!validStatuses.includes(requestedStatus)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid status. Must be one of: ${validStatuses.join(
-          ", "
-        )}`,
+        message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
         data: {
           requestedStatus,
           validStatuses,
@@ -1223,10 +1278,7 @@ const updateTestimonialStatus = async (req, res) => {
     // CREATE NOTIFICATIONS
     // ============================================================
 
-    await createAllRoleNotifications(
-      testimonial,
-      notificationType
-    );
+    await createAllRoleNotifications(testimonial, notificationType);
 
     return res.status(200).json({
       success: true,
@@ -1234,10 +1286,7 @@ const updateTestimonialStatus = async (req, res) => {
       data: testimonial,
     });
   } catch (error) {
-    console.error(
-      "❌ Update testimonial status error:",
-      error.message
-    );
+    console.error("❌ Update testimonial status error:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -1255,7 +1304,7 @@ exports.toggleFeatured = async (req, res) => {
     if (!testimonial) {
       return res.status(404).json({
         success: false,
-        message: 'Testimonial not found'
+        message: "Testimonial not found",
       });
     }
 
@@ -1268,24 +1317,25 @@ exports.toggleFeatured = async (req, res) => {
     // =====================
     const userInfo = {
       userId: testimonial.userId || null,
-      email: testimonial.email || '',
+      email: testimonial.email || "",
       role: "user",
     };
 
-    const notificationType = testimonial.featured ? 'testimonial_featured' : 'testimonial_unfeatured';
+    const notificationType = testimonial.featured
+      ? "testimonial_featured"
+      : "testimonial_unfeatured";
     await createAllRoleNotifications(testimonial, notificationType, userInfo);
 
     res.status(200).json({
       success: true,
-      message: `Testimonial ${testimonial.featured ? 'featured' : 'unfeatured'} successfully`,
-      data: testimonial
+      message: `Testimonial ${testimonial.featured ? "featured" : "unfeatured"} successfully`,
+      data: testimonial,
     });
-
   } catch (error) {
-    console.error('Toggle featured error:', error);
+    console.error("Toggle featured error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to toggle featured status'
+      message: "Failed to toggle featured status",
     });
   }
 };
@@ -1298,7 +1348,7 @@ exports.deleteTestimonial = async (req, res) => {
     if (!testimonial) {
       return res.status(404).json({
         success: false,
-        message: 'Testimonial not found'
+        message: "Testimonial not found",
       });
     }
 
@@ -1307,11 +1357,15 @@ exports.deleteTestimonial = async (req, res) => {
     // =====================
     const userInfo = {
       userId: testimonial.userId || null,
-      email: testimonial.email || '',
+      email: testimonial.email || "",
       role: "user",
     };
 
-    await createAllRoleNotifications(testimonial, "testimonial_deleted", userInfo);
+    await createAllRoleNotifications(
+      testimonial,
+      "testimonial_deleted",
+      userInfo,
+    );
 
     // Delete image from Cloudinary
     if (testimonial.image?.public_id) {
@@ -1322,14 +1376,13 @@ exports.deleteTestimonial = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Testimonial deleted successfully'
+      message: "Testimonial deleted successfully",
     });
-
   } catch (error) {
-    console.error('Delete testimonial error:', error);
+    console.error("Delete testimonial error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete testimonial'
+      message: "Failed to delete testimonial",
     });
   }
 };
@@ -1341,7 +1394,7 @@ exports.updateTestimonial = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        errors: errors.array(),
       });
     }
 
@@ -1349,11 +1402,12 @@ exports.updateTestimonial = async (req, res) => {
     if (!testimonial) {
       return res.status(404).json({
         success: false,
-        message: 'Testimonial not found'
+        message: "Testimonial not found",
       });
     }
 
-    const { name, university, location, rating, title, content, houseName } = req.body;
+    const { name, university, location, rating, title, content, houseName } =
+      req.body;
 
     // Update fields
     if (name) testimonial.name = name;
@@ -1370,11 +1424,11 @@ exports.updateTestimonial = async (req, res) => {
       if (testimonial.image?.public_id) {
         await cloudinary.uploader.destroy(testimonial.image.public_id);
       }
-      
+
       testimonial.image = {
         public_id: req.file.filename,
         url: req.file.path,
-        secure_url: req.file.path
+        secure_url: req.file.path,
       };
     }
 
@@ -1385,23 +1439,26 @@ exports.updateTestimonial = async (req, res) => {
     // =====================
     const userInfo = {
       userId: testimonial.userId || null,
-      email: testimonial.email || '',
+      email: testimonial.email || "",
       role: "user",
     };
 
-    await createAllRoleNotifications(testimonial, "testimonial_updated", userInfo);
+    await createAllRoleNotifications(
+      testimonial,
+      "testimonial_updated",
+      userInfo,
+    );
 
     res.status(200).json({
       success: true,
-      message: 'Testimonial updated successfully',
-      data: testimonial
+      message: "Testimonial updated successfully",
+      data: testimonial,
     });
-
   } catch (error) {
-    console.error('Update testimonial error:', error);
+    console.error("Update testimonial error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update testimonial'
+      message: "Failed to update testimonial",
     });
   }
 };
@@ -1410,17 +1467,16 @@ exports.updateTestimonial = async (req, res) => {
 exports.getTestimonialStatistics = async (req, res) => {
   try {
     const stats = await Testimonial.getStatistics();
-    
+
     res.status(200).json({
       success: true,
-      data: stats
+      data: stats,
     });
-
   } catch (error) {
-    console.error('Get testimonial statistics error:', error);
+    console.error("Get testimonial statistics error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get statistics'
+      message: "Failed to get statistics",
     });
   }
 };
@@ -1429,9 +1485,9 @@ exports.getTestimonialStatistics = async (req, res) => {
 exports.getTopRated = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    
+
     const testimonials = await Testimonial.find({
-      status: 'approved'
+      status: "approved",
     })
       .sort({ rating: -1, createdAt: -1 })
       .limit(limit)
@@ -1439,14 +1495,13 @@ exports.getTopRated = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: testimonials
+      data: testimonials,
     });
-
   } catch (error) {
-    console.error('Get top rated testimonials error:', error);
+    console.error("Get top rated testimonials error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch top rated testimonials'
+      message: "Failed to fetch top rated testimonials",
     });
   }
 };
@@ -1455,9 +1510,9 @@ exports.getTopRated = async (req, res) => {
 exports.getRecentTestimonials = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    
+
     const testimonials = await Testimonial.find({
-      status: 'approved'
+      status: "approved",
     })
       .sort({ createdAt: -1 })
       .limit(limit)
@@ -1465,14 +1520,13 @@ exports.getRecentTestimonials = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: testimonials
+      data: testimonials,
     });
-
   } catch (error) {
-    console.error('Get recent testimonials error:', error);
+    console.error("Get recent testimonials error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch recent testimonials'
+      message: "Failed to fetch recent testimonials",
     });
   }
 };
@@ -1688,16 +1742,13 @@ exports.markAllNotificationsAsRead = async (req, res) => {
       ];
     }
 
-    const result = await Notification.updateMany(
-      filter,
-      {
-        $set: {
-          isRead: true,
-          status: "read",
-          readAt: new Date(),
-        },
-      }
-    );
+    const result = await Notification.updateMany(filter, {
+      $set: {
+        isRead: true,
+        status: "read",
+        readAt: new Date(),
+      },
+    });
 
     return res.status(200).json({
       success: true,
@@ -1843,9 +1894,7 @@ exports.bulkDeleteNotifications = async (req, res) => {
     }
 
     // Validate every ID
-    const invalidIds = ids.filter(
-      (id) => !mongoose.Types.ObjectId.isValid(id)
-    );
+    const invalidIds = ids.filter((id) => !mongoose.Types.ObjectId.isValid(id));
 
     if (invalidIds.length > 0) {
       return res.status(400).json({
