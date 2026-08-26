@@ -1,4 +1,3 @@
-
 // ============================================================
 // MODELS / NOTIFICATION.JS
 // ============================================================
@@ -123,7 +122,6 @@ const notificationSchema = new mongoose.Schema(
         "payment_completed",
         "payment_failed",
 
-      
         // ======================================================
         // ADMIN
         // ======================================================
@@ -131,6 +129,18 @@ const notificationSchema = new mongoose.Schema(
         "admin_created",
         "admin_updated",
         "admin_deleted",
+
+        // ==================================================
+        // TESTIMONIALS
+        // ==================================================
+
+        "testimonial_created",
+        "testimonial_updated",
+        "testimonial_deleted",
+        "testimonial_approved",
+        "testimonial_rejected",
+        "testimonial_featured",
+        "testimonial_unfeatured",
       ],
     },
 
@@ -196,6 +206,29 @@ const notificationSchema = new mongoose.Schema(
     },
 
     targetUserEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: "",
+    },
+
+    // ==========================================================
+    // TESTIMONIAL REFERENCE
+    // ==========================================================
+
+    testimonialId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Testimonial",
+      default: null,
+    },
+
+    testimonialName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    testimonialEmail: {
       type: String,
       trim: true,
       lowercase: true,
@@ -373,13 +406,7 @@ const notificationSchema = new mongoose.Schema(
     priority: {
       type: String,
 
-      enum: [
-        "low",
-        "normal",
-        "medium",
-        "high",
-        "urgent",
-      ],
+      enum: ["low", "normal", "medium", "high", "urgent"],
 
       default: "normal",
     },
@@ -391,13 +418,7 @@ const notificationSchema = new mongoose.Schema(
     status: {
       type: String,
 
-      enum: [
-        "new",
-        "read",
-        "dismissed",
-        "archived",
-        "actioned",
-      ],
+      enum: ["new", "read", "dismissed", "archived", "actioned"],
 
       default: "new",
 
@@ -520,7 +541,7 @@ const notificationSchema = new mongoose.Schema(
     toObject: {
       virtuals: true,
     },
-  }
+  },
 );
 
 // ============================================================
@@ -598,76 +619,69 @@ notificationSchema.index({
 // MARK AS READ
 // ============================================================
 
-notificationSchema.methods.markAsRead =
-  async function () {
-    this.isRead = true;
+notificationSchema.methods.markAsRead = async function () {
+  this.isRead = true;
 
-    this.status = "read";
+  this.status = "read";
 
-    this.readAt = new Date();
+  this.readAt = new Date();
 
-    return this.save();
-  };
+  return this.save();
+};
 
 // ============================================================
 // MARK AS UNREAD
 // ============================================================
 
-notificationSchema.methods.markAsUnread =
-  async function () {
-    this.isRead = false;
+notificationSchema.methods.markAsUnread = async function () {
+  this.isRead = false;
 
-    this.status = "new";
+  this.status = "new";
 
-    this.readAt = null;
+  this.readAt = null;
 
-    return this.save();
-  };
+  return this.save();
+};
 
 // ============================================================
 // STATIC: MARK ALL USER NOTIFICATIONS AS READ
 // ============================================================
 
-notificationSchema.statics.markAllAsRead =
-  async function (email) {
-    if (!email) {
-      return null;
-    }
+notificationSchema.statics.markAllAsRead = async function (email) {
+  if (!email) {
+    return null;
+  }
 
-    return this.updateMany(
-      {
-        targetUserEmail: String(email)
-          .trim()
-          .toLowerCase(),
+  return this.updateMany(
+    {
+      targetUserEmail: String(email).trim().toLowerCase(),
 
-        isRead: false,
+      isRead: false,
 
-        isActive: true,
+      isActive: true,
+    },
+
+    {
+      $set: {
+        isRead: true,
+        status: "read",
+        readAt: new Date(),
       },
-
-      {
-        $set: {
-          isRead: true,
-          status: "read",
-          readAt: new Date(),
-        },
-      }
-    );
-  };
+    },
+  );
+};
 
 // ============================================================
 // VIRTUAL: IS EXPIRED
 // ============================================================
 
-notificationSchema.virtual("isExpired").get(
-  function () {
-    if (!this.expiresAt) {
-      return false;
-    }
-
-    return new Date() > this.expiresAt;
+notificationSchema.virtual("isExpired").get(function () {
+  if (!this.expiresAt) {
+    return false;
   }
-);
+
+  return new Date() > this.expiresAt;
+});
 
 // ============================================================
 // CLEAN EMPTY REFERENCES
@@ -711,7 +725,7 @@ notificationSchema.index(
   },
   {
     expireAfterSeconds: 0,
-  }
+  },
 );
 
 // ============================================================
@@ -720,9 +734,6 @@ notificationSchema.index(
 
 const Notification =
   mongoose.models.Notification ||
-  mongoose.model(
-    "Notification",
-    notificationSchema
-  );
+  mongoose.model("Notification", notificationSchema);
 
 module.exports = Notification;

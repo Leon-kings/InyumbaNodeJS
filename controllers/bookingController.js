@@ -1,4 +1,3 @@
-
 // // ============================================================
 // // CONTROLLERS / BOOKING.CONTROLLER.JS (Cloudinary Only)
 // // ============================================================
@@ -408,7 +407,6 @@
 //     });
 //   }
 // };
-
 
 // // ============================================================
 // // DELETE MULTIPLE NOTIFICATIONS
@@ -988,16 +986,6 @@
 //   uploadBookingScreenshot, // Export the multer middleware
 // };
 
-
-
-
-
-
-
-
-
-
-
 // ============================================================
 // CONTROLLERS / BOOKING.CONTROLLER.JS (Enhanced with Notifications)
 // ============================================================
@@ -1136,13 +1124,13 @@ const getHostNotificationEmail = (booking) => ({
           <p style="margin: 5px 0;"><strong>Name:</strong> ${booking.fullName}</p>
           <p style="margin: 5px 0;"><strong>Email:</strong> ${booking.email}</p>
           <p style="margin: 5px 0;"><strong>Phone:</strong> ${booking.phone}</p>
-          ${booking.university ? `<p style="margin: 5px 0;"><strong>University:</strong> ${booking.university}</p>` : ''}
+          ${booking.university ? `<p style="margin: 5px 0;"><strong>University:</strong> ${booking.university}</p>` : ""}
         </div>
         
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
           <h3 style="margin: 0 0 15px; color: #667eea;">Booking Details</h3>
           <p style="margin: 5px 0;"><strong>Property:</strong> ${booking.houseName}</p>
-          <p style="margin: 5px 0;"><strong>Location:</strong> ${booking.district || 'N/A'}, ${booking.sector || 'N/A'}</p>
+          <p style="margin: 5px 0;"><strong>Location:</strong> ${booking.district || "N/A"}, ${booking.sector || "N/A"}</p>
           <p style="margin: 5px 0;"><strong>Check-in:</strong> ${new Date(booking.checkIn).toLocaleDateString()}</p>
           <p style="margin: 5px 0;"><strong>Check-out:</strong> ${new Date(booking.checkOut).toLocaleDateString()}</p>
           <p style="margin: 5px 0;"><strong>Months:</strong> ${booking.months}</p>
@@ -1152,7 +1140,7 @@ const getHostNotificationEmail = (booking) => ({
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
           <p style="margin: 0; text-align: center;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/host/bookings/${booking._id}" 
+            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/host/bookings/${booking._id}" 
                style="display: inline-block; background: #667eea; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px;">
               View & Respond
             </a>
@@ -1293,32 +1281,29 @@ const getHostNotificationEmail = (booking) => ({
 //   }
 // };
 
-const createRoleNotification = async (
-  booking,
-  type,
-  role,
-  userInfo = null
-) => {
+const createRoleNotification = async (booking, type, role, userInfo = null) => {
   try {
     // ============================================================
     // VALIDATION
     // ============================================================
 
     if (!booking) {
-      console.error("❌ Cannot create booking notification: booking is missing");
+      console.error(
+        "❌ Cannot create booking notification: booking is missing",
+      );
       return null;
     }
 
     if (!booking._id) {
       console.error(
-        "❌ Cannot create booking notification: booking._id is missing"
+        "❌ Cannot create booking notification: booking._id is missing",
       );
       return null;
     }
 
     if (!role) {
       console.error(
-        "❌ Cannot create booking notification: notification role is missing"
+        "❌ Cannot create booking notification: notification role is missing",
       );
       return null;
     }
@@ -1329,9 +1314,7 @@ const createRoleNotification = async (
 
     let notificationType = "booking_status_changed";
     let title = "📩 Booking Notification";
-    let message = `Update for booking ${
-      booking.bookingId || booking._id
-    }`;
+    let message = `Update for booking ${booking.bookingId || booking._id}`;
     let priority = "normal";
 
     // ============================================================
@@ -1346,8 +1329,7 @@ const createRoleNotification = async (
     // BOOKING REFERENCE
     // ============================================================
 
-    const bookingReference =
-      booking.bookingId || booking._id.toString();
+    const bookingReference = booking.bookingId || booking._id.toString();
 
     // ============================================================
     // NOTIFICATION TYPE
@@ -1631,16 +1613,11 @@ const createRoleNotification = async (
 
     await notification.save();
 
-    console.log(
-      `✅ ${role} booking notification created: ${notificationType}`
-    );
+    console.log(`✅ ${role} booking notification created: ${notificationType}`);
 
     return notification;
   } catch (error) {
-    console.error(
-      `❌ Error creating ${role} notification:`,
-      error.message
-    );
+    console.error(`❌ Error creating ${role} notification:`, error.message);
 
     return null;
   }
@@ -1654,8 +1631,13 @@ const createAllRoleNotifications = async (booking, type, userInfo = null) => {
   for (const role of roles) {
     // Skip user notification if it's a host request
     if (type === "request" && role === "user") continue;
-    
-    const notification = await createRoleNotification(booking, type, role, userInfo);
+
+    const notification = await createRoleNotification(
+      booking,
+      type,
+      role,
+      userInfo,
+    );
     if (notification) {
       notifications.push(notification);
     }
@@ -2028,8 +2010,7 @@ const createBooking = async (req, res) => {
       bookingId: booking.bookingId,
       status: booking.status,
       paymentStatus: booking.paymentStatus,
-      paymentScreenshot:
-        booking.paymentScreenshot?.url || "",
+      paymentScreenshot: booking.paymentScreenshot?.url || "",
     };
 
     // ============================================================
@@ -2050,97 +2031,79 @@ const createBooking = async (req, res) => {
     // SEND EMAILS
     // ------------------------------------------------------------
 
-    Promise.resolve()
-      .then(async () => {
-        try {
-          await sendBookingEmails(booking, "created");
-        } catch (emailError) {
-          console.error(
-            "❌ Failed to send booking emails:",
-            emailError.message
-          );
-        }
-      });
+    Promise.resolve().then(async () => {
+      try {
+        await sendBookingEmails(booking, "created");
+      } catch (emailError) {
+        console.error("❌ Failed to send booking emails:", emailError.message);
+      }
+    });
 
     // ------------------------------------------------------------
     // CREATE ROLE-BASED NOTIFICATIONS
     // ------------------------------------------------------------
 
-    Promise.resolve()
-      .then(async () => {
-        try {
-          const userInfo = {
-            userId,
-            email,
-            role: userRole,
-          };
+    Promise.resolve().then(async () => {
+      try {
+        const userInfo = {
+          userId,
+          email,
+          role: userRole,
+        };
 
-          await createAllRoleNotifications(
-            booking,
-            "created",
-            userInfo
-          );
-        } catch (notificationError) {
-          console.error(
-            "❌ Failed to create booking notifications:",
-            notificationError.message
-          );
-        }
-      });
+        await createAllRoleNotifications(booking, "created", userInfo);
+      } catch (notificationError) {
+        console.error(
+          "❌ Failed to create booking notifications:",
+          notificationError.message,
+        );
+      }
+    });
 
     // ------------------------------------------------------------
     // CREATE USER ACTIVITY
     // ------------------------------------------------------------
 
-    Promise.resolve()
-      .then(async () => {
-        try {
-          const ipAddress =
-            req.headers["x-forwarded-for"]
-              ?.split(",")[0]
-              ?.trim() ||
-            req.socket.remoteAddress ||
-            null;
+    Promise.resolve().then(async () => {
+      try {
+        const ipAddress =
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.socket.remoteAddress ||
+          null;
 
-          await UserActivity.create({
-            userId,
-            userName: fullName,
-            userEmail: email,
-            action: "booking_created",
+        await UserActivity.create({
+          userId,
+          userName: fullName,
+          userEmail: email,
+          action: "booking_created",
 
-            description: `User ${fullName} created a booking for ${houseName}`,
+          description: `User ${fullName} created a booking for ${houseName}`,
 
-            ipAddress,
+          ipAddress,
 
-            userAgent:
-              req.headers["user-agent"] || null,
+          userAgent: req.headers["user-agent"] || null,
 
-            metadata: {
-              bookingId: booking.bookingId,
-              houseId: booking.houseId,
-              totalAmount: booking.totalAmount,
-            },
-          });
-        } catch (activityError) {
-          console.error(
-            "❌ Failed to create user activity:",
-            activityError.message
-          );
-        }
-      });
-
+          metadata: {
+            bookingId: booking.bookingId,
+            houseId: booking.houseId,
+            totalAmount: booking.totalAmount,
+          },
+        });
+      } catch (activityError) {
+        console.error(
+          "❌ Failed to create user activity:",
+          activityError.message,
+        );
+      }
+    });
   } catch (error) {
-    console.error(
-      "❌ Create booking error:",
-      error.message
-    );
+    console.error("❌ Create booking error:", error.message);
 
     // Only send this if the response hasn't already been sent.
     if (!res.headersSent) {
       return res.status(500).json({
         success: false,
-        message:
-          error.message || "Failed to create booking",
+        message: error.message || "Failed to create booking",
       });
     }
   }
@@ -2356,14 +2319,9 @@ const updateBooking = async (req, res) => {
     // ==========================================================
     if (req.file) {
       // Delete old Cloudinary image
-      if (
-        booking.paymentScreenshot &&
-        booking.paymentScreenshot.publicId
-      ) {
+      if (booking.paymentScreenshot && booking.paymentScreenshot.publicId) {
         try {
-          await cloudinary.uploader.destroy(
-            booking.paymentScreenshot.publicId
-          );
+          await cloudinary.uploader.destroy(booking.paymentScreenshot.publicId);
           console.log("🗑️ Old payment screenshot deleted");
         } catch (err) {
           console.error("Failed to delete old image:", err.message);
@@ -2386,7 +2344,7 @@ const updateBooking = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
 
     // Create notification for update
@@ -2534,23 +2492,14 @@ const updateBookingStatus = async (req, res) => {
     // CREATE NOTIFICATIONS FOR ALL ROLES
     // ============================================================
 
-    await createAllRoleNotifications(
-      booking,
-      notificationType
-    );
+    await createAllRoleNotifications(booking, notificationType);
 
     // ============================================================
     // SEND EMAIL FOR CONFIRMED / CANCELLED
     // ============================================================
 
-    if (
-      status === "confirmed" ||
-      status === "cancelled"
-    ) {
-      await sendBookingEmails(
-        booking,
-        status
-      );
+    if (status === "confirmed" || status === "cancelled") {
+      await sendBookingEmails(booking, status);
     }
 
     // ============================================================
@@ -2568,10 +2517,7 @@ const updateBookingStatus = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(
-      "❌ Update booking status error:",
-      error
-    );
+    console.error("❌ Update booking status error:", error);
 
     return res.status(500).json({
       success: false,
@@ -2605,7 +2551,8 @@ const verifyPayment = async (req, res) => {
     await booking.save();
 
     // Create notification based on payment status
-    const notificationType = paymentStatus === "verified" ? "payment_verified" : "payment_failed";
+    const notificationType =
+      paymentStatus === "verified" ? "payment_verified" : "payment_failed";
     await createAllRoleNotifications(booking, notificationType);
 
     res.json({
@@ -2798,8 +2745,7 @@ const getBookingStats = async (req, res) => {
 // GET ALL NOTIFICATIONS
 const getAllNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find()
-      .sort({ createdAt: -1 });
+    const notifications = await Notification.find().sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -3143,16 +3089,13 @@ const markAllNotificationsAsRead = async (req, res) => {
       ];
     }
 
-    const result = await Notification.updateMany(
-      filter,
-      {
-        $set: {
-          isRead: true,
-          status: "read",
-          readAt: new Date(),
-        },
-      }
-    );
+    const result = await Notification.updateMany(filter, {
+      $set: {
+        isRead: true,
+        status: "read",
+        readAt: new Date(),
+      },
+    });
 
     return res.status(200).json({
       success: true,
