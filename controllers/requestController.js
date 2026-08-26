@@ -223,45 +223,36 @@
 
 // //       html: `
 
-
 // // <h2>New Request</h2>
-
 
 // // <p>
 // // <b>Name:</b>${name}
 // // </p>
 
-
 // // <p>
 // // <b>Email:</b>${email}
 // // </p>
-
 
 // // <p>
 // // <b>Language:</b>${language}
 // // </p>
 
-
 // // <p>
 // // <b>Message:</b>${message}
 // // </p>
-
-
 
 // // ${
 // //   image.url
 // //     ? `
 
-// // <img 
-// // src="${image.url}" 
+// // <img
+// // src="${image.url}"
 // // width="300"
 // // />
 
 // // `
 // //     : ""
 // // }
-
-
 
 // // `,
 // //     });
@@ -489,15 +480,6 @@
 // // };
 
 // // module.exports.upload = upload;
-
-
-
-
-
-
-
-
-
 
 // const Request = require("../models/Request");
 // const Notification = require("../models/Notification");
@@ -903,7 +885,6 @@
 //   }
 // };
 
-
 // // ============================================================
 // // NOTIFICATION CONTROLLER
 // // ============================================================
@@ -1152,15 +1133,6 @@
 
 // module.exports.upload = upload;
 
-
-
-
-
-
-
-
-
-
 const Request = require("../models/Request");
 const Notification = require("../models/Notification");
 const User = require("../models/User");
@@ -1239,8 +1211,8 @@ const getRequestConfirmationEmail = (request) => ({
           <h3 style="margin: 0 0 15px; color: #667eea;">Request Details</h3>
           <p style="margin: 5px 0;"><strong>Name:</strong> ${request.name}</p>
           <p style="margin: 5px 0;"><strong>Email:</strong> ${request.email}</p>
-          ${request.language ? `<p style="margin: 5px 0;"><strong>Language:</strong> ${request.language}</p>` : ''}
-          <p style="margin: 5px 0;"><strong>Status:</strong> ${request.status || 'Pending'}</p>
+          ${request.language ? `<p style="margin: 5px 0;"><strong>Language:</strong> ${request.language}</p>` : ""}
+          <p style="margin: 5px 0;"><strong>Status:</strong> ${request.status || "Pending"}</p>
           <p style="margin: 15px 0 5px;"><strong>Message:</strong></p>
           <p style="background: #f1f3f5; padding: 15px; border-radius: 5px; margin: 5px 0 0;">${request.message}</p>
         </div>
@@ -1286,19 +1258,23 @@ const getAdminRequestNotificationEmail = (request) => ({
           <h3 style="margin: 0 0 15px; color: #f5576c;">Request Details</h3>
           <p style="margin: 5px 0;"><strong>Name:</strong> ${request.name}</p>
           <p style="margin: 5px 0;"><strong>Email:</strong> ${request.email}</p>
-          ${request.language ? `<p style="margin: 5px 0;"><strong>Language:</strong> ${request.language}</p>` : ''}
+          ${request.language ? `<p style="margin: 5px 0;"><strong>Language:</strong> ${request.language}</p>` : ""}
           <p style="margin: 5px 0;"><strong>Submitted:</strong> ${new Date(request.createdAt).toLocaleString()}</p>
           <p style="margin: 15px 0 5px;"><strong>Message:</strong></p>
           <p style="background: #f1f3f5; padding: 15px; border-radius: 5px; margin: 5px 0 0;">${request.message}</p>
-          ${request.image?.url ? `
+          ${
+            request.image?.url
+              ? `
             <p style="margin: 15px 0 5px;"><strong>Image:</strong></p>
             <img src="${request.image.url}" style="max-width: 100%; border-radius: 5px;" />
-          ` : ''}
+          `
+              : ""
+          }
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
           <p style="margin: 0; text-align: center;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/requests/${request._id}" 
+            <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/admin/requests/${request._id}" 
                style="display: inline-block; background: #667eea; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px;">
               View & Respond
             </a>
@@ -1384,7 +1360,7 @@ const createRoleNotification = async (request, type, role, userInfo = null) => {
         break;
       case "request_status_changed":
         title = "🔄 Request Status Changed";
-        message = `Request from ${request.name} status changed to ${request.status || 'updated'}`;
+        message = `Request from ${request.name} status changed to ${request.status || "updated"}`;
         priority = "high";
         break;
       case "request_replied":
@@ -1451,7 +1427,12 @@ const createAllRoleNotifications = async (request, type, userInfo = null) => {
   const notifications = [];
 
   for (const role of roles) {
-    const notification = await createRoleNotification(request, type, role, userInfo);
+    const notification = await createRoleNotification(
+      request,
+      type,
+      role,
+      userInfo,
+    );
     if (notification) {
       notifications.push(notification);
     }
@@ -1486,7 +1467,7 @@ const sendRequestEmails = async (request, type, userInfo = null) => {
     if (type === "request_created" || type === "request_updated") {
       const adminEmailTemplate = getAdminRequestNotificationEmail(request);
       const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
-      
+
       if (adminEmail) {
         const result = await sendEmail({
           to: adminEmail,
@@ -1505,7 +1486,7 @@ const sendRequestEmails = async (request, type, userInfo = null) => {
       const statusEmailTemplate = getRequestStatusUpdateEmail(
         request,
         userInfo.oldStatus,
-        request.status || "updated"
+        request.status || "updated",
       );
       const result = await sendEmail({
         to: request.email,
@@ -1546,12 +1527,7 @@ const sendRequestEmails = async (request, type, userInfo = null) => {
 
 exports.createRequest = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      message,
-      language,
-    } = req.body;
+    const { name, email, message, language } = req.body;
 
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -1737,7 +1713,7 @@ exports.updateRequest = async (req, res) => {
       req.body,
       {
         new: true,
-      }
+      },
     );
 
     // =======================
@@ -1753,10 +1729,18 @@ exports.updateRequest = async (req, res) => {
       };
 
       // Create role-based notifications
-      await createAllRoleNotifications(updatedRequest, "request_status_changed", userInfo);
+      await createAllRoleNotifications(
+        updatedRequest,
+        "request_status_changed",
+        userInfo,
+      );
 
       // Send email notification
-      await sendRequestEmails(updatedRequest, "request_status_changed", userInfo);
+      await sendRequestEmails(
+        updatedRequest,
+        "request_status_changed",
+        userInfo,
+      );
     }
 
     res.json({
@@ -2004,8 +1988,7 @@ exports.getRequestStatistics = async (req, res) => {
 // GET ALL NOTIFICATIONS
 exports.getAllNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({})
-      .sort({ createdAt: -1 });
+    const notifications = await Notification.find({}).sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -2237,16 +2220,13 @@ exports.markAllNotificationsAsRead = async (req, res) => {
       ];
     }
 
-    const result = await Notification.updateMany(
-      filter,
-      {
-        $set: {
-          isRead: true,
-          status: "read",
-          readAt: new Date(),
-        },
-      }
-    );
+    const result = await Notification.updateMany(filter, {
+      $set: {
+        isRead: true,
+        status: "read",
+        readAt: new Date(),
+      },
+    });
 
     return res.status(200).json({
       success: true,
@@ -2391,9 +2371,7 @@ exports.bulkDeleteNotifications = async (req, res) => {
     }
 
     // Validate every ID
-    const invalidIds = ids.filter(
-      (id) => !mongoose.Types.ObjectId.isValid(id)
-    );
+    const invalidIds = ids.filter((id) => !mongoose.Types.ObjectId.isValid(id));
 
     if (invalidIds.length > 0) {
       return res.status(400).json({
