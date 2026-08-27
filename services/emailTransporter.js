@@ -739,7 +739,35 @@
 // };
 
 // ============================================================
-// EMAIL SERVICE - GMAIL SMTP / NODEMAILER
+// EMAIL SERVICE - GMAIL SMTP / NODEMAILER (PORT 587 / STARTTLS)
+// ============================================================
+//
+// Configured for:
+//   SMTP_HOST=smtp.gmail.com
+//   SMTP_PORT=587          -> STARTTLS (NOT SSL/TLS)
+//   SMTP_USER=<your gmail address>
+//   SMTP_PASS=<gmail App Password, NOT your normal password>
+//   NODE_ENV=production
+//
+// IMPORTANT ABOUT SMTP_PASS:
+// Gmail will reject plain account passwords for SMTP login.
+// You must generate a 16-character "App Password":
+//   1. Enable 2-Step Verification on the Google account:
+//      https://myaccount.google.com/security
+//   2. Go to https://myaccount.google.com/apppasswords
+//   3. Create an app password for "Mail" and paste the
+//      16-character value (no spaces) into SMTP_PASS.
+// A blank SMTP_PASS will make every send fail with an
+// authentication error.
+//
+// IMPORTANT ABOUT HOSTING:
+// If you deploy this to a platform that blocks outbound SMTP
+// ports (Render, Railway, Vercel, some Heroku dynos, etc.),
+// connections will time out (ETIMEDOUT) no matter how correct
+// this config is, because the packets never leave the host.
+// Test with `nc -zv smtp.gmail.com 587` from inside that
+// environment if you see timeouts after fixing SMTP_PASS.
+//
 // ============================================================
 
 const nodemailer = require("nodemailer");
@@ -751,9 +779,8 @@ require("dotenv").config();
 
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 
-// Use 587 by default because 465 was timing out.
-// 465 = SSL/TLS
-// 587 = STARTTLS
+// 587 = STARTTLS (recommended, used here)
+// 465 = SSL/TLS (implicit)
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 
 const SMTP_USER = process.env.SMTP_USER || "";
@@ -763,22 +790,19 @@ const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "INYUMBA";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || SMTP_USER;
 
-// Optional test recipient.
-// Put TEST_EMAIL in .env if you want to change it.
+// Optional test recipient. Put TEST_EMAIL in .env to override.
 const TEST_EMAIL = process.env.TEST_EMAIL || SMTP_USER;
+
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 // ============================================================
 // SMTP STATE
 // ============================================================
 
 let smtpTransporter = null;
-
 let smtpConnected = false;
-
 let smtpLastError = null;
-
 let smtpLastCheckedAt = null;
-
 let startupTestSent = false;
 
 // Prevent multiple simultaneous verification calls.
@@ -787,6 +811,9 @@ let verificationInProgress = false;
 // ============================================================
 // SMTP SECURITY
 // ============================================================
+// secure:true is only for port 465 (implicit TLS).
+// Port 587 must use secure:false + STARTTLS upgrade, which
+// Nodemailer negotiates automatically.
 
 const isSecureConnection = SMTP_PORT === 465;
 
@@ -796,7 +823,7 @@ const isSecureConnection = SMTP_PORT === 465;
 
 const getFromAddress = () => {
   if (!ADMIN_EMAIL) {
-    throw new Error("ADMIN_EMAIL is required");
+    throw new Error("ADMIN_EMAIL (or SMTP_USER) is required");
   }
 
   return `"${EMAIL_FROM_NAME}" <${ADMIN_EMAIL}>`;
@@ -810,7 +837,7 @@ const isSMTPConfigured = () => {
   return Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS && ADMIN_EMAIL);
 };
 
-// Keep compatibility with your existing code.
+// Keep compatibility with existing code that references this name.
 const isResendConfigured = isSMTPConfigured;
 
 // ============================================================
@@ -824,30 +851,26 @@ const getSMTPErrorMessage = (error) => {
 
   const code = error.code || "";
   const message = error.message || String(error);
+  const lower = message.toLowerCase();
 
-  // Connection timeout
   if (
     code === "ETIMEDOUT" ||
     code === "ESOCKET" ||
-    message.toLowerCase().includes("connection timeout") ||
-    message.toLowerCase().includes("timeout")
+    lower.includes("connection timeout") ||
+    lower.includes("timeout")
   ) {
     return (
       `SMTP connection timeout to ${SMTP_HOST}:${SMTP_PORT}. ` +
-      `The server may be blocking the SMTP port, the network may be unavailable, ` +
-      `or Gmail may be unreachable from this hosting environment.`
+      `The hosting environment may be blocking outbound SMTP ports, ` +
+      `the network may be unavailable, or Gmail may be unreachable ` +
+      `from this environment. Test with: nc -zv ${SMTP_HOST} ${SMTP_PORT}`
     );
   }
 
-  // DNS failure
   if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
-    return (
-      `Cannot resolve SMTP host ${SMTP_HOST}. ` +
-      `Check DNS/network connectivity.`
-    );
+    return `Cannot resolve SMTP host ${SMTP_HOST}. Check DNS/network connectivity.`;
   }
 
-  // Connection refused
   if (code === "ECONNREFUSED") {
     return (
       `SMTP connection refused by ${SMTP_HOST}:${SMTP_PORT}. ` +
@@ -855,24 +878,16 @@ const getSMTPErrorMessage = (error) => {
     );
   }
 
-  // Authentication
-  if (
-    code === "EAUTH" ||
-    message.includes("535") ||
-    message.toLowerCase().includes("authentication")
-  ) {
+  if (code === "EAUTH" || message.includes("535") || lower.includes("authentication")) {
     return (
-      "Gmail SMTP authentication failed. " +
-      "Make sure SMTP_USER is correct and SMTP_PASS is a Gmail App Password."
+      "Gmail SMTP authentication failed (Error 535). " +
+      "SMTP_PASS must be a 16-character Gmail App Password, not your normal " +
+      "account password, and 2-Step Verification must be enabled on the account. " +
+      "Generate one at https://myaccount.google.com/apppasswords"
     );
   }
 
-  // TLS errors
-  if (
-    message.toLowerCase().includes("certificate") ||
-    message.toLowerCase().includes("tls") ||
-    message.toLowerCase().includes("ssl")
-  ) {
+  if (lower.includes("certificate") || lower.includes("tls") || lower.includes("ssl")) {
     return (
       `TLS/SSL connection failed with ${SMTP_HOST}:${SMTP_PORT}. ` +
       `Check SMTP_PORT and secure configuration.`
@@ -890,7 +905,7 @@ const getTransporter = () => {
   if (!isSMTPConfigured()) {
     throw new Error(
       "Gmail SMTP configuration is incomplete. " +
-        "Required: SMTP_USER, SMTP_PASS and ADMIN_EMAIL.",
+        "Required: SMTP_USER, SMTP_PASS (App Password) and ADMIN_EMAIL.",
     );
   }
 
@@ -903,47 +918,38 @@ const getTransporter = () => {
     console.log("🔌 Port:", SMTP_PORT);
     console.log("🔒 Security:", isSecureConnection ? "SSL/TLS" : "STARTTLS");
     console.log("👤 User:", SMTP_USER);
+    console.log("🏷️  Env:", NODE_ENV);
     console.log("================================================");
 
     smtpTransporter = nodemailer.createTransport({
       host: SMTP_HOST,
-
       port: SMTP_PORT,
 
-      // 465 = true
-      // 587 = false (STARTTLS)
+      // false for 587 (STARTTLS), true for 465 (implicit TLS)
       secure: isSecureConnection,
+
+      // Explicitly request STARTTLS on 587 so the connection
+      // upgrades to TLS instead of staying plaintext.
+      requireTLS: !isSecureConnection,
 
       auth: {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
 
-      // Connection timeout
       connectionTimeout: 15000,
-
-      // SMTP greeting timeout
       greetingTimeout: 15000,
-
-      // Socket timeout
       socketTimeout: 20000,
 
-      // TLS configuration
       tls: {
         servername: SMTP_HOST,
-
-        // Do not reject valid Gmail certificates.
         rejectUnauthorized: true,
       },
 
-      // Do not automatically open a connection.
       pool: false,
-
-      // Maximum number of messages per connection.
       maxMessages: 100,
 
-      // Debugging can be enabled from .env:
-      // SMTP_DEBUG=true
+      // Enable verbose SMTP logging with SMTP_DEBUG=true in .env
       logger: process.env.SMTP_DEBUG === "true",
       debug: process.env.SMTP_DEBUG === "true",
     });
@@ -961,7 +967,9 @@ const verifySMTPConnection = async () => {
     return {
       success: false,
       connected: false,
-      error: "Gmail SMTP configuration is incomplete",
+      error: SMTP_PASS
+        ? "Gmail SMTP configuration is incomplete"
+        : "SMTP_PASS is empty. Set it to a Gmail App Password (see file header comments).",
     };
   }
 
@@ -969,15 +977,12 @@ const verifySMTPConnection = async () => {
     const transporter = getTransporter();
 
     console.log("🔄 Verifying Gmail SMTP connection...");
-
     console.log(`🌐 ${SMTP_HOST}:${SMTP_PORT}`);
 
     await transporter.verify();
 
     smtpConnected = true;
-
     smtpLastError = null;
-
     smtpLastCheckedAt = new Date();
 
     console.log("");
@@ -1001,9 +1006,7 @@ const verifySMTPConnection = async () => {
     };
   } catch (error) {
     smtpConnected = false;
-
     smtpLastError = getSMTPErrorMessage(error);
-
     smtpLastCheckedAt = new Date();
 
     console.error("");
@@ -1056,287 +1059,86 @@ const sendTestEmail = async () => {
 
   try {
     const transporter = getTransporter();
-
     const from = getFromAddress();
 
     console.log("");
     console.log("================================================");
     console.log("📨 SENDING SMTP TEST EMAIL");
     console.log("================================================");
-
     console.log("📤 From:", from);
     console.log("📨 To:", TEST_EMAIL);
 
     const result = await transporter.sendMail({
       from,
-
       to: TEST_EMAIL,
-
       subject: "✨ INYUMBA Email Service Test",
-
       text:
         "This is a test email from the INYUMBA application. " +
         "Your Gmail SMTP email service is working correctly.",
-
       html: `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>INYUMBA Email Test</title>
-
   <style>
-    body {
-      margin: 0;
-      padding: 30px;
-      background: #f1f5f9;
-      font-family: Arial, sans-serif;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: auto;
-      padding: 40px 30px;
-      background: #ffffff;
-      border-radius: 20px;
-      border: 1px solid #eaeef5;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .logo {
-      display: inline-block;
-      padding: 12px 24px;
-      background: #6366f1;
-      color: white;
-      font-size: 28px;
-      font-weight: 700;
-      border-radius: 14px;
-    }
-
-    .badge {
-      display: inline-block;
-      margin-top: 14px;
-      padding: 6px 18px;
-      background: #dcfce7;
-      color: #166534;
-      border-radius: 100px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    h2 {
-      color: #1e293b;
-      text-align: center;
-    }
-
-    .subtitle {
-      color: #64748b;
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    .status-card {
-      background: #f8fafc;
-      border-radius: 16px;
-      padding: 24px;
-      margin-top: 24px;
-      border-left: 5px solid #22c55e;
-    }
-
-    .row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #e9edf2;
-      font-size: 14px;
-    }
-
-    .row:last-child {
-      border-bottom: none;
-    }
-
-    .label {
-      color: #475569;
-      font-weight: 500;
-    }
-
-    .value {
-      color: #0f172a;
-      font-weight: 600;
-      text-align: right;
-    }
-
-    .connected {
-      color: #16a34a;
-    }
-
-    .footer {
-      margin-top: 30px;
-      text-align: center;
-      color: #94a3b8;
-      font-size: 13px;
-      line-height: 1.8;
-    }
-
+    body { margin: 0; padding: 30px; background: #f1f5f9; font-family: Arial, sans-serif; }
+    .container { max-width: 600px; margin: auto; padding: 40px 30px; background: #ffffff; border-radius: 20px; border: 1px solid #eaeef5; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .logo { display: inline-block; padding: 12px 24px; background: #6366f1; color: white; font-size: 28px; font-weight: 700; border-radius: 14px; }
+    .badge { display: inline-block; margin-top: 14px; padding: 6px 18px; background: #dcfce7; color: #166534; border-radius: 100px; font-size: 13px; font-weight: 600; }
+    h2 { color: #1e293b; text-align: center; }
+    .subtitle { color: #64748b; text-align: center; line-height: 1.6; }
+    .status-card { background: #f8fafc; border-radius: 16px; padding: 24px; margin-top: 24px; border-left: 5px solid #22c55e; }
+    .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e9edf2; font-size: 14px; }
+    .row:last-child { border-bottom: none; }
+    .label { color: #475569; font-weight: 500; }
+    .value { color: #0f172a; font-weight: 600; text-align: right; }
+    .connected { color: #16a34a; }
+    .footer { margin-top: 30px; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.8; }
     @media (max-width: 480px) {
-      body {
-        padding: 15px;
-      }
-
-      .container {
-        padding: 25px 18px;
-      }
-
-      .row {
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .value {
-        text-align: left;
-      }
+      body { padding: 15px; }
+      .container { padding: 25px 18px; }
+      .row { flex-direction: column; gap: 4px; }
+      .value { text-align: left; }
     }
   </style>
 </head>
-
 <body>
-
   <div class="container">
-
     <div class="header">
-      <div class="logo">
-        INYUMBA
-      </div>
-
-      <div class="badge">
-        ✅ SMTP Test Email
-      </div>
+      <div class="logo">INYUMBA</div>
+      <div class="badge">✅ SMTP Test Email</div>
     </div>
-
-    <h2>
-      Email Service is Working 🚀
-    </h2>
-
+    <h2>Email Service is Working 🚀</h2>
     <p class="subtitle">
-      Your INYUMBA application successfully
-      connected to Gmail SMTP and sent this
-      test email.
+      Your INYUMBA application successfully connected to Gmail SMTP
+      and sent this test email.
     </p>
-
     <div class="status-card">
-
-      <div class="row">
-        <span class="label">
-          📧 Service
-        </span>
-
-        <span class="value">
-          Gmail SMTP
-        </span>
-      </div>
-
-      <div class="row">
-        <span class="label">
-          🌐 Host
-        </span>
-
-        <span class="value">
-          ${SMTP_HOST}
-        </span>
-      </div>
-
-      <div class="row">
-        <span class="label">
-          🔌 Port
-        </span>
-
-        <span class="value">
-          ${SMTP_PORT}
-        </span>
-      </div>
-
-      <div class="row">
-        <span class="label">
-          🔒 Security
-        </span>
-
-        <span class="value">
-          ${isSecureConnection ? "SSL/TLS" : "STARTTLS"}
-        </span>
-      </div>
-
-      <div class="row">
-        <span class="label">
-          📶 Status
-        </span>
-
-        <span class="value connected">
-          ● Connected
-        </span>
-      </div>
-
-      <div class="row">
-        <span class="label">
-          👤 From
-        </span>
-
-        <span class="value">
-          ${from}
-        </span>
-      </div>
-
-      <div class="row">
-        <span class="label">
-          📨 Recipient
-        </span>
-
-        <span class="value">
-          ${TEST_EMAIL}
-        </span>
-      </div>
-
-      <div class="row">
-        <span class="label">
-          ⏱️ Sent
-        </span>
-
-        <span class="value">
-          ${new Date().toLocaleString()}
-        </span>
-      </div>
-
+      <div class="row"><span class="label">📧 Service</span><span class="value">Gmail SMTP</span></div>
+      <div class="row"><span class="label">🌐 Host</span><span class="value">${SMTP_HOST}</span></div>
+      <div class="row"><span class="label">🔌 Port</span><span class="value">${SMTP_PORT}</span></div>
+      <div class="row"><span class="label">🔒 Security</span><span class="value">${isSecureConnection ? "SSL/TLS" : "STARTTLS"}</span></div>
+      <div class="row"><span class="label">📶 Status</span><span class="value connected">● Connected</span></div>
+      <div class="row"><span class="label">👤 From</span><span class="value">${from}</span></div>
+      <div class="row"><span class="label">📨 Recipient</span><span class="value">${TEST_EMAIL}</span></div>
+      <div class="row"><span class="label">⏱️ Sent</span><span class="value">${new Date().toLocaleString()}</span></div>
     </div>
-
     <div class="footer">
       <strong>INYUMBA</strong><br />
-
-      This is an automated SMTP test.
-      No action is required.
+      This is an automated SMTP test. No action is required.
     </div>
-
   </div>
-
 </body>
 </html>
         `,
     });
 
     smtpConnected = true;
-
     smtpLastError = null;
-
     smtpLastCheckedAt = new Date();
-
     startupTestSent = true;
 
     console.log("");
@@ -1358,9 +1160,7 @@ const sendTestEmail = async () => {
     };
   } catch (error) {
     smtpConnected = false;
-
     smtpLastError = getSMTPErrorMessage(error);
-
     smtpLastCheckedAt = new Date();
 
     console.error("❌ SMTP TEST EMAIL FAILED:", smtpLastError);
@@ -1377,12 +1177,7 @@ const sendTestEmail = async () => {
 };
 
 // ============================================================
-// TEST SMTP CONNECTION
-// ============================================================
-//
-// This function ONLY verifies the connection.
-// It does NOT send an email.
-//
+// TEST SMTP CONNECTION (verify only, no email sent)
 // ============================================================
 
 const testConnection = async () => {
@@ -1418,24 +1213,15 @@ const sendMail = async (mailOptions) => {
     }
 
     if (!mailOptions || typeof mailOptions !== "object") {
-      return {
-        success: false,
-        error: "Mail options are required",
-      };
+      return { success: false, error: "Mail options are required" };
     }
 
     if (!mailOptions.to) {
-      return {
-        success: false,
-        error: "Email recipient is required",
-      };
+      return { success: false, error: "Email recipient is required" };
     }
 
     if (!mailOptions.subject) {
-      return {
-        success: false,
-        error: "Email subject is required",
-      };
+      return { success: false, error: "Email subject is required" };
     }
 
     if (!mailOptions.text && !mailOptions.html) {
@@ -1446,7 +1232,6 @@ const sendMail = async (mailOptions) => {
     }
 
     const transporter = getTransporter();
-
     const from = mailOptions.from || getFromAddress();
 
     const to = Array.isArray(mailOptions.to)
@@ -1455,44 +1240,28 @@ const sendMail = async (mailOptions) => {
 
     const result = await transporter.sendMail({
       from,
-
       to,
-
       subject: mailOptions.subject,
-
-      ...(mailOptions.text && {
-        text: mailOptions.text,
-      }),
-
-      ...(mailOptions.html && {
-        html: mailOptions.html,
-      }),
-
+      ...(mailOptions.text && { text: mailOptions.text }),
+      ...(mailOptions.html && { html: mailOptions.html }),
       ...(mailOptions.cc && {
         cc: Array.isArray(mailOptions.cc)
           ? mailOptions.cc.join(",")
           : mailOptions.cc,
       }),
-
       ...(mailOptions.bcc && {
         bcc: Array.isArray(mailOptions.bcc)
           ? mailOptions.bcc.join(",")
           : mailOptions.bcc,
       }),
-
-      ...(mailOptions.replyTo && {
-        replyTo: mailOptions.replyTo,
-      }),
-
+      ...(mailOptions.replyTo && { replyTo: mailOptions.replyTo }),
       ...(mailOptions.attachments && {
         attachments: mailOptions.attachments,
       }),
     });
 
     smtpConnected = true;
-
     smtpLastError = null;
-
     smtpLastCheckedAt = new Date();
 
     console.log("");
@@ -1503,26 +1272,15 @@ const sendMail = async (mailOptions) => {
     console.log("📨 Message ID:", result.messageId || "N/A");
     console.log("================================================");
 
-    return {
-      success: true,
-      info: result,
-      data: result,
-      error: null,
-    };
+    return { success: true, info: result, data: result, error: null };
   } catch (error) {
     smtpConnected = false;
-
     smtpLastError = getSMTPErrorMessage(error);
-
     smtpLastCheckedAt = new Date();
 
     console.error("❌ GMAIL SMTP EMAIL SENDING FAILED:", smtpLastError);
 
-    return {
-      success: false,
-      error: smtpLastError,
-      code: error.code || null,
-    };
+    return { success: false, error: smtpLastError, code: error.code || null };
   }
 };
 
@@ -1540,20 +1298,8 @@ const sendEmail = async ({
   replyTo,
   attachments,
 }) => {
-  if (!to) {
-    return {
-      success: false,
-      error: "Email recipient is required",
-    };
-  }
-
-  if (!subject) {
-    return {
-      success: false,
-      error: "Email subject is required",
-    };
-  }
-
+  if (!to) return { success: false, error: "Email recipient is required" };
+  if (!subject) return { success: false, error: "Email subject is required" };
   if (!text && !html) {
     return {
       success: false,
@@ -1563,34 +1309,14 @@ const sendEmail = async ({
 
   const mailOptions = {
     from: getFromAddress(),
-
     to,
-
     subject,
-
-    ...(text && {
-      text,
-    }),
-
-    ...(html && {
-      html,
-    }),
-
-    ...(cc && {
-      cc,
-    }),
-
-    ...(bcc && {
-      bcc,
-    }),
-
-    ...(replyTo && {
-      replyTo,
-    }),
-
-    ...(attachments && {
-      attachments,
-    }),
+    ...(text && { text }),
+    ...(html && { html }),
+    ...(cc && { cc }),
+    ...(bcc && { bcc }),
+    ...(replyTo && { replyTo }),
+    ...(attachments && { attachments }),
   };
 
   return await sendMailWithRetry(mailOptions, 3);
@@ -1614,15 +1340,18 @@ const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
       }
 
       lastError = result.error;
+
+      // Auth failures won't fix themselves on retry — stop early.
+      if (result.code === "EAUTH") {
+        break;
+      }
     } catch (error) {
       lastError = getSMTPErrorMessage(error);
     }
 
     if (attempt < maxRetries) {
       const delay = attempt * 2000;
-
       console.log(`🔄 Retrying SMTP email in ${delay / 1000} seconds...`);
-
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
@@ -1644,13 +1373,8 @@ const sendMailSafely = async (mailOptions) => {
     return await sendMailWithRetry(mailOptions, 3);
   } catch (error) {
     const message = getSMTPErrorMessage(error);
-
     console.error("⚠️ Gmail SMTP email service error:", message);
-
-    return {
-      success: false,
-      error: message,
-    };
+    return { success: false, error: message };
   }
 };
 
@@ -1661,37 +1385,22 @@ const sendMailSafely = async (mailOptions) => {
 const getSMTPInfo = () => {
   return {
     host: SMTP_HOST,
-
     port: SMTP_PORT,
-
     user: SMTP_USER,
-
     adminEmail: ADMIN_EMAIL,
-
     fromName: EMAIL_FROM_NAME,
-
     service: "Gmail SMTP",
-
     protocol: "SMTP",
-
     secure: isSecureConnection,
-
     security: isSecureConnection ? "SSL/TLS" : "STARTTLS",
-
+    env: NODE_ENV,
     configured: isSMTPConfigured(),
-
     transporterCreated: Boolean(smtpTransporter),
-
     connected: smtpConnected,
-
     status: smtpConnected ? "ONLINE" : "OFFLINE",
-
     startupTestEmail: TEST_EMAIL,
-
     startupTestSent: startupTestSent,
-
     lastError: smtpLastError,
-
     lastCheckedAt: smtpLastCheckedAt,
   };
 };
@@ -1707,19 +1416,13 @@ const closeTransporter = async () => {
     }
 
     smtpTransporter = null;
-
     smtpConnected = false;
 
     console.log("🔌 GMAIL SMTP CLIENT CLOSED");
 
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-    };
+    return { success: false, error: error.message };
   }
 };
 
@@ -1727,10 +1430,9 @@ const closeTransporter = async () => {
 // STARTUP VERIFICATION
 // ============================================================
 //
-// IMPORTANT:
-// This verifies SMTP but does NOT send a test email.
-// This prevents every server restart from sending an
-// unnecessary test email.
+// Verifies SMTP but does NOT send a test email by default, so
+// every server restart doesn't spam an inbox. Pass true to
+// startSMTPVerification() to also send a one-off test email.
 //
 // ============================================================
 
@@ -1739,52 +1441,42 @@ const startSMTPVerification = async (sendStartupTest = false) => {
   console.log("================================================");
   console.log("📧 EMAIL SERVICE STARTUP CHECK");
   console.log("================================================");
-
   console.log("🌐 SMTP Host:", SMTP_HOST);
-
   console.log("🔌 SMTP Port:", SMTP_PORT);
-
   console.log("🔒 Security:", isSecureConnection ? "SSL/TLS" : "STARTTLS");
-
   console.log("📧 SMTP User:", SMTP_USER || "NOT CONFIGURED");
-
+  console.log("🏷️  NODE_ENV:", NODE_ENV);
   console.log("================================================");
 
-  // ----------------------------------------------------------
-  // Configuration check
-  // ----------------------------------------------------------
+  if (!SMTP_PASS) {
+    smtpConnected = false;
+    smtpLastError =
+      "SMTP_PASS is empty. Generate a Gmail App Password at " +
+      "https://myaccount.google.com/apppasswords and set it in your " +
+      "environment — Gmail will reject a blank or normal account password.";
+
+    console.error("🔴 EMAIL SERVICE STATUS: OFFLINE");
+    console.error("❌", smtpLastError);
+    console.log("================================================");
+
+    return { success: false, connected: false, error: smtpLastError };
+  }
 
   if (!isSMTPConfigured()) {
     smtpConnected = false;
-
     smtpLastError = "SMTP configuration is incomplete";
 
     console.error("🔴 EMAIL SERVICE STATUS: OFFLINE");
-
     console.error("❌ Required environment variables:");
-
     console.error("   SMTP_HOST");
-
     console.error("   SMTP_PORT");
-
     console.error("   SMTP_USER");
-
     console.error("   SMTP_PASS");
-
     console.error("   ADMIN_EMAIL");
-
     console.log("================================================");
 
-    return {
-      success: false,
-      connected: false,
-      error: smtpLastError,
-    };
+    return { success: false, connected: false, error: smtpLastError };
   }
-
-  // ----------------------------------------------------------
-  // Verify connection
-  // ----------------------------------------------------------
 
   const result = await testConnection();
 
@@ -1792,16 +1484,9 @@ const startSMTPVerification = async (sendStartupTest = false) => {
 
   if (result.connected) {
     console.log("🟢 EMAIL SERVICE STATUS: ONLINE");
-
     console.log("🟢 GMAIL SMTP: CONNECTED");
-
     console.log("🌐 SMTP:", `${SMTP_HOST}:${SMTP_PORT}`);
-
     console.log("🔒 SECURITY:", isSecureConnection ? "SSL/TLS" : "STARTTLS");
-
-    // --------------------------------------------------------
-    // Optional startup test email
-    // --------------------------------------------------------
 
     if (sendStartupTest === true) {
       const testResult = await sendTestEmail();
@@ -1817,14 +1502,10 @@ const startSMTPVerification = async (sendStartupTest = false) => {
     }
   } else {
     console.log("🔴 EMAIL SERVICE STATUS: OFFLINE");
-
     console.log("🔴 Reason:", result.error);
-
     console.log("");
     console.log("⚠️ IMPORTANT:");
-
     console.log("The application will continue running.");
-
     console.log("Email functionality will retry when used.");
   }
 
@@ -1839,28 +1520,16 @@ const startSMTPVerification = async (sendStartupTest = false) => {
 
 module.exports = {
   getTransporter,
-
   getSMTPInfo,
-
   isSMTPConfigured,
-
   isResendConfigured,
-
   verifySMTPConnection,
-
   testConnection,
-
   sendTestEmail,
-
   startSMTPVerification,
-
   sendEmail,
-
   sendMail,
-
   sendMailWithRetry,
-
   sendMailSafely,
-
   closeTransporter,
 };
