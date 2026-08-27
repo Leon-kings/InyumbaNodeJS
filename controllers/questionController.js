@@ -1835,6 +1835,67 @@ exports.getQuestionNotifications = async (req, res) => {
   }
 };
 
+exports.getQuestionNotificationsByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
+
+    const query = {
+      type: { $regex: /^question_/ },
+      isActive: true,
+      email: email.trim().toLowerCase(),
+    };
+
+    const [notifications, total, unreadCount] = await Promise.all([
+      Notification.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      Notification.countDocuments(query),
+
+      Notification.countDocuments({
+        ...query,
+        isRead: false,
+      }),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: notifications,
+      unreadCount,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error(
+      "❌ Get question notifications by email error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch notifications",
+      error: error.message,
+    });
+  }
+};
+
 // 12. Get My Question Notifications
 exports.getMyQuestionNotifications = async (req, res) => {
   try {

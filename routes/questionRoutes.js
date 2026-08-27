@@ -182,6 +182,11 @@ router.get(
   questionController.getQuestionNotifications
 );
 
+router.get(
+  "/notifications/email/:email",
+  questionController.getQuestionNotificationsByEmail
+);
+
 // 2. Get my question notifications
 router.get(
   "/notifications/my",
