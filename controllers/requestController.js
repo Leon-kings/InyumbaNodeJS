@@ -2305,10 +2305,61 @@ exports.getUnreadCount = async (req, res) => {
 };
 
 // DELETE ONE NOTIFICATION
+// exports.deleteNotification = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const user = req.user;
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid notification ID",
+//       });
+//     }
+
+//     const notification = await Notification.findById(id);
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     // Check permission
+//     const hasPermission =
+//       user.role === "admin" ||
+//       notification.targetUserId?.toString() === user.id ||
+//       notification.userId?.toString() === user.id;
+
+//     if (!hasPermission) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "You don't have permission to delete this notification",
+//       });
+//     }
+
+//     await notification.deleteOne();
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Notification deleted successfully",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error("❌ DELETE NOTIFICATION ERROR:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to delete notification",
+//       error: error.message,
+//     });
+//   }
+// };
+
 exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -2326,19 +2377,7 @@ exports.deleteNotification = async (req, res) => {
       });
     }
 
-    // Check permission
-    const hasPermission =
-      user.role === "admin" ||
-      notification.targetUserId?.toString() === user.id ||
-      notification.userId?.toString() === user.id;
-
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to delete this notification",
-      });
-    }
-
+    // Delete notification without checking user, role, email, or ownership
     await notification.deleteOne();
 
     return res.status(200).json({
@@ -2358,10 +2397,70 @@ exports.deleteNotification = async (req, res) => {
 };
 
 // BULK DELETE NOTIFICATIONS
+// exports.bulkDeleteNotifications = async (req, res) => {
+//   try {
+//     const { ids } = req.body;
+//     const user = req.user;
+
+//     if (!Array.isArray(ids) || ids.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Please provide an array of notification IDs",
+//       });
+//     }
+
+//     // Validate every ID
+//     const invalidIds = ids.filter((id) => !mongoose.Types.ObjectId.isValid(id));
+
+//     if (invalidIds.length > 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "One or more notification IDs are invalid",
+//         invalidIds,
+//       });
+//     }
+
+//     let query = {
+//       _id: { $in: ids },
+//     };
+
+//     // Non-admin users can only delete their own notifications
+//     if (user.role !== "admin") {
+//       query.$or = [
+//         { targetUserId: user.id },
+//         { userId: user.id },
+//         { targetUserEmail: user.email },
+//       ];
+//     }
+
+//     const result = await Notification.deleteMany(query);
+
+//     if (result.deletedCount === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No notifications found to delete",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `${result.deletedCount} notifications deleted successfully`,
+//       deletedCount: result.deletedCount,
+//     });
+//   } catch (error) {
+//     console.error("❌ BULK DELETE NOTIFICATIONS ERROR:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to delete notifications",
+//       error: error.message,
+//     });
+//   }
+// };
+
 exports.bulkDeleteNotifications = async (req, res) => {
   try {
     const { ids } = req.body;
-    const user = req.user;
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
@@ -2371,7 +2470,9 @@ exports.bulkDeleteNotifications = async (req, res) => {
     }
 
     // Validate every ID
-    const invalidIds = ids.filter((id) => !mongoose.Types.ObjectId.isValid(id));
+    const invalidIds = ids.filter(
+      (id) => !mongoose.Types.ObjectId.isValid(id)
+    );
 
     if (invalidIds.length > 0) {
       return res.status(400).json({
@@ -2381,20 +2482,11 @@ exports.bulkDeleteNotifications = async (req, res) => {
       });
     }
 
-    let query = {
+    // Delete all requested notifications
+    // without checking role, user, email, or ownership
+    const result = await Notification.deleteMany({
       _id: { $in: ids },
-    };
-
-    // Non-admin users can only delete their own notifications
-    if (user.role !== "admin") {
-      query.$or = [
-        { targetUserId: user.id },
-        { userId: user.id },
-        { targetUserEmail: user.email },
-      ];
-    }
-
-    const result = await Notification.deleteMany(query);
+    });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({
