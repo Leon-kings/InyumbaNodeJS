@@ -727,6 +727,12 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 // ============================================================
+// FORCE IPv4 RESOLUTION (Fixes ENETUNREACH error)
+// ============================================================
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
+// ============================================================
 // CONFIGURATION
 // ============================================================
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
@@ -756,6 +762,9 @@ const timers = {
   totalEmailsFailed: 0,
   averageResponseTime: 0,
   responseTimes: [],
+  uptimeStart: Date.now(),
+  lastSuccessfulSend: null,
+  lastFailedSend: null,
 };
 
 // ============================================================
@@ -789,7 +798,8 @@ const getTransporter = () => {
     smtpTransporter = nodemailer.createTransport({
       host: SMTP_HOST,
       port: 465,
-      secure: true,
+      secure: true, // 🔒 Always true for port 465 (SSL/TLS)
+      family: 4, // 🔒 Force IPv4 to avoid ENETUNREACH
       auth: {
         user: SMTP_USER,
         pass: SMTP_PASS,
@@ -831,6 +841,27 @@ const recordResponseTime = (duration) => {
   timers.averageResponseTime = sum / timers.responseTimes.length;
 };
 
+const getUptime = () => {
+  return Math.floor((Date.now() - timers.uptimeStart) / 1000); // in seconds
+};
+
+const formatUptime = (seconds) => {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m ${secs}s`;
+  } else if (hours > 0) {
+    return `${hours}h ${minutes}m ${secs}s`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${secs}s`;
+  } else {
+    return `${secs}s`;
+  }
+};
+
 // ============================================================
 // TEST SMTP (GMAIL)
 // ============================================================
@@ -867,6 +898,7 @@ const testConnection = async () => {
     console.log("🔄 Connecting to Gmail SMTP...");
     console.log("🌐 Host:", SMTP_HOST);
     console.log("🔒 Port: 465 (SSL/TLS)");
+    console.log("🔌 Network: IPv4 (forced)");
     console.log("📤 From:", from);
     console.log("📨 Test recipient:", TEST_EMAIL);
 
@@ -1045,6 +1077,10 @@ const testConnection = async () => {
               <span class="status-value">SSL/TLS</span>
             </div>
             <div class="status-row">
+              <span class="status-label">🔌 Network</span>
+              <span class="status-value">IPv4</span>
+            </div>
+            <div class="status-row">
               <span class="status-label">📶 Status</span>
               <span class="status-value connected">● Connected</span>
             </div>
@@ -1095,6 +1131,7 @@ const testConnection = async () => {
     const sendDuration = endTimer("sendStart");
     recordResponseTime(sendDuration);
     timers.totalEmailsSent++;
+    timers.lastSuccessfulSend = new Date();
     smtpConnected = true;
     smtpLastError = null;
     smtpLastCheckedAt = new Date();
@@ -1106,8 +1143,10 @@ const testConnection = async () => {
     console.log("🟢 EMAIL SERVICE: ONLINE");
     console.log("🟢 GMAIL SMTP: CONNECTED");
     console.log("🔒 SECURITY: SSL/TLS");
+    console.log("🔌 NETWORK: IPv4");
     console.log(`🟢 TEST EMAIL SENT TO: ${TEST_EMAIL}`);
-    console.log(`⏱️ Response Time: ${sendDuration}ms`);
+    console.log(`⏱️ Connection Time: ${connectionDuration}ms`);
+    console.log(`⏱️ Send Time: ${sendDuration}ms`);
     console.log("📨 Message ID:", result.messageId || "N/A");
     console.log("================================================");
 
@@ -1126,6 +1165,7 @@ const testConnection = async () => {
     smtpLastError = error.message;
     smtpLastCheckedAt = new Date();
     timers.totalEmailsFailed++;
+    timers.lastFailedSend = new Date();
 
     console.error("");
     console.error("================================================");
@@ -1214,6 +1254,7 @@ const sendMail = async (mailOptions) => {
     const sendDuration = endTimer("sendStart");
     recordResponseTime(sendDuration);
     timers.totalEmailsSent++;
+    timers.lastSuccessfulSend = new Date();
     smtpConnected = true;
     smtpLastError = null;
     smtpLastCheckedAt = new Date();
@@ -1222,6 +1263,7 @@ const sendMail = async (mailOptions) => {
     console.log("================================================");
     console.log("✅ EMAIL SENT SUCCESSFULLY THROUGH GMAIL SMTP");
     console.log("🔒 SECURITY: SSL/TLS (PORT 465)");
+    console.log("🔌 NETWORK: IPv4");
     console.log("📤 From:", from);
     console.log("📨 To:", to);
     console.log(`⏱️ Response Time: ${sendDuration}ms`);
@@ -1240,6 +1282,7 @@ const sendMail = async (mailOptions) => {
     smtpLastError = error.message;
     smtpLastCheckedAt = new Date();
     timers.totalEmailsFailed++;
+    timers.lastFailedSend = new Date();
 
     console.error("❌ GMAIL SMTP EMAIL SENDING FAILED:", error.message);
 
@@ -1359,6 +1402,8 @@ const sendMailSafely = async (mailOptions) => {
 // SMTP INFORMATION WITH TIMERS
 // ============================================================
 const getSMTPInfo = () => {
+  const uptimeSeconds = getUptime();
+  
   return {
     // Basic configuration
     host: SMTP_HOST,
@@ -1369,6 +1414,7 @@ const getSMTPInfo = () => {
     service: "Gmail SMTP",
     protocol: "SMTP",
     security: "SSL/TLS",
+    network: "IPv4 (forced)",
     
     // Status
     configured: isSMTPConfigured(),
@@ -1381,6 +1427,10 @@ const getSMTPInfo = () => {
     lastCheckedAt: smtpLastCheckedAt,
 
     // Timers and metrics
+    uptime: {
+      seconds: uptimeSeconds,
+      formatted: formatUptime(uptimeSeconds),
+    },
     timers: {
       connectionDuration: timers.connectionStart 
         ? Date.now() - timers.connectionStart 
@@ -1395,6 +1445,8 @@ const getSMTPInfo = () => {
         : 0,
       averageResponseTime: Math.round(timers.averageResponseTime),
       recentResponseTimes: timers.responseTimes.slice(-10).map(ms => Math.round(ms)),
+      lastSuccessfulSend: timers.lastSuccessfulSend,
+      lastFailedSend: timers.lastFailedSend,
     },
   };
 };
@@ -1410,9 +1462,13 @@ const closeTransporter = async () => {
     smtpTransporter = null;
     smtpConnected = false;
 
-    // Reset timers
+    // Reset timers (keep stats)
     Object.keys(timers).forEach(key => {
-      if (key !== 'totalEmailsSent' && key !== 'totalEmailsFailed' && key !== 'responseTimes' && key !== 'averageResponseTime') {
+      if (key !== 'totalEmailsSent' && 
+          key !== 'totalEmailsFailed' && 
+          key !== 'responseTimes' && 
+          key !== 'averageResponseTime' &&
+          key !== 'uptimeStart') {
         timers[key] = null;
       }
     });
@@ -1449,6 +1505,7 @@ const startSMTPVerification = async () => {
     console.log("🟢 EMAIL SERVICE STATUS: ONLINE");
     console.log("🟢 GMAIL SMTP: CONNECTED");
     console.log("🔒 SECURITY: SSL/TLS (PORT 465)");
+    console.log("🔌 NETWORK: IPv4");
     console.log(`🟢 TEST EMAIL SENT TO: ${TEST_EMAIL}`);
     console.log(`⏱️ Connection Time: ${result.connectionDuration || 'N/A'}ms`);
     console.log(`⏱️ Send Time: ${result.sendDuration || 'N/A'}ms`);
@@ -1484,4 +1541,6 @@ module.exports = {
   startTimer,
   endTimer,
   recordResponseTime,
+  getUptime,
+  formatUptime,
 };
