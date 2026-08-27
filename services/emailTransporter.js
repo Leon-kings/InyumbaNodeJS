@@ -733,15 +733,17 @@ const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
 // ============================================================
-// CONFIGURATION
+// CONFIGURATION - All from .env file (NO CREDENTIALS HERE!)
 // ============================================================
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = 465; // 🔒 Fixed to port 465 only
-const SMTP_USER = process.env.SMTP_USER || "";
-const SMTP_PASS = process.env.SMTP_PASS || "";
-const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "INYUMBA";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || SMTP_USER;
-const TEST_EMAIL = "kingsleon250@gmail.com";
+const BREVO_SMTP_HOST = process.env.BREVO_SMTP_HOST || "smtp-relay.brevo.com";
+const BREVO_SMTP_PORT = parseInt(process.env.BREVO_SMTP_PORT) || 587;
+const BREVO_SMTP_USER = process.env.BREVO_SMTP_USER || "";
+const BREVO_SMTP_PASS = process.env.BREVO_SMTP_PASS || "";
+const BREVO_FROM_NAME = process.env.BREVO_FROM_NAME || "INYUMBA";
+const BREVO_FROM_EMAIL = process.env.BREVO_FROM_EMAIL || "";
+const BREVO_TEST_EMAIL = process.env.BREVO_TEST_EMAIL || "kingsleon250@gmail.com";
+const BREVO_USE_SSL = process.env.BREVO_USE_SSL === 'true' || false;
+const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
 
 // ============================================================
 // STATE MANAGEMENT
@@ -771,44 +773,47 @@ const timers = {
 // FROM ADDRESS
 // ============================================================
 const getFromAddress = () => {
-  if (!ADMIN_EMAIL) {
-    throw new Error("ADMIN_EMAIL is required");
+  if (!BREVO_FROM_EMAIL) {
+    throw new Error("BREVO_FROM_EMAIL is required");
   }
-  return `"${EMAIL_FROM_NAME}" <${ADMIN_EMAIL}>`;
+  return `"${BREVO_FROM_NAME}" <${BREVO_FROM_EMAIL}>`;
 };
 
 // ============================================================
 // CONFIGURATION CHECKS
 // ============================================================
 const isSMTPConfigured = () => {
-  return Boolean(SMTP_USER && SMTP_PASS && ADMIN_EMAIL);
+  return Boolean(BREVO_SMTP_USER && BREVO_SMTP_PASS && BREVO_FROM_EMAIL);
 };
 
-const isResendConfigured = isSMTPConfigured;
-
 // ============================================================
-// SMTP TRANSPORTER (GMAIL - PORT 465 ONLY)
+// SMTP TRANSPORTER (BREVO)
 // ============================================================
 const getTransporter = () => {
   if (!isSMTPConfigured()) {
-    throw new Error("Gmail SMTP configuration is incomplete");
+    throw new Error("Brevo SMTP configuration is incomplete. Please check BREVO_SMTP_USER, BREVO_SMTP_PASS, and BREVO_FROM_EMAIL");
   }
 
   if (!smtpTransporter) {
-    smtpTransporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: 465,
-      secure: true, // 🔒 Always true for port 465 (SSL/TLS)
-      family: 4, // 🔒 Force IPv4 to avoid ENETUNREACH
+    const config = {
+      host: BREVO_SMTP_HOST,
+      port: BREVO_SMTP_PORT,
+      secure: BREVO_USE_SSL,
+      family: 4, // Force IPv4
       auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
+        user: BREVO_SMTP_USER,
+        pass: BREVO_SMTP_PASS,
       },
-      // Connection timeout settings
-      connectionTimeout: 30000, // 30 seconds
+      connectionTimeout: 30000,
       greetingTimeout: 30000,
-      socketTimeout: 60000, // 60 seconds
-    });
+      socketTimeout: 60000,
+    };
+
+    if (BREVO_SMTP_PORT === 587 && !BREVO_USE_SSL) {
+      config.requireTLS = true;
+    }
+
+    smtpTransporter = nodemailer.createTransport(config);
   }
 
   return smtpTransporter;
@@ -832,17 +837,15 @@ const endTimer = (timerName) => {
 
 const recordResponseTime = (duration) => {
   timers.responseTimes.push(duration);
-  // Keep only last 100 response times for average calculation
   if (timers.responseTimes.length > 100) {
     timers.responseTimes.shift();
   }
-  // Update average
   const sum = timers.responseTimes.reduce((a, b) => a + b, 0);
   timers.averageResponseTime = sum / timers.responseTimes.length;
 };
 
 const getUptime = () => {
-  return Math.floor((Date.now() - timers.uptimeStart) / 1000); // in seconds
+  return Math.floor((Date.now() - timers.uptimeStart) / 1000);
 };
 
 const formatUptime = (seconds) => {
@@ -863,24 +866,24 @@ const formatUptime = (seconds) => {
 };
 
 // ============================================================
-// TEST SMTP (GMAIL)
+// TEST SMTP (BREVO)
 // ============================================================
 const testConnection = async () => {
   console.log("");
   console.log("================================================");
-  console.log("🔍 VERIFYING GMAIL SMTP CONNECTION (PORT 465)");
+  console.log("🔍 VERIFYING BREVO SMTP CONNECTION");
   console.log("================================================");
 
   smtpLastCheckedAt = new Date();
 
   if (!isSMTPConfigured()) {
     smtpConnected = false;
-    smtpLastError = "Gmail SMTP configuration is incomplete";
-    console.error("❌ GMAIL SMTP CONFIGURATION INCOMPLETE");
+    smtpLastError = "Brevo SMTP configuration is incomplete";
+    console.error("❌ BREVO SMTP CONFIGURATION INCOMPLETE");
     console.error("Required environment variables:");
-    console.error("SMTP_USER");
-    console.error("SMTP_PASS");
-    console.error("ADMIN_EMAIL");
+    console.error("BREVO_SMTP_USER");
+    console.error("BREVO_SMTP_PASS");
+    console.error("BREVO_FROM_EMAIL");
     console.log("================================================");
     return {
       success: false,
@@ -895,32 +898,30 @@ const testConnection = async () => {
     const transporter = getTransporter();
     const from = getFromAddress();
 
-    console.log("🔄 Connecting to Gmail SMTP...");
-    console.log("🌐 Host:", SMTP_HOST);
-    console.log("🔒 Port: 465 (SSL/TLS)");
+    console.log("🔄 Connecting to Brevo SMTP...");
+    console.log("🌐 Host:", BREVO_SMTP_HOST);
+    console.log(`🔒 Port: ${BREVO_SMTP_PORT} (${BREVO_USE_SSL ? 'SSL' : 'TLS'})`);
     console.log("🔌 Network: IPv4 (forced)");
     console.log("📤 From:", from);
-    console.log("📨 Test recipient:", TEST_EMAIL);
+    console.log("📨 Test recipient:", BREVO_TEST_EMAIL);
 
-    // Verify connection
     await transporter.verify();
     const connectionDuration = endTimer("connectionStart");
     console.log(`✅ Connection established in ${connectionDuration}ms`);
 
-    // Send test email
     startTimer("sendStart");
     const result = await transporter.sendMail({
       from,
-      to: TEST_EMAIL,
-      subject: "✨ INYUMBA Email Service Test",
-      text: "This is a test email from the INYUMBA application. The Gmail SMTP email service is working correctly.",
+      to: BREVO_TEST_EMAIL,
+      subject: "✨ INYUMBA Email Service Test - Brevo",
+      text: "This is a test email from the INYUMBA application. The Brevo SMTP email service is working correctly.",
       html: `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>INYUMBA Email Test</title>
+        <title>INYUMBA Email Test - Brevo</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -941,7 +942,7 @@ const testConnection = async () => {
 
           .logo-icon {
             display: inline-block;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            background: linear-gradient(135deg, #0b6bdf, #00b4d8);
             color: white;
             font-size: 28px;
             font-weight: 700;
@@ -982,7 +983,7 @@ const testConnection = async () => {
             border-radius: 16px;
             padding: 24px 28px;
             margin: 24px 0;
-            border-left: 5px solid #22c55e;
+            border-left: 5px solid #0b6bdf;
           }
 
           .status-row {
@@ -1028,7 +1029,7 @@ const testConnection = async () => {
           }
 
           .footer a {
-            color: #6366f1;
+            color: #0b6bdf;
             text-decoration: none;
             font-weight: 500;
           }
@@ -1058,23 +1059,23 @@ const testConnection = async () => {
 
           <div class="header">
             <div class="logo-icon">INYUMBA</div>
-            <div class="badge">✅ Test Email</div>
+            <div class="badge">✅ Brevo Test Email</div>
           </div>
 
           <h2>Email Service is Live 🚀</h2>
           <p class="subtitle">
             This is a test email from the <strong>INYUMBA</strong> application.
-            Your Gmail SMTP configuration is working perfectly.
+            Your Brevo SMTP configuration is working perfectly.
           </p>
 
           <div class="status-card">
             <div class="status-row">
               <span class="status-label">📧 Service</span>
-              <span class="status-value">Gmail SMTP (Port 465)</span>
+              <span class="status-value">Brevo SMTP (Port ${BREVO_SMTP_PORT})</span>
             </div>
             <div class="status-row">
               <span class="status-label">🔒 Security</span>
-              <span class="status-value">SSL/TLS</span>
+              <span class="status-value">${BREVO_USE_SSL ? 'SSL' : 'TLS'}</span>
             </div>
             <div class="status-row">
               <span class="status-label">🔌 Network</span>
@@ -1090,7 +1091,7 @@ const testConnection = async () => {
             </div>
             <div class="status-row">
               <span class="status-label">📨 Recipient</span>
-              <span class="status-value">${TEST_EMAIL}</span>
+              <span class="status-value">${BREVO_TEST_EMAIL}</span>
             </div>
             <div class="status-row">
               <span class="status-label">⏱️ Response Time</span>
@@ -1139,12 +1140,12 @@ const testConnection = async () => {
 
     console.log("");
     console.log("================================================");
-    console.log("✅ GMAIL SMTP CONNECTION VERIFIED (PORT 465)");
+    console.log("✅ BREVO SMTP CONNECTION VERIFIED");
     console.log("🟢 EMAIL SERVICE: ONLINE");
-    console.log("🟢 GMAIL SMTP: CONNECTED");
-    console.log("🔒 SECURITY: SSL/TLS");
+    console.log("🟢 BREVO SMTP: CONNECTED");
+    console.log(`🔒 SECURITY: ${BREVO_USE_SSL ? 'SSL' : 'TLS'}`);
     console.log("🔌 NETWORK: IPv4");
-    console.log(`🟢 TEST EMAIL SENT TO: ${TEST_EMAIL}`);
+    console.log(`🟢 TEST EMAIL SENT TO: ${BREVO_TEST_EMAIL}`);
     console.log(`⏱️ Connection Time: ${connectionDuration}ms`);
     console.log(`⏱️ Send Time: ${sendDuration}ms`);
     console.log("📨 Message ID:", result.messageId || "N/A");
@@ -1155,7 +1156,7 @@ const testConnection = async () => {
       connected: true,
       error: null,
       data: result,
-      testEmail: TEST_EMAIL,
+      testEmail: BREVO_TEST_EMAIL,
       checkedAt: smtpLastCheckedAt,
       connectionDuration,
       sendDuration,
@@ -1169,7 +1170,7 @@ const testConnection = async () => {
 
     console.error("");
     console.error("================================================");
-    console.error("❌ GMAIL SMTP CONNECTION FAILED (PORT 465)");
+    console.error("❌ BREVO SMTP CONNECTION FAILED");
     console.error("🔴 EMAIL SERVICE: OFFLINE");
     console.error("❌ Error:", error.message);
     console.error("================================================");
@@ -1191,7 +1192,7 @@ const sendMail = async (mailOptions) => {
     if (!isSMTPConfigured()) {
       return {
         success: false,
-        error: "Gmail SMTP configuration is incomplete",
+        error: "Brevo SMTP configuration is incomplete",
       };
     }
 
@@ -1261,8 +1262,8 @@ const sendMail = async (mailOptions) => {
 
     console.log("");
     console.log("================================================");
-    console.log("✅ EMAIL SENT SUCCESSFULLY THROUGH GMAIL SMTP");
-    console.log("🔒 SECURITY: SSL/TLS (PORT 465)");
+    console.log("✅ EMAIL SENT SUCCESSFULLY THROUGH BREVO SMTP");
+    console.log(`🔒 SECURITY: ${BREVO_USE_SSL ? 'SSL' : 'TLS'} (PORT ${BREVO_SMTP_PORT})`);
     console.log("🔌 NETWORK: IPv4");
     console.log("📤 From:", from);
     console.log("📨 To:", to);
@@ -1284,7 +1285,7 @@ const sendMail = async (mailOptions) => {
     timers.totalEmailsFailed++;
     timers.lastFailedSend = new Date();
 
-    console.error("❌ GMAIL SMTP EMAIL SENDING FAILED:", error.message);
+    console.error("❌ BREVO SMTP EMAIL SENDING FAILED:", error.message);
 
     return {
       success: false,
@@ -1369,7 +1370,7 @@ const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
     if (attempt < maxRetries) {
       const waitTime = attempt * 2000;
       console.log(
-        `🔄 Retrying Gmail SMTP email in ${waitTime}ms (${attempt + 1}/${maxRetries})...`,
+        `🔄 Retrying Brevo SMTP email in ${waitTime}ms (${attempt + 1}/${maxRetries})...`,
       );
       await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
@@ -1377,7 +1378,7 @@ const sendMailWithRetry = async (mailOptions, maxRetries = 3) => {
 
   return {
     success: false,
-    error: lastError || "Gmail SMTP email sending failed",
+    error: lastError || "Brevo SMTP email sending failed",
     totalAttempts: maxRetries,
     totalTime: Date.now() - startTime,
   };
@@ -1390,7 +1391,7 @@ const sendMailSafely = async (mailOptions) => {
   try {
     return await sendMailWithRetry(mailOptions, 3);
   } catch (error) {
-    console.error("⚠️ Gmail SMTP email service error:", error.message);
+    console.error("⚠️ Brevo SMTP email service error:", error.message);
     return {
       success: false,
       error: error.message,
@@ -1405,39 +1406,28 @@ const getSMTPInfo = () => {
   const uptimeSeconds = getUptime();
   
   return {
-    // Basic configuration
-    host: SMTP_HOST,
-    port: 465,
-    user: SMTP_USER,
-    adminEmail: ADMIN_EMAIL,
-    fromName: EMAIL_FROM_NAME,
-    service: "Gmail SMTP",
+    service: "Brevo SMTP",
+    host: BREVO_SMTP_HOST,
+    port: BREVO_SMTP_PORT,
+    user: BREVO_SMTP_USER ? "✓ Configured" : "✗ Missing",
+    fromEmail: BREVO_FROM_EMAIL,
+    fromName: BREVO_FROM_NAME,
     protocol: "SMTP",
-    security: "SSL/TLS",
+    security: BREVO_USE_SSL ? 'SSL' : 'TLS',
     network: "IPv4 (forced)",
-    
-    // Status
     configured: isSMTPConfigured(),
     transporterCreated: Boolean(smtpTransporter),
     connected: smtpConnected,
     status: smtpConnected ? "ONLINE" : "OFFLINE",
-    startupTestEmail: TEST_EMAIL,
+    testEmail: BREVO_TEST_EMAIL,
     startupTestSent: startupTestSent,
     lastError: smtpLastError,
     lastCheckedAt: smtpLastCheckedAt,
-
-    // Timers and metrics
     uptime: {
       seconds: uptimeSeconds,
       formatted: formatUptime(uptimeSeconds),
     },
     timers: {
-      connectionDuration: timers.connectionStart 
-        ? Date.now() - timers.connectionStart 
-        : null,
-      lastSendDuration: timers.lastSendStart && timers.lastSendEnd
-        ? timers.lastSendEnd - timers.lastSendStart
-        : null,
       totalEmailsSent: timers.totalEmailsSent,
       totalEmailsFailed: timers.totalEmailsFailed,
       successRate: timers.totalEmailsSent + timers.totalEmailsFailed > 0
@@ -1462,7 +1452,6 @@ const closeTransporter = async () => {
     smtpTransporter = null;
     smtpConnected = false;
 
-    // Reset timers (keep stats)
     Object.keys(timers).forEach(key => {
       if (key !== 'totalEmailsSent' && 
           key !== 'totalEmailsFailed' && 
@@ -1473,7 +1462,7 @@ const closeTransporter = async () => {
       }
     });
 
-    console.log("🔌 GMAIL SMTP CLIENT CLOSED");
+    console.log("🔌 BREVO SMTP CLIENT CLOSED");
     return {
       success: true,
     };
@@ -1491,7 +1480,7 @@ const closeTransporter = async () => {
 const startSMTPVerification = async () => {
   console.log("");
   console.log("================================================");
-  console.log("📧 EMAIL SERVICE STARTUP CHECK (PORT 465)");
+  console.log("📧 EMAIL SERVICE STARTUP CHECK - BREVO");
   console.log("================================================");
 
   const result = await testConnection();
@@ -1503,10 +1492,10 @@ const startSMTPVerification = async () => {
 
   if (result.connected) {
     console.log("🟢 EMAIL SERVICE STATUS: ONLINE");
-    console.log("🟢 GMAIL SMTP: CONNECTED");
-    console.log("🔒 SECURITY: SSL/TLS (PORT 465)");
+    console.log("🟢 BREVO SMTP: CONNECTED");
+    console.log(`🔒 SECURITY: ${BREVO_USE_SSL ? 'SSL' : 'TLS'} (PORT ${BREVO_SMTP_PORT})`);
     console.log("🔌 NETWORK: IPv4");
-    console.log(`🟢 TEST EMAIL SENT TO: ${TEST_EMAIL}`);
+    console.log(`🟢 TEST EMAIL SENT TO: ${BREVO_TEST_EMAIL}`);
     console.log(`⏱️ Connection Time: ${result.connectionDuration || 'N/A'}ms`);
     console.log(`⏱️ Send Time: ${result.sendDuration || 'N/A'}ms`);
   } else {
@@ -1524,11 +1513,9 @@ const startSMTPVerification = async () => {
 // EXPORTS
 // ============================================================
 module.exports = {
-  // Core functions
   getTransporter,
   getSMTPInfo,
   isSMTPConfigured,
-  isResendConfigured,
   testConnection,
   startSMTPVerification,
   sendEmail,
@@ -1536,8 +1523,6 @@ module.exports = {
   sendMailWithRetry,
   sendMailSafely,
   closeTransporter,
-  
-  // Timer utilities
   startTimer,
   endTimer,
   recordResponseTime,
