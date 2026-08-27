@@ -107,7 +107,7 @@ router.post("/bulk-delete", contactController.bulkDeleteContacts);
 // GET /api/notifications/:email?page=1&limit=20
 // ============================================================
 
-router.get("/:email", async (req, res) => {
+router.get("/notifications/:email", async (req, res) => {
   try {
     const { email } = req.params;
 
