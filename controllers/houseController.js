@@ -2868,6 +2868,44 @@ exports.getHouseByHouseId = async (req, res) => {
 };
 
 // 5. Get Houses by Host Email
+// exports.getHousesByEmail = async (req, res) => {
+//   try {
+//     const { email } = req.params;
+
+//     if (!email) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email is required",
+//       });
+//     }
+
+//     const houses = await House.find({
+//       "host.email": email.toLowerCase().trim(),
+//     }).sort({ createdAt: -1 });
+
+//     if (houses.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No houses found for this email",
+//         data: [],
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       total: houses.length,
+//       data: houses,
+//     });
+//   } catch (error) {
+//     console.error("Get houses by email error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch houses",
+//     });
+//   }
+// };
+
 exports.getHousesByEmail = async (req, res) => {
   try {
     const { email } = req.params;
@@ -2879,8 +2917,16 @@ exports.getHousesByEmail = async (req, res) => {
       });
     }
 
+    const normalizedEmail = decodeURIComponent(email)
+      .trim()
+      .toLowerCase();
+
     const houses = await House.find({
-      "host.email": email.toLowerCase().trim(),
+      $or: [
+        { ownerEmail: normalizedEmail },
+        { "host.email": normalizedEmail },
+        { createdByEmail: normalizedEmail },
+      ],
     }).sort({ createdAt: -1 });
 
     if (houses.length === 0) {
@@ -2902,6 +2948,7 @@ exports.getHousesByEmail = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch houses",
+      error: error.message,
     });
   }
 };
