@@ -299,17 +299,9 @@ const houseSchema = new mongoose.Schema(
     guests: {
       type: Number,
       required: [true, "Number of guests is required"],
-      min: [1, "Guests must be at least 1"],
       default: 1,
-
-      validate: {
-        validator: function (value) {
-          return Number.isInteger(value);
-        },
-
-        message: "Guests must be a whole number",
       },
-    },
+   
 
     // ==========================================================
     // AMENITIES
