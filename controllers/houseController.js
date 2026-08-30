@@ -2227,10 +2227,26 @@ exports.getMyHouseNotifications = async (req, res) => {
 // 15. Mark Notification as Read - FIXED (No role checking)
 exports.markNotificationAsRead = async (req, res) => {
   try {
-    const { notificationId } = req.params;
-    const user = req.user;
+    const { notificationId } = req.body;
 
-    const notification = await Notification.findById(notificationId);
+    if (!notificationId) {
+      return res.status(400).json({
+        success: false,
+        message: "Notification ID is required",
+      });
+    }
+
+    const notification = await Notification.findByIdAndUpdate(
+      notificationId,
+      {
+        $set: {
+          isRead: true,
+          status: "read",
+          readAt: new Date(),
+        },
+      },
+      { new: true }
+    );
 
     if (!notification) {
       return res.status(404).json({
@@ -2239,39 +2255,10 @@ exports.markNotificationAsRead = async (req, res) => {
       });
     }
 
-    // Check if user owns this notification or is admin
-    const hasPermission =
-      notification.userId?.toString() === user.id ||
-      notification.userEmail === user.email ||
-      user.role === "admin";
-
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to mark this notification as read",
-      });
-    }
-
-    notification.isRead = true;
-    notification.status = "read";
-    notification.readAt = new Date();
-
-    if (!notification.readBy) {
-      notification.readBy = [];
-    }
-
-    notification.readBy.push({
-      userId: user.id,
-      userEmail: user.email,
-      userRole: user.role,
-    });
-
-    await notification.save();
-
     return res.status(200).json({
       success: true,
       message: "Notification marked as read",
-      data: notification,
+      notification,
     });
   } catch (error) {
     return res.status(500).json({
