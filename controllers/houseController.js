@@ -1,4 +1,3 @@
-
 const House = require("../models/House");
 const Notification = require("../models/Notification");
 const User = require("../models/User");
@@ -56,11 +55,11 @@ const upload = multer({
 // ===========================================
 
 const getHouseNotificationEmail = (house, type, recipientType = "admin") => {
-  const locationStr = `${house.location.province || 'N/A'}, ${house.location.district || 'N/A'}, ${house.location.sector || 'N/A'}`;
-  
+  const locationStr = `${house.location.province || "N/A"}, ${house.location.district || "N/A"}, ${house.location.sector || "N/A"}`;
+
   const isAdmin = recipientType === "admin";
   const isHost = recipientType === "host";
-  
+
   const colors = {
     admin: {
       bg: "linear-gradient(135deg, #FF385C 0%, #D70466 100%)",
@@ -122,39 +121,47 @@ const getHouseNotificationEmail = (house, type, recipientType = "admin") => {
             <div class="alert-box">
               <h3>${house.name}</h3>
               <p><strong>📍 Location:</strong> ${locationStr}</p>
-              ${isHost ? `<p><strong>Status:</strong> ${house.status || 'Pending'}</p>` : ''}
+              ${isHost ? `<p><strong>Status:</strong> ${house.status || "Pending"}</p>` : ""}
             </div>
             
             <div class="details">
               <p><strong>Type:</strong> ${type}</p>
               <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-              ${house.pricePerMonth ? `<p><strong>Price:</strong> $${house.pricePerMonth}/month</p>` : ''}
-              ${house.bedrooms ? `<p><strong>Bedrooms:</strong> ${house.bedrooms}</p>` : ''}
-              ${house.bathrooms ? `<p><strong>Bathrooms:</strong> ${house.bathrooms}</p>` : ''}
-              ${house.university ? `<p><strong>University:</strong> ${house.university}</p>` : ''}
+              ${house.pricePerMonth ? `<p><strong>Price:</strong> $${house.pricePerMonth}/month</p>` : ""}
+              ${house.bedrooms ? `<p><strong>Bedrooms:</strong> ${house.bedrooms}</p>` : ""}
+              ${house.bathrooms ? `<p><strong>Bathrooms:</strong> ${house.bathrooms}</p>` : ""}
+              ${house.university ? `<p><strong>University:</strong> ${house.university}</p>` : ""}
             </div>
             
-            ${isAdmin ? `
+            ${
+              isAdmin
+                ? `
               <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
                 <p style="margin: 0; text-align: center;">
-                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/houses/${house._id}" 
+                  <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/admin/houses/${house._id}" 
                      style="display: inline-block; background: #667eea; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px;">
                     View & Manage
                   </a>
                 </p>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
             
-            ${isHost ? `
+            ${
+              isHost
+                ? `
               <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
                 <p style="margin: 0; text-align: center;">
-                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/host/houses/${house._id}" 
+                  <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/host/houses/${house._id}" 
                      style="display: inline-block; background: #28a745; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px;">
                     View Your House
                   </a>
                 </p>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <div class="footer">
               <p>This is an automated notification from INYUMBA PROJECT.</p>
@@ -177,7 +184,7 @@ const createRoleNotification = async (house, type, role, userInfo = null) => {
     let title = "";
     let message = "";
     let priority = "normal";
-    const locationStr = `${house.location.province || 'N/A'}, ${house.location.district || 'N/A'}, ${house.location.sector || 'N/A'}`;
+    const locationStr = `${house.location.province || "N/A"}, ${house.location.district || "N/A"}, ${house.location.sector || "N/A"}`;
 
     switch (type) {
       case "house_created":
@@ -197,7 +204,7 @@ const createRoleNotification = async (house, type, role, userInfo = null) => {
         break;
       case "house_status_changed":
         title = "🔄 House Status Changed";
-        message = `House "${house.name}" status changed to ${house.status || 'updated'}`;
+        message = `House "${house.name}" status changed to ${house.status || "updated"}`;
         priority = "high";
         break;
       case "house_approved":
@@ -279,8 +286,13 @@ const createAllRoleNotifications = async (house, type, userInfo = null) => {
   for (const role of roles) {
     // Skip host if no host email
     if (role === "host" && !house.host?.email) continue;
-    
-    const notification = await createRoleNotification(house, type, role, userInfo);
+
+    const notification = await createRoleNotification(
+      house,
+      type,
+      role,
+      userInfo,
+    );
     if (notification) {
       notifications.push(notification);
     }
@@ -509,25 +521,20 @@ exports.createHouse = async (req, res) => {
       // Support multipart/form-data:
       // amenities[]
       if (
-        (!Array.isArray(amenitiesArray) ||
-          amenitiesArray.length === 0) &&
+        (!Array.isArray(amenitiesArray) || amenitiesArray.length === 0) &&
         req.body["amenities[]"]
       ) {
         if (Array.isArray(req.body["amenities[]"])) {
           amenitiesArray = req.body["amenities[]"];
         } else {
-          amenitiesArray = [
-            req.body["amenities[]"],
-          ];
+          amenitiesArray = [req.body["amenities[]"]];
         }
       }
     } catch (error) {
       if (Array.isArray(req.body["amenities[]"])) {
         amenitiesArray = req.body["amenities[]"];
       } else if (req.body["amenities[]"]) {
-        amenitiesArray = [
-          req.body["amenities[]"],
-        ];
+        amenitiesArray = [req.body["amenities[]"]];
       } else {
         return res.status(400).json({
           success: false,
@@ -548,10 +555,7 @@ exports.createHouse = async (req, res) => {
       ...new Set(
         amenitiesArray
           .map((item) => {
-            if (
-              item === null ||
-              item === undefined
-            ) {
+            if (item === null || item === undefined) {
               return "";
             }
 
@@ -568,16 +572,12 @@ exports.createHouse = async (req, res) => {
     const numericPrice = Number(pricePerMonth);
 
     const numericBedrooms =
-      bedrooms === undefined ||
-      bedrooms === null ||
-      bedrooms === ""
+      bedrooms === undefined || bedrooms === null || bedrooms === ""
         ? 0
         : Number(bedrooms);
 
     const numericBathrooms =
-      bathrooms === undefined ||
-      bathrooms === null ||
-      bathrooms === ""
+      bathrooms === undefined || bathrooms === null || bathrooms === ""
         ? 0
         : Number(bathrooms);
 
@@ -587,22 +587,17 @@ exports.createHouse = async (req, res) => {
     // PRICE VALIDATION
     // ==========================================================
 
-    if (
-      !Number.isFinite(numericPrice) ||
-      numericPrice < 0
-    ) {
+    if (!Number.isFinite(numericPrice) || numericPrice < 0) {
       return res.status(400).json({
         success: false,
-        message:
-          "Monthly price must be a valid non-negative number",
+        message: "Monthly price must be a valid non-negative number",
       });
     }
 
     if (!Number.isInteger(numericPrice)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Monthly price must be a whole number",
+        message: "Monthly price must be a whole number",
       });
     }
 
@@ -610,22 +605,17 @@ exports.createHouse = async (req, res) => {
     // BEDROOM VALIDATION
     // ==========================================================
 
-    if (
-      !Number.isFinite(numericBedrooms) ||
-      numericBedrooms < 0
-    ) {
+    if (!Number.isFinite(numericBedrooms) || numericBedrooms < 0) {
       return res.status(400).json({
         success: false,
-        message:
-          "Bedrooms must be a valid non-negative number",
+        message: "Bedrooms must be a valid non-negative number",
       });
     }
 
     if (!Number.isInteger(numericBedrooms)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Bedrooms must be a whole number",
+        message: "Bedrooms must be a whole number",
       });
     }
 
@@ -633,22 +623,17 @@ exports.createHouse = async (req, res) => {
     // BATHROOM VALIDATION
     // ==========================================================
 
-    if (
-      !Number.isFinite(numericBathrooms) ||
-      numericBathrooms < 0
-    ) {
+    if (!Number.isFinite(numericBathrooms) || numericBathrooms < 0) {
       return res.status(400).json({
         success: false,
-        message:
-          "Bathrooms must be a valid non-negative number",
+        message: "Bathrooms must be a valid non-negative number",
       });
     }
 
     if (!Number.isInteger(numericBathrooms)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Bathrooms must be a whole number",
+        message: "Bathrooms must be a whole number",
       });
     }
 
@@ -656,10 +641,7 @@ exports.createHouse = async (req, res) => {
     // GUEST VALIDATION
     // ==========================================================
 
-    if (
-      !Number.isFinite(numericGuests) ||
-      numericGuests < 1
-    ) {
+    if (!Number.isFinite(numericGuests) || numericGuests < 1) {
       return res.status(400).json({
         success: false,
         message: "Guests must be at least 1",
@@ -669,8 +651,7 @@ exports.createHouse = async (req, res) => {
     if (!Number.isInteger(numericGuests)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Guests must be a whole number",
+        message: "Guests must be a whole number",
       });
     }
 
@@ -693,35 +674,17 @@ exports.createHouse = async (req, res) => {
     // ==========================================================
 
     const normalizedLocation = {
-      province:
-        locationObj.province
-          ? String(locationObj.province).trim()
-          : "",
+      province: locationObj.province ? String(locationObj.province).trim() : "",
 
-      district:
-        locationObj.district
-          ? String(locationObj.district).trim()
-          : "",
+      district: locationObj.district ? String(locationObj.district).trim() : "",
 
-      sector:
-        locationObj.sector
-          ? String(locationObj.sector).trim()
-          : "",
+      sector: locationObj.sector ? String(locationObj.sector).trim() : "",
 
-      cell:
-        locationObj.cell
-          ? String(locationObj.cell).trim()
-          : "",
+      cell: locationObj.cell ? String(locationObj.cell).trim() : "",
 
-      village:
-        locationObj.village
-          ? String(locationObj.village).trim()
-          : "",
+      village: locationObj.village ? String(locationObj.village).trim() : "",
 
-      address:
-        locationObj.address
-          ? String(locationObj.address).trim()
-          : "",
+      address: locationObj.address ? String(locationObj.address).trim() : "",
 
       latitude: null,
 
@@ -733,26 +696,17 @@ exports.createHouse = async (req, res) => {
     // ==========================================================
 
     const latitude =
-      locationObj.latitude ??
-      locationObj.coordinates?.lat ??
-      null;
+      locationObj.latitude ?? locationObj.coordinates?.lat ?? null;
 
     const longitude =
-      locationObj.longitude ??
-      locationObj.coordinates?.lng ??
-      null;
+      locationObj.longitude ?? locationObj.coordinates?.lng ?? null;
 
     // ==========================================================
     // LATITUDE
     // ==========================================================
 
-    if (
-      latitude !== null &&
-      latitude !== "" &&
-      latitude !== undefined
-    ) {
-      const numericLatitude =
-        Number(latitude);
+    if (latitude !== null && latitude !== "" && latitude !== undefined) {
+      const numericLatitude = Number(latitude);
 
       if (
         !Number.isFinite(numericLatitude) ||
@@ -761,26 +715,19 @@ exports.createHouse = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message:
-            "Latitude must be between -90 and 90",
+          message: "Latitude must be between -90 and 90",
         });
       }
 
-      normalizedLocation.latitude =
-        numericLatitude;
+      normalizedLocation.latitude = numericLatitude;
     }
 
     // ==========================================================
     // LONGITUDE
     // ==========================================================
 
-    if (
-      longitude !== null &&
-      longitude !== "" &&
-      longitude !== undefined
-    ) {
-      const numericLongitude =
-        Number(longitude);
+    if (longitude !== null && longitude !== "" && longitude !== undefined) {
+      const numericLongitude = Number(longitude);
 
       if (
         !Number.isFinite(numericLongitude) ||
@@ -789,13 +736,11 @@ exports.createHouse = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message:
-            "Longitude must be between -180 and 180",
+          message: "Longitude must be between -180 and 180",
         });
       }
 
-      normalizedLocation.longitude =
-        numericLongitude;
+      normalizedLocation.longitude = numericLongitude;
     }
 
     // ==========================================================
@@ -812,69 +757,42 @@ exports.createHouse = async (req, res) => {
     ];
 
     const normalizedStatus =
-      status &&
-      allowedStatuses.includes(
-        String(status).trim().toLowerCase(),
-      )
-        ? String(status)
-            .trim()
-            .toLowerCase()
+      status && allowedStatuses.includes(String(status).trim().toLowerCase())
+        ? String(status).trim().toLowerCase()
         : "pending";
 
     // ==========================================================
     // GET AUTHENTICATED USER
     // ==========================================================
 
-    const userId =
-      req.user?._id ||
-      req.user?.id ||
-      req.user?.userId ||
-      null;
+    const userId = req.user?._id || req.user?.id || req.user?.userId || null;
 
-    const userRole =
-      req.user?.role || "user";
+    const userRole = req.user?.role || "user";
 
     // ==========================================================
     // NORMALIZE EMAIL
     // ==========================================================
 
-    const normalizedOwnerEmail =
-      ownerEmail
-        ? String(ownerEmail)
-            .trim()
-            .toLowerCase()
-        : "";
+    const normalizedOwnerEmail = ownerEmail
+      ? String(ownerEmail).trim().toLowerCase()
+      : "";
 
-    const normalizedCreatedByEmail =
-      req.user?.email
-        ? String(req.user.email)
-            .trim()
-            .toLowerCase()
-        : normalizedOwnerEmail;
+    const normalizedCreatedByEmail = req.user?.email
+      ? String(req.user.email).trim().toLowerCase()
+      : normalizedOwnerEmail;
 
     // ==========================================================
     // PREPARE CLOUDINARY IMAGES
     // ==========================================================
 
     const images = req.files.map((file) => ({
-      public_id:
-        file.public_id ||
-        file.filename ||
-        "",
+      public_id: file.public_id || file.filename || "",
 
-      secure_url:
-        file.secure_url ||
-        file.path ||
-        "",
+      secure_url: file.secure_url || file.path || "",
 
-      url:
-        file.url ||
-        file.path ||
-        "",
+      url: file.url || file.path || "",
 
-      original_filename:
-        file.originalname ||
-        "",
+      original_filename: file.originalname || "",
     }));
 
     // ==========================================================
@@ -889,23 +807,15 @@ exports.createHouse = async (req, res) => {
     const houseData = {
       name: String(name).trim(),
 
-      houseType: String(houseType)
-        .trim()
-        .toLowerCase(),
+      houseType: String(houseType).trim().toLowerCase(),
 
-      description:
-        description
-          ? String(description).trim()
-          : "",
+      description: description ? String(description).trim() : "",
 
       images,
 
       location: normalizedLocation,
 
-      university:
-        university
-          ? String(university).trim()
-          : "",
+      university: university ? String(university).trim() : "",
 
       pricePerMonth: numericPrice,
 
@@ -923,23 +833,15 @@ exports.createHouse = async (req, res) => {
 
       status: normalizedStatus,
 
-      ownerName:
-        ownerName
-          ? String(ownerName).trim()
-          : "",
+      ownerName: ownerName ? String(ownerName).trim() : "",
 
-      ownerEmail:
-        normalizedOwnerEmail,
+      ownerEmail: normalizedOwnerEmail,
 
-      ownerContact:
-        ownerContact
-          ? String(ownerContact).trim()
-          : "",
+      ownerContact: ownerContact ? String(ownerContact).trim() : "",
 
       createdBy: userId,
 
-      createdByEmail:
-        normalizedCreatedByEmail,
+      createdByEmail: normalizedCreatedByEmail,
 
       isActive: true,
 
@@ -956,9 +858,7 @@ exports.createHouse = async (req, res) => {
     // ==========================================================
 
     if (houseId && String(houseId).trim()) {
-      houseData.houseId = String(houseId)
-        .trim()
-        .toUpperCase();
+      houseData.houseId = String(houseId).trim().toUpperCase();
     }
 
     // ==========================================================
@@ -966,16 +866,14 @@ exports.createHouse = async (req, res) => {
     // ==========================================================
 
     if (houseData.houseId) {
-      const existingHouse =
-        await House.findOne({
-          houseId: houseData.houseId,
-        }).lean();
+      const existingHouse = await House.findOne({
+        houseId: houseData.houseId,
+      }).lean();
 
       if (existingHouse) {
         return res.status(409).json({
           success: false,
-          message:
-            "House ID already exists",
+          message: "House ID already exists",
           data: {
             houseId: houseData.houseId,
           },
@@ -987,9 +885,7 @@ exports.createHouse = async (req, res) => {
     // CREATE MONGOOSE DOCUMENT
     // ==========================================================
 
-    const house = new House(
-      houseData,
-    );
+    const house = new House(houseData);
 
     // ==========================================================
     // SAVE HOUSE
@@ -1010,14 +906,9 @@ exports.createHouse = async (req, res) => {
     const userInfo = {
       userId,
 
-      email:
-        normalizedOwnerEmail ||
-        normalizedCreatedByEmail,
+      email: normalizedOwnerEmail || normalizedCreatedByEmail,
 
-      name:
-        ownerName
-          ? String(ownerName).trim()
-          : req.user?.name || "",
+      name: ownerName ? String(ownerName).trim() : req.user?.name || "",
 
       role: userRole,
     };
@@ -1027,16 +918,11 @@ exports.createHouse = async (req, res) => {
     // ==========================================================
 
     try {
-      await createAllRoleNotifications(
-        house,
-        "house_created",
-        userInfo,
-      );
+      await createAllRoleNotifications(house, "house_created", userInfo);
     } catch (notificationError) {
       console.error(
         "House notification creation failed:",
-        notificationError?.message ||
-          notificationError,
+        notificationError?.message || notificationError,
       );
     }
 
@@ -1045,16 +931,11 @@ exports.createHouse = async (req, res) => {
     // ==========================================================
 
     try {
-      await sendHouseEmails(
-        house,
-        "Created",
-        userInfo,
-      );
+      await sendHouseEmails(house, "Created", userInfo);
     } catch (emailError) {
       console.error(
         "House email notification failed:",
-        emailError?.message ||
-          emailError,
+        emailError?.message || emailError,
       );
     }
 
@@ -1065,8 +946,7 @@ exports.createHouse = async (req, res) => {
     return res.status(201).json({
       success: true,
 
-      message:
-        "House created successfully and waiting for approval",
+      message: "House created successfully and waiting for approval",
 
       data: house,
     });
@@ -1075,46 +955,29 @@ exports.createHouse = async (req, res) => {
     // LOG REAL ERROR
     // ==========================================================
 
-    console.error(
-      "==================================================",
-    );
+    console.error("==================================================");
 
-    console.error(
-      "❌ CREATE HOUSE ERROR",
-    );
+    console.error("❌ CREATE HOUSE ERROR");
 
-    console.error(
-      "Error name:",
-      error?.name,
-    );
+    console.error("Error name:", error?.name);
 
-    console.error(
-      "Error message:",
-      error?.message,
-    );
+    console.error("Error message:", error?.message);
 
-    console.error(
-      "Error code:",
-      error?.code,
-    );
+    console.error("Error code:", error?.code);
 
     if (error?.errors) {
       console.error(
         "Validation errors:",
         Object.fromEntries(
-          Object.entries(error.errors).map(
-            ([field, err]) => [
-              field,
-              err.message,
-            ],
-          ),
+          Object.entries(error.errors).map(([field, err]) => [
+            field,
+            err.message,
+          ]),
         ),
       );
     }
 
-    console.error(
-      "==================================================",
-    );
+    console.error("==================================================");
 
     // ==========================================================
     // CLOUDINARY CLEANUP
@@ -1122,26 +985,18 @@ exports.createHouse = async (req, res) => {
     // ONLY CLEAN UP IF HOUSE WAS NOT SAVED.
     // ==========================================================
 
-    if (
-      !houseSaved &&
-      req.files?.length
-    ) {
+    if (!houseSaved && req.files?.length) {
       for (const file of req.files) {
         try {
-          const publicId =
-            file.public_id ||
-            file.filename;
+          const publicId = file.public_id || file.filename;
 
           if (publicId) {
-            await cloudinary.uploader.destroy(
-              publicId,
-            );
+            await cloudinary.uploader.destroy(publicId);
           }
         } catch (cleanupError) {
           console.error(
             "Cloudinary cleanup failed:",
-            cleanupError?.message ||
-              cleanupError,
+            cleanupError?.message || cleanupError,
           );
         }
       }
@@ -1151,27 +1006,19 @@ exports.createHouse = async (req, res) => {
     // MONGOOSE VALIDATION ERROR
     // ==========================================================
 
-    if (
-      error?.name ===
-      "ValidationError"
-    ) {
-      const validationErrors =
-        Object.values(
-          error.errors || {},
-        ).map((err) => ({
-          field: err.path,
-          message: err.message,
-          value: err.value,
-        }));
+    if (error?.name === "ValidationError") {
+      const validationErrors = Object.values(error.errors || {}).map((err) => ({
+        field: err.path,
+        message: err.message,
+        value: err.value,
+      }));
 
       return res.status(400).json({
         success: false,
 
-        message:
-          "House validation failed",
+        message: "House validation failed",
 
-        errors:
-          validationErrors,
+        errors: validationErrors,
       });
     }
 
@@ -1179,18 +1026,13 @@ exports.createHouse = async (req, res) => {
     // CAST ERROR
     // ==========================================================
 
-    if (
-      error?.name ===
-      "CastError"
-    ) {
+    if (error?.name === "CastError") {
       return res.status(400).json({
         success: false,
 
-        message:
-          `Invalid value for ${error.path}`,
+        message: `Invalid value for ${error.path}`,
 
-        error:
-          error.message,
+        error: error.message,
       });
     }
 
@@ -1198,17 +1040,13 @@ exports.createHouse = async (req, res) => {
     // DUPLICATE KEY ERROR
     // ==========================================================
 
-    if (
-      error?.code === 11000
-    ) {
+    if (error?.code === 11000) {
       return res.status(409).json({
         success: false,
 
-        message:
-          "House with this unique value already exists",
+        message: "House with this unique value already exists",
 
-        duplicateFields:
-          error.keyValue || {},
+        duplicateFields: error.keyValue || {},
       });
     }
 
@@ -1219,18 +1057,13 @@ exports.createHouse = async (req, res) => {
     return res.status(500).json({
       success: false,
 
-      message:
-        "Failed to create house",
+      message: "Failed to create house",
 
-      error:
-        error?.message ||
-        "Unknown server error",
+      error: error?.message || "Unknown server error",
 
-      errorName:
-        error?.name || "Error",
+      errorName: error?.name || "Error",
 
-      errorCode:
-        error?.code || null,
+      errorCode: error?.code || null,
     });
   }
 };
@@ -1254,8 +1087,10 @@ exports.getAllHouses = async (req, res) => {
 
     if (status) query.status = status;
     if (university) query.university = { $regex: university, $options: "i" };
-    if (province) query["location.province"] = { $regex: province, $options: "i" };
-    if (district) query["location.district"] = { $regex: district, $options: "i" };
+    if (province)
+      query["location.province"] = { $regex: province, $options: "i" };
+    if (district)
+      query["location.district"] = { $regex: district, $options: "i" };
     if (bedrooms) query.bedrooms = parseInt(bedrooms);
     if (minPrice || maxPrice) {
       query.pricePerMonth = {};
@@ -1394,9 +1229,7 @@ exports.getHousesByEmail = async (req, res) => {
       });
     }
 
-    const normalizedEmail = decodeURIComponent(email)
-      .trim()
-      .toLowerCase();
+    const normalizedEmail = decodeURIComponent(email).trim().toLowerCase();
 
     const houses = await House.find({
       $or: [
@@ -1494,11 +1327,13 @@ exports.updateHouse = async (req, res) => {
     if (status) house.status = status;
     if (rating !== undefined) house.rating = parseFloat(rating);
     if (totalReviews !== undefined) house.totalReviews = parseInt(totalReviews);
-    if (isActive !== undefined) house.isActive = isActive === "true" || isActive === true;
+    if (isActive !== undefined)
+      house.isActive = isActive === "true" || isActive === true;
 
     if (location) {
       try {
-        const locationObj = typeof location === "string" ? JSON.parse(location) : location;
+        const locationObj =
+          typeof location === "string" ? JSON.parse(location) : location;
         house.location = {
           province: locationObj.province || house.location.province,
           district: locationObj.district || house.location.district,
@@ -1506,8 +1341,14 @@ exports.updateHouse = async (req, res) => {
           cell: locationObj.cell || house.location.cell,
           village: locationObj.village || house.location.village,
           coordinates: {
-            lat: locationObj.coordinates?.lat || house.location.coordinates?.lat || null,
-            lng: locationObj.coordinates?.lng || house.location.coordinates?.lng || null,
+            lat:
+              locationObj.coordinates?.lat ||
+              house.location.coordinates?.lat ||
+              null,
+            lng:
+              locationObj.coordinates?.lng ||
+              house.location.coordinates?.lng ||
+              null,
           },
         };
       } catch (e) {
@@ -1517,7 +1358,8 @@ exports.updateHouse = async (req, res) => {
 
     if (amenities) {
       try {
-        house.amenities = typeof amenities === "string" ? JSON.parse(amenities) : amenities;
+        house.amenities =
+          typeof amenities === "string" ? JSON.parse(amenities) : amenities;
       } catch (e) {
         house.amenities = [];
       }
@@ -1531,7 +1373,8 @@ exports.updateHouse = async (req, res) => {
           name: hostObj.name || house.host.name,
           email: hostObj.email || house.host.email,
           phone: hostObj.phone || house.host.phone,
-          responseRate: parseFloat(hostObj.responseRate) || house.host.responseRate,
+          responseRate:
+            parseFloat(hostObj.responseRate) || house.host.responseRate,
           responseTime: hostObj.responseTime || house.host.responseTime,
         };
       } catch (e) {
@@ -1541,7 +1384,10 @@ exports.updateHouse = async (req, res) => {
 
     if (availability) {
       try {
-        const availabilityObj = typeof availability === "string" ? JSON.parse(availability) : availability;
+        const availabilityObj =
+          typeof availability === "string"
+            ? JSON.parse(availability)
+            : availability;
         house.availability = {
           startDate: availabilityObj.startDate || house.availability.startDate,
           endDate: availabilityObj.endDate || house.availability.endDate,
@@ -1655,7 +1501,7 @@ exports.updateHouseStatus = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: `Invalid status value. Must be one of: ${validStatuses.join(
-          ", "
+          ", ",
         )}`,
         data: {
           requestedStatus: status,
@@ -1712,7 +1558,7 @@ exports.updateHouseStatus = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     ).lean();
 
     // ==========================================================
@@ -1786,10 +1632,7 @@ exports.updateHouseStatus = async (req, res) => {
     const userInfo = {
       userId: updatedHouse.createdBy || null,
 
-      email:
-        updatedHouse.ownerEmail ||
-        updatedHouse.createdByEmail ||
-        "",
+      email: updatedHouse.ownerEmail || updatedHouse.createdByEmail || "",
 
       name: updatedHouse.ownerName || "",
 
@@ -1831,12 +1674,12 @@ exports.updateHouseStatus = async (req, res) => {
         await createAllRoleNotifications(
           updatedHouse,
           notificationType,
-          userInfo
+          userInfo,
         );
       } catch (notificationError) {
         console.error(
           "❌ House notification failed:",
-          notificationError.message
+          notificationError.message,
         );
       }
     });
@@ -1850,20 +1693,14 @@ exports.updateHouseStatus = async (req, res) => {
         await sendHouseEmails(
           updatedHouse,
           `Status Changed: ${oldStatus} → ${status}`,
-          userInfo
+          userInfo,
         );
       } catch (emailError) {
-        console.error(
-          "❌ House status email failed:",
-          emailError.message
-        );
+        console.error("❌ House status email failed:", emailError.message);
       }
     });
   } catch (error) {
-    console.error(
-      "❌ Update house status error:",
-      error.message
-    );
+    console.error("❌ Update house status error:", error.message);
 
     if (!res.headersSent) {
       return res.status(500).json({
@@ -1927,21 +1764,12 @@ exports.deleteHouse = async (req, res) => {
     // ==========================================================
 
     const userInfo = {
-      userId:
-        house.host?.userId ||
-        house.createdBy ||
-        null,
+      userId: house.host?.userId || house.createdBy || null,
 
       email:
-        house.host?.email ||
-        house.ownerEmail ||
-        house.createdByEmail ||
-        "",
+        house.host?.email || house.ownerEmail || house.createdByEmail || "",
 
-      name:
-        house.host?.name ||
-        house.ownerName ||
-        "",
+      name: house.host?.name || house.ownerName || "",
     };
 
     // ==========================================================
@@ -1949,17 +1777,13 @@ exports.deleteHouse = async (req, res) => {
     // ==========================================================
 
     try {
-      await createAllRoleNotifications(
-        house,
-        "house_deleted",
-        userInfo
-      );
+      await createAllRoleNotifications(house, "house_deleted", userInfo);
 
       console.log("✅ House deletion notifications created");
     } catch (notificationError) {
       console.error(
         "❌ House notification failed:",
-        notificationError?.message || notificationError
+        notificationError?.message || notificationError,
       );
     }
 
@@ -1968,17 +1792,13 @@ exports.deleteHouse = async (req, res) => {
     // ==========================================================
 
     try {
-      await sendHouseEmails(
-        house,
-        "Deleted",
-        userInfo
-      );
+      await sendHouseEmails(house, "Deleted", userInfo);
 
       console.log("✅ House deletion emails processed");
     } catch (emailError) {
       console.error(
         "❌ House deletion email failed:",
-        emailError?.message || emailError
+        emailError?.message || emailError,
       );
     }
 
@@ -1990,28 +1810,20 @@ exports.deleteHouse = async (req, res) => {
       for (const img of house.images) {
         try {
           const publicId =
-            img?.public_id ||
-            img?.publicId ||
-            img?.publicID ||
-            null;
+            img?.public_id || img?.publicId || img?.publicID || null;
 
           if (!publicId) {
-            console.warn(
-              "⚠️ Image has no Cloudinary public ID. Skipping."
-            );
+            console.warn("⚠️ Image has no Cloudinary public ID. Skipping.");
             continue;
           }
 
           await cloudinary.uploader.destroy(publicId);
 
-          console.log(
-            "✅ Cloudinary image deleted:",
-            publicId
-          );
+          console.log("✅ Cloudinary image deleted:", publicId);
         } catch (cloudinaryError) {
           console.error(
             "❌ Cloudinary image deletion failed:",
-            cloudinaryError?.message || cloudinaryError
+            cloudinaryError?.message || cloudinaryError,
           );
         }
       }
@@ -2165,9 +1977,10 @@ exports.getNewlyAddedHouses = async (req, res) => {
       success: true,
       data: houses,
       count: houses.length,
-      message: houses.length > 0
-        ? `Found ${houses.length} newly added houses in the last ${days} days`
-        : "No newly added houses found",
+      message:
+        houses.length > 0
+          ? `Found ${houses.length} newly added houses in the last ${days} days`
+          : "No newly added houses found",
     });
   } catch (error) {
     console.error("Get newly added houses error:", error);
@@ -2469,28 +2282,31 @@ exports.markNotificationAsRead = async (req, res) => {
 };
 
 // 16. Mark All Notifications as Read - FIXED (No role checking)
+
 exports.markAllNotificationsAsRead = async (req, res) => {
   try {
-    const user = req.user;
+    const { notificationIds } = req.body;
 
-    const filter = {
-      source: "house",
-      isRead: false,
-      $or: [
-        { userId: user.id },
-        { userEmail: user.email },
-      ]
-    };
+    if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Notification IDs are required",
+      });
+    }
 
     const result = await Notification.updateMany(
-      filter,
+      {
+        _id: { $in: notificationIds },
+        source: "house",
+        isRead: false,
+      },
       {
         $set: {
           isRead: true,
           status: "read",
           readAt: new Date(),
         },
-      }
+      },
     );
 
     return res.status(200).json({
@@ -2730,22 +2546,15 @@ exports.deleteNotification = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(
-      "❌ Delete notification error:",
-      error.message
-    );
+    console.error("❌ Delete notification error:", error.message);
 
     return res.status(500).json({
       success: false,
       message: "Failed to delete notification",
-      error:
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : undefined,
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
-
 
 // ============================================================
 // 19. BULK DELETE NOTIFICATIONS
@@ -2771,11 +2580,7 @@ exports.bulkDeleteNotifications = async (req, res) => {
     // ==========================================================
 
     const uniqueIds = [
-      ...new Set(
-        ids
-          .map((id) => String(id).trim())
-          .filter(Boolean)
-      ),
+      ...new Set(ids.map((id) => String(id).trim()).filter(Boolean)),
     ];
 
     if (uniqueIds.length === 0) {
@@ -2790,7 +2595,7 @@ exports.bulkDeleteNotifications = async (req, res) => {
     // ==========================================================
 
     const invalidIds = uniqueIds.filter(
-      (id) => !mongoose.Types.ObjectId.isValid(id)
+      (id) => !mongoose.Types.ObjectId.isValid(id),
     );
 
     if (invalidIds.length > 0) {
@@ -2838,18 +2643,12 @@ exports.bulkDeleteNotifications = async (req, res) => {
       requestedCount: uniqueIds.length,
     });
   } catch (error) {
-    console.error(
-      "❌ Bulk delete notifications error:",
-      error.message
-    );
+    console.error("❌ Bulk delete notifications error:", error.message);
 
     return res.status(500).json({
       success: false,
       message: "Failed to delete notifications",
-      error:
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : undefined,
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

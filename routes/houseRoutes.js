@@ -51,7 +51,7 @@ router.put(
 );
 
 router.put("/:id/status", houseController.updateHouseStatus);
-router.put("/notifications/:id/read", houseController.markNotificationAsRead);
+router.put("/notifications/:notificationId/read", houseController.markNotificationAsRead);
 router.put(
   "/notifications/mark-all-read",
   houseController.markAllNotificationsAsRead,
