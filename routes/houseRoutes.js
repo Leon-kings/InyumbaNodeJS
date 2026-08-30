@@ -15,11 +15,9 @@ const houseValidation = [
   body("bathrooms")
     .isInt({ min: 0 })
     .withMessage("Bathrooms must be a positive number"),
-  
+
   // ✅ FIXED: Use 'guests' (matches your Mongoose model)
-  body("guests")
-    .isInt({ min: 1 })
-    .withMessage("Guests must be at least 1"),
+  body("guests").isInt({ min: 1 }).withMessage("Guests must be at least 1"),
 ];
 
 // Public Routes
