@@ -76,9 +76,9 @@
 //   // Rwandan school/university email structure
 //   // Examples:
 //   // ug2424867@ines.ac.rw
-//   // student123@ur.ac.rw
+//   //123@ur.ac.rw
 //   // 220001234@ur.ac.rw
-//   // student@rp.ac.rw
+//   //@rp.ac.rw
 //   // name@auca.ac.rw
 //   const rwandaSchoolEmailRegex =
 //     /^[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.ac\.rw$/i;
@@ -2336,20 +2336,6 @@
 //   getNotificationsByEmail,
 // };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // const bcrypt = require("bcryptjs");
 // const jwt = require("jsonwebtoken");
 // const crypto = require("crypto");
@@ -2540,20 +2526,20 @@
 //       <div class="content">
 //         <p>Hello <strong>${user.name}</strong>,</p>
 //         <p>Thank you for registering with us! Please verify your email address to activate your account.</p>
-        
+
 //         <div style="text-align: center;">
 //           <a href="${verificationLink}" class="btn">Verify Email Address</a>
 //         </div>
-        
+
 //         <p>Or use this verification code:</p>
 //         <div class="code-box">${verificationCode}</div>
-        
+
 //         <div class="note">
 //           <strong>⏰ Note:</strong> This verification link and code will expire in 24 hours.
 //         </div>
-        
+
 //         <p>If you didn't create an account with us, please ignore this email.</p>
-        
+
 //         <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
 //         <p style="color: #6c757d; font-size: 14px; text-align: center; margin: 0;">
 //           This is an automated message from our system. Please do not reply to this email.
@@ -2659,19 +2645,19 @@
 //       <div class="content">
 //         <p>Hello <strong>${user.name}</strong>,</p>
 //         <p>We received a request to reset your password. Click the button below to create a new password.</p>
-        
+
 //         <div style="text-align: center;">
 //           <a href="${resetLink}" class="btn">Reset Password</a>
 //         </div>
-        
+
 //         <p>Or use this reset code:</p>
 //         <div class="code-box">${resetCode}</div>
-        
+
 //         <div class="warning">
 //           <strong>⚠️ Security Notice:</strong> This password reset link and code will expire in 1 hour.
 //           If you didn't request this, please ignore this email and your password will remain unchanged.
 //         </div>
-        
+
 //         <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
 //         <p style="color: #6c757d; font-size: 14px; text-align: center; margin: 0;">
 //           This is an automated message from our system. Please do not reply to this email.
@@ -4680,31 +4666,6 @@
 //   getNotificationsByEmail,
 // };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // const bcrypt = require("bcryptjs");
 // const jwt = require("jsonwebtoken");
 // const crypto = require("crypto");
@@ -4811,7 +4772,7 @@
 
 // const sendVerificationEmail = async (user, verificationCode) => {
 //   const verificationToken = generateVerificationToken(user.email);
-//   const frontendUrl = "https://inyumba-studentportal.vercel.app";
+//   const frontendUrl = "https://inyumbaportal.vercel.app";
 //   const verificationLink = `${frontendUrl}/verification/email/status?token=${verificationToken}&code=${verificationCode}&email=${encodeURIComponent(user.email)}`;
 
 //   const html = `
@@ -4895,20 +4856,20 @@
 //       <div class="content">
 //         <p>Hello <strong>${user.name}</strong>,</p>
 //         <p>Thank you for registering with us! Please verify your email address to activate your account.</p>
-        
+
 //         <div style="text-align: center;">
 //           <a href="${verificationLink}" class="btn">Verify Email Address</a>
 //         </div>
-        
+
 //         <p>Or use this verification code:</p>
 //         <div class="code-box">${verificationCode}</div>
-        
+
 //         <div class="note">
 //           <strong>⏰ Note:</strong> This verification link and code will expire in 24 hours.
 //         </div>
-        
+
 //         <p>If you didn't create an account with us, please ignore this email.</p>
-        
+
 //         <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
 //         <p style="color: #6c757d; font-size: 14px; text-align: center; margin: 0;">
 //           This is an automated message from our system. Please do not reply to this email.
@@ -4930,7 +4891,7 @@
 // // ======================================================
 
 // const sendPasswordResetEmail = async (user, resetToken, resetCode) => {
-//   const frontendUrl = "https://inyumba-studentportal.vercel.app";
+//   const frontendUrl = "https://inyumbaportal.vercel.app";
 //   const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&code=${resetCode}&email=${encodeURIComponent(user.email)}`;
 
 //   const html = `
@@ -5014,19 +4975,19 @@
 //       <div class="content">
 //         <p>Hello <strong>${user.name}</strong>,</p>
 //         <p>We received a request to reset your password. Click the button below to create a new password.</p>
-        
+
 //         <div style="text-align: center;">
 //           <a href="${resetLink}" class="btn">Reset Password</a>
 //         </div>
-        
+
 //         <p>Or use this reset code:</p>
 //         <div class="code-box">${resetCode}</div>
-        
+
 //         <div class="warning">
 //           <strong>⚠️ Security Notice:</strong> This password reset link and code will expire in 1 hour.
 //           If you didn't request this, please ignore this email and your password will remain unchanged.
 //         </div>
-        
+
 //         <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
 //         <p style="color: #6c757d; font-size: 14px; text-align: center; margin: 0;">
 //           This is an automated message from our system. Please do not reply to this email.
@@ -7021,18 +6982,6 @@
 //   getNotificationsByEmail,
 // };
 
-
-
-
-
-
-
-
-
-
-
-
-
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -7045,6 +6994,50 @@ const transporter = require("../services/emailTransporter");
 // ======================================================
 // EMAIL VALIDATION
 // ======================================================
+
+// const validateEmail = (email) => {
+//   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+//   if (!emailRegex.test(email)) {
+//     return {
+//       valid: false,
+//       message: "Invalid email format",
+//     };
+//   }
+
+//   const disposableDomains = [
+//     "tempmail.com",
+//     "temp-mail.org",
+//     "guerrillamail.com",
+//     "10minutemail.com",
+//     "throwawaymail.com",
+//     "mailinator.com",
+//   ];
+
+//   const domain = email.split("@")[1].toLowerCase();
+
+//   if (disposableDomains.includes(domain)) {
+//     return {
+//       valid: false,
+//       message: "Disposable email addresses are not allowed",
+//     };
+//   }
+
+//   const rwandaSchoolEmailRegex =
+//     /^[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.ac\.rw$/i;
+
+//   const isRwandaSchoolEmail = rwandaSchoolEmailRegex.test(email);
+
+//   if (isRwandaSchoolEmail) {
+//     return {
+//       valid: true,
+//     };
+//   }
+
+//   return {
+//     valid: true,
+//   };
+// };
 
 const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -7074,8 +7067,13 @@ const validateEmail = (email) => {
     };
   }
 
+  // Rwanda school/university email format
+  // Examples:
+  // ug22738@ines.ac.rw
+  // hs7292@uk.ac.rw
+  // student123@school.ac.rw
   const rwandaSchoolEmailRegex =
-    /^[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.ac\.rw$/i;
+    /^[a-z0-9._%+-]+@[a-z0-9-]+\.ac\.rw$/i;
 
   const isRwandaSchoolEmail = rwandaSchoolEmailRegex.test(email);
 
@@ -7103,11 +7101,7 @@ const generateVerificationCode = () => {
 // ======================================================
 
 const generateVerificationToken = (email) => {
-  return jwt.sign(
-    { email },
-    process.env.JWT_SECRET,
-    { expiresIn: "24h" }
-  );
+  return jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "24h" });
 };
 
 // ======================================================
@@ -7125,7 +7119,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent to ${to}: ${subject}`);
+    // console.log(`✅ Email sent to ${to}: ${subject}`);
     return { success: true, info };
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error.message);
@@ -7138,8 +7132,8 @@ const sendEmail = async ({ to, subject, html, text }) => {
 // ======================================================
 
 const sendAccountCreationConfirmation = async (user) => {
-  const frontendUrl = "https://inyumba-studentportal.vercel.app";
-  const loginLink = `${frontendUrl}/login`;
+  const frontendUrl = "https://inyumbaportal.vercel.app";
+  const loginLink = `${frontendUrl}`;
 
   const html = `
     <!DOCTYPE html>
@@ -7147,7 +7141,7 @@ const sendAccountCreationConfirmation = async (user) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Welcome to Inyumba Student Portal</title>
+      <title>Welcome to Inyumba Portal</title>
       <style>
         body {
           font-family: Arial, sans-serif;
@@ -7227,13 +7221,13 @@ const sendAccountCreationConfirmation = async (user) => {
     </head>
     <body>
       <div class="header">
-        <h1>🎉 Welcome to Inyumba Student Portal!</h1>
+        <h1>🎉 Welcome to Inyumba Portal!</h1>
         <p>Your account has been successfully created</p>
       </div>
       <div class="content">
         <div class="welcome-box">
           <p>Hello <strong>${user.name}</strong>,</p>
-          <p>Thank you for creating an account with the <strong>Inyumba Student Portal</strong>! We're excited to have you on board.</p>
+          <p>Thank you for creating an account with the <strong>Inyumba Portal</strong>! We're excited to have you on board.</p>
         </div>
 
         <div class="info-box">
@@ -7241,9 +7235,9 @@ const sendAccountCreationConfirmation = async (user) => {
           <div class="user-details">
             <p><strong>Name:</strong> ${user.name}</p>
             <p><strong>Email:</strong> ${user.email}</p>
-            <p><strong>Phone:</strong> ${user.phone || 'Not provided'}</p>
-            <p><strong>Account Type:</strong> ${user.role || 'User'}</p>
-            <p><strong>Created:</strong> ${new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+            <p><strong>Phone:</strong> ${user.phone || "Not provided"}</p>
+            <p><strong>Account Type:</strong> ${user.role || "User"}</p>
+            <p><strong>Created:</strong> ${new Date(user.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
           </div>
         </div>
 
@@ -7265,7 +7259,7 @@ const sendAccountCreationConfirmation = async (user) => {
         </p>
       </div>
       <div class="footer">
-        <p>&copy; ${new Date().getFullYear()} Inyumba Student Portal. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} Inyumba Portal. All rights reserved.</p>
       </div>
     </body>
     </html>
@@ -7273,7 +7267,7 @@ const sendAccountCreationConfirmation = async (user) => {
 
   return await sendEmail({
     to: user.email,
-    subject: "🎉 Welcome to Inyumba Student Portal - Account Created",
+    subject: "🎉 Welcome to Inyumba Portal - Account Created",
     html,
   });
 };
@@ -7284,7 +7278,7 @@ const sendAccountCreationConfirmation = async (user) => {
 
 const sendVerificationEmail = async (user, verificationCode) => {
   const verificationToken = generateVerificationToken(user.email);
-  const frontendUrl = "https://inyumba-studentportal.vercel.app";
+  const frontendUrl = "https://inyumbaportal.vercel.app";
   const verificationLink = `${frontendUrl}/verification/email/status?token=${verificationToken}&code=${verificationCode}&email=${encodeURIComponent(user.email)}`;
 
   const html = `
@@ -7403,7 +7397,7 @@ const sendVerificationEmail = async (user, verificationCode) => {
 // ======================================================
 
 const sendPasswordResetEmail = async (user, resetToken, resetCode) => {
-  const frontendUrl = "https://inyumba-studentportal.vercel.app";
+  const frontendUrl = "https://inyumbaportal.vercel.app";
   const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&code=${resetCode}&email=${encodeURIComponent(user.email)}`;
 
   const html = `
@@ -7556,25 +7550,13 @@ const createNotification = async ({
 
 const register = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      phone,
-      password,
-      confirmPassword,
-    } = req.body;
+    const { name, email, phone, password, confirmPassword } = req.body;
 
     // ===========================
     // VALIDATE REQUIRED FIELDS
     // ===========================
 
-    if (
-      !name ||
-      !email ||
-      !phone ||
-      !password ||
-      !confirmPassword
-    ) {
+    if (!name || !email || !phone || !password || !confirmPassword) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -7611,9 +7593,7 @@ const register = async (req, res) => {
     // NORMALIZE EMAIL AND PHONE
     // ===========================
 
-    const normalizedEmail = email
-      .toLowerCase()
-      .trim();
+    const normalizedEmail = email.toLowerCase().trim();
 
     const normalizedPhone = String(phone).trim();
 
@@ -7621,8 +7601,7 @@ const register = async (req, res) => {
     // EMAIL VALIDATION
     // ===========================
 
-    const emailValidation =
-      validateEmail(normalizedEmail);
+    const emailValidation = validateEmail(normalizedEmail);
 
     if (!emailValidation.valid) {
       return res.status(400).json({
@@ -7645,8 +7624,7 @@ const register = async (req, res) => {
       return res.status(409).json({
         success: false,
         errors: {
-          email:
-            "An account with this email already exists",
+          email: "An account with this email already exists",
         },
       });
     }
@@ -7657,17 +7635,13 @@ const register = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
 
-    const hashedPassword = await bcrypt.hash(
-      password,
-      salt
-    );
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     // ===========================
     // GENERATE VERIFICATION CODE
     // ===========================
 
-    const verificationCode =
-      generateVerificationCode();
+    const verificationCode = generateVerificationCode();
 
     // ===========================
     // CREATE USER
@@ -7689,11 +7663,13 @@ const register = async (req, res) => {
 
     try {
       await sendAccountCreationConfirmation(newUser);
-      console.log(`✅ Account creation confirmation email sent to ${newUser.email}`);
+      console.log(
+        `✅ Account creation confirmation email sent to ${newUser.email}`,
+      );
     } catch (emailError) {
       console.error(
         "❌ Failed to send account creation confirmation email:",
-        emailError.message
+        emailError.message,
       );
     }
 
@@ -7707,7 +7683,7 @@ const register = async (req, res) => {
     } catch (emailError) {
       console.error(
         "❌ Failed to send verification email:",
-        emailError.message
+        emailError.message,
       );
     }
 
@@ -7727,7 +7703,7 @@ const register = async (req, res) => {
     } catch (notificationError) {
       console.error(
         "❌ Failed to create account notification:",
-        notificationError.message
+        notificationError.message,
       );
     }
 
@@ -7747,7 +7723,7 @@ const register = async (req, res) => {
     } catch (notificationError) {
       console.error(
         "❌ Failed to create verification notification:",
-        notificationError.message
+        notificationError.message,
       );
     }
 
@@ -7763,22 +7739,17 @@ const register = async (req, res) => {
         action: "user_created",
         description: `New user ${newUser.name} created an account`,
         ipAddress:
-          req.headers["x-forwarded-for"]
-            ?.split(",")[0]
-            ?.trim() ||
+          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
           req.socket.remoteAddress ||
           null,
-        userAgent:
-          req.headers["user-agent"] || null,
+        userAgent: req.headers["user-agent"] || null,
       });
 
-      console.log(
-        `✅ User activity created for ${newUser.email}`
-      );
+      console.log(`✅ User activity created for ${newUser.email}`);
     } catch (activityError) {
       console.error(
         "❌ Failed to create user activity:",
-        activityError.message
+        activityError.message,
       );
     }
 
@@ -7795,7 +7766,7 @@ const register = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
-      }
+      },
     );
 
     // ======================================================
@@ -7823,15 +7794,11 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(
-      "REGISTER ERROR:",
-      error
-    );
+    console.error("REGISTER ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Something went wrong during registration.",
+      message: "Something went wrong during registration.",
       error: error.message,
       name: error.name,
     });
@@ -8031,7 +7998,7 @@ const resendVerificationCode = async (req, res) => {
     } catch (emailError) {
       console.error(
         "❌ Failed to send verification email:",
-        emailError.message
+        emailError.message,
       );
     }
 
@@ -8050,7 +8017,8 @@ const resendVerificationCode = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "New verification code created and sent to your email. Check your inbox.",
+      message:
+        "New verification code created and sent to your email. Check your inbox.",
     });
   } catch (error) {
     console.error("Resend verification error:", error);
@@ -8119,7 +8087,7 @@ const forgotPassword = async (req, res) => {
     const resetToken = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // ===========================
@@ -8147,7 +8115,7 @@ const forgotPassword = async (req, res) => {
     } catch (emailError) {
       console.error(
         "❌ Failed to send password reset email:",
-        emailError.message
+        emailError.message,
       );
     }
 
@@ -8728,7 +8696,7 @@ const updateCurrentUser = async (req, res) => {
       } catch (emailError) {
         console.error(
           "❌ Failed to send new verification email:",
-          emailError.message
+          emailError.message,
         );
       }
 
