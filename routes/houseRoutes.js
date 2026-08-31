@@ -32,6 +32,7 @@ router.get(
 );
 router.get("/", houseController.getAllHouses);
 router.get("/:email", houseController.getHousesByEmail);
+router.get("/notifications/:email", houseController.getNotificationsByEmail);
 router.get("/:id", houseController.getHouseById);
 router.get("/house-id/:houseId", houseController.getHouseByHouseId);
 
@@ -51,9 +52,12 @@ router.put(
 );
 
 router.put("/:id/status", houseController.updateHouseStatus);
-router.put("/notifications/:notificationId/read", houseController.markNotificationAsRead);
 router.put(
-  "/notifications/mark-all-read",
+  "/notifications/:id/read",
+  houseController.markNotificationAsRead,
+);
+router.put(
+  "/notifications/:id/mark-all-read",
   houseController.markAllNotificationsAsRead,
 );
 // Delete one notification

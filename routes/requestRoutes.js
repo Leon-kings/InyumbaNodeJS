@@ -17,6 +17,7 @@ const {
   markAllNotificationsAsRead,
   deleteNotification,
   bulkDeleteNotifications,
+  getAllNotificationsByEmail,
 
   upload,
 } = require("../controllers/requestController");
@@ -38,7 +39,7 @@ router.put("/:id", updateRequest);
 
 router.delete("/:id", deleteRequest);
 
-
+router.get ("/notifications/:email", getAllNotificationsByEmail)
 
 // ============================================================
 // MARK ONE AS READ
