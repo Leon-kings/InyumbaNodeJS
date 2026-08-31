@@ -2358,6 +2358,37 @@ exports.getAllNotifications = async (req, res) => {
   }
 };
 
+exports.getAllNotificationsByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const notifications = await Notification.find({
+      email: email,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: notifications.length,
+      data: notifications,
+    });
+  } catch (error) {
+    console.error("❌ GET NOTIFICATIONS BY EMAIL ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get notifications",
+      error: error.message,
+    });
+  }
+};
+
 // GET NOTIFICATIONS BY ID
 exports.getNotificationById = async (req, res) => {
   try {

@@ -2160,7 +2160,8 @@ exports.getMyHouseNotifications = async (req, res) => {
 // 15. Mark Notification as Read - FIXED (Supports both params & body)
 exports.markNotificationAsRead = async (req, res) => {
   try {
-    const notificationId = req.params.notificationId || req.body.notificationId;
+    // Check both param names for compatibility
+    const notificationId = req.params.id || req.params.notificationId || req.body.notificationId;
 
     if (!notificationId) {
       return res.status(400).json({
@@ -2201,6 +2202,34 @@ exports.markNotificationAsRead = async (req, res) => {
   }
 };
 
+exports.getNotificationsByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const notifications = await Notification.find({ email })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: "Notifications retrieved successfully",
+      count: notifications.length,
+      notifications,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve notifications",
+      error: error.message,
+    });
+  }
+};
 // 16. Mark All Notifications as Read - FIXED (No role checking)
 
 // exports.markAllNotificationsAsRead = async (req, res) => {

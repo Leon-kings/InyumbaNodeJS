@@ -201,7 +201,7 @@ router.put(
 
 // 4. Mark all notifications as read
 router.put(
-  "/notifications/read-all",
+  "/notifications/:id/read-all",
   questionController.markAllNotificationsAsRead
 );
 
