@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const contactSchema = new mongoose.Schema(
@@ -99,7 +98,7 @@ const contactSchema = new mongoose.Schema(
     toObject: {
       virtuals: true,
     },
-  }
+  },
 );
 
 // ===========================
@@ -118,10 +117,7 @@ contactSchema.virtual("notificationMessage").get(function () {
     archived: `📦 Contact from ${this.name} has been archived`,
   };
 
-  return (
-    statusMessages[this.status] ||
-    `📩 New contact from ${this.name}`
-  );
+  return statusMessages[this.status] || `📩 New contact from ${this.name}`;
 });
 
 contactSchema.virtual("messagePreview").get(function () {
@@ -135,18 +131,11 @@ contactSchema.virtual("responseTime").get(function () {
 
   const diff = this.repliedAt - this.createdAt;
 
-  const hours = Math.floor(
-    diff / (1000 * 60 * 60)
-  );
+  const hours = Math.floor(diff / (1000 * 60 * 60));
 
-  const minutes = Math.floor(
-    (diff % (1000 * 60 * 60)) /
-      (1000 * 60)
-  );
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-  return hours > 0
-    ? `${hours}h ${minutes}m`
-    : `${minutes}m`;
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 });
 
 // ===========================
@@ -239,13 +228,9 @@ contactSchema.methods.getAdminNotification = function () {
 
     createdAt: this.createdAt,
 
-    notificationMessage:
-      `📩 New contact message from ${this.name}`,
+    notificationMessage: `📩 New contact message from ${this.name}`,
 
-    priority:
-      this.status === "pending"
-        ? "high"
-        : "normal",
+    priority: this.status === "pending" ? "high" : "normal",
   };
 };
 
@@ -261,8 +246,7 @@ contactSchema.methods.getUserNotification = function () {
 
     repliedAt: this.repliedAt,
 
-    notificationMessage:
-      "✅ Your message has been replied to",
+    notificationMessage: "✅ Your message has been replied to",
   };
 };
 
@@ -288,12 +272,9 @@ contactSchema.methods.markAsReplied = function (replyMessage) {
 contactSchema.methods.getResponseTimeHours = function () {
   if (!this.repliedAt) return null;
 
-  const diff =
-    this.repliedAt - this.createdAt;
+  const diff = this.repliedAt - this.createdAt;
 
-  return (
-    diff / (1000 * 60 * 60)
-  ).toFixed(1);
+  return (diff / (1000 * 60 * 60)).toFixed(1);
 };
 
 // ===========================
@@ -305,16 +286,11 @@ contactSchema.query.pending = function () {
 };
 
 contactSchema.query.unread = function () {
-  return this.where("status").in([
-    "pending",
-    "read",
-  ]);
+  return this.where("status").in(["pending", "read"]);
 };
 
 contactSchema.query.byEmail = function (email) {
-  return this.where("email").regex(
-    new RegExp(email, "i")
-  );
+  return this.where("email").regex(new RegExp(email, "i"));
 };
 
 // ===========================
@@ -323,17 +299,11 @@ contactSchema.query.byEmail = function (email) {
 
 contactSchema.pre("save", async function () {
   if (this.isModified("status")) {
-    if (
-      this.status === "read" &&
-      !this.readAt
-    ) {
+    if (this.status === "read" && !this.readAt) {
       this.readAt = new Date();
     }
 
-    if (
-      this.status === "replied" &&
-      !this.repliedAt
-    ) {
+    if (this.status === "replied" && !this.repliedAt) {
       this.repliedAt = new Date();
     }
   }
@@ -345,9 +315,7 @@ contactSchema.pre("save", async function () {
 
 contactSchema.post("save", async function (doc) {
   if (doc.isNew) {
-    console.log(
-      `📩 New contact saved: ${doc.name} (${doc.email})`
-    );
+    console.log(`📩 New contact saved: ${doc.name} (${doc.email})`);
   }
 });
 
@@ -356,5 +324,4 @@ contactSchema.post("save", async function (doc) {
 // ===========================
 
 module.exports =
-  mongoose.models.Contact ||
-  mongoose.model("Contact", contactSchema);
+  mongoose.models.Contact || mongoose.model("Contact", contactSchema);
