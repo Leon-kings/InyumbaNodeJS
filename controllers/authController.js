@@ -197,15 +197,239 @@ const createNotification = async ({
 // REGISTER USER
 // ======================================================
 
+// const register = async (req, res) => {
+//   try {
+//     const { name, email, phone, password, confirmPassword } = req.body;
+
+//     // ===========================
+//     // VALIDATE REQUIRED FIELDS
+//     // ===========================
+
+//     if (!name || !email || !phone || !password || !confirmPassword) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "All fields are required",
+//       });
+//     }
+
+//     // ===========================
+//     // PASSWORD CONFIRMATION
+//     // ===========================
+
+//     if (password !== confirmPassword) {
+//       return res.status(400).json({
+//         success: false,
+//         errors: {
+//           confirmPassword: "Passwords do not match",
+//         },
+//       });
+//     }
+
+//     // ===========================
+//     // PASSWORD LENGTH
+//     // ===========================
+
+//     if (password.length < 8) {
+//       return res.status(400).json({
+//         success: false,
+//         errors: {
+//           password: "Password must be at least 8 characters",
+//         },
+//       });
+//     }
+
+//     // ===========================
+//     // EMAIL VALIDATION
+//     // ===========================
+
+//     const emailValidation = validateEmail(email);
+
+//     if (!emailValidation.valid) {
+//       return res.status(400).json({
+//         success: false,
+//         errors: {
+//           email: emailValidation.message,
+//         },
+//       });
+//     }
+
+//     const normalizedEmail = email.toLowerCase().trim();
+
+//     // ===========================
+//     // CHECK EXISTING USER
+//     // ===========================
+
+//     const existingUser = await User.findOne({
+//       $or: [{ email: normalizedEmail }],
+//     });
+
+//     if (existingUser) {
+//       const errors = {};
+
+//       if (existingUser.email === normalizedEmail) {
+//         errors.email = "An account with this email already exists";
+//       }
+
+//       return res.status(409).json({
+//         success: false,
+//         errors,
+//       });
+//     }
+
+//     // ===========================
+//     // HASH PASSWORD
+//     // ===========================
+
+//     const salt = await bcrypt.genSalt(10);
+//     const hashedPassword = await bcrypt.hash(password, salt);
+
+//     // ===========================
+//     // GENERATE VERIFICATION CODE
+//     // ===========================
+
+//     const verificationCode = generateVerificationCode();
+
+//     // ===========================
+//     // CREATE USER
+//     // ===========================
+
+//     const newUser = await User.create({
+//       name: name.trim(),
+//       email: normalizedEmail,
+//       phone: normalizedPhone,
+//       password: hashedPassword,
+//       isEmailVerified: false,
+//       isActive: true,
+//       emailVerificationCode: verificationCode,
+//       emailVerificationExpires: undefined,
+//     });
+
+//     // console.log(`✅ User created: ${newUser.email}`);
+
+//     // ======================================================
+//     // ACCOUNT CREATED NOTIFICATION
+//     // ======================================================
+
+//     await createNotification({
+//       userId: newUser._id,
+//       userName: newUser.name,
+//       email: newUser.email,
+//       title: "Account Created",
+//       message: `Welcome ${newUser.name}! Your account has been created successfully.`,
+//       type: "user_created",
+//     });
+
+//     // ======================================================
+//     // VERIFICATION CODE NOTIFICATION
+//     // ======================================================
+
+//     await createNotification({
+//       userId: newUser._id,
+//       userName: newUser.name,
+//       email: newUser.email,
+//       title: "Email Verification Code",
+//       message: `Your email verification code is: <strong>${verificationCode}</strong>. Please use this code to verify your email address.`,
+//       type: "email_verification",
+//     });
+
+//     // ======================================================
+//     // USER ACTIVITY
+//     // ======================================================
+
+//     try {
+//       await UserActivity.create({
+//         userId: newUser._id,
+//         userName: newUser.name,
+//         userEmail: newUser.email,
+//         action: "user_created",
+//         description: `New user ${newUser.name} created an account`,
+//         ipAddress:
+//           req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+//           req.socket.remoteAddress ||
+//           null,
+//         userAgent: req.headers["user-agent"] || null,
+//       });
+
+//       console.log(`✅ User activity created for ${newUser.email}`);
+//     } catch (activityError) {
+//       console.error(
+//         "❌ Failed to create user activity:",
+//         activityError.message,
+//       );
+//     }
+
+//     // ======================================================
+//     // GENERATE JWT
+//     // ======================================================
+
+//     const token = jwt.sign(
+//       {
+//         id: newUser._id,
+//         email: newUser.email,
+//         role: newUser.role,
+//       },
+//       process.env.JWT_SECRET,
+//       {
+//         expiresIn: "1d",
+//       },
+//     );
+
+//     // ======================================================
+//     // RESPONSE
+//     // ======================================================
+
+//     return res.status(201).json({
+//       success: true,
+//       message:
+//         "Registration successful. Please check your notifications for your verification code.",
+//       requiresEmailVerification: true,
+//       emailSent: true,
+//       token,
+//       user: {
+//         id: newUser._id,
+//         name: newUser.name,
+//         email: newUser.email,
+//         phone: newUser.phone,
+//         role: newUser.role,
+//         isEmailVerified: newUser.isEmailVerified,
+//         isActive: newUser.isActive,
+//         statistics: newUser.statistics,
+//         createdAt: newUser.createdAt,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("REGISTER ERROR:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong during registration.",
+//       error: error.message,
+//       name: error.name,
+//     });
+//   }
+// };
+
 const register = async (req, res) => {
   try {
-    const { name, email, phone, password, confirmPassword } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      password,
+      confirmPassword,
+    } = req.body;
 
     // ===========================
     // VALIDATE REQUIRED FIELDS
     // ===========================
 
-    if (!name || !email || !phone || !password || !confirmPassword) {
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !password ||
+      !confirmPassword
+    ) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -239,10 +463,21 @@ const register = async (req, res) => {
     }
 
     // ===========================
+    // NORMALIZE EMAIL AND PHONE
+    // ===========================
+
+    const normalizedEmail = email
+      .toLowerCase()
+      .trim();
+
+    const normalizedPhone = String(phone).trim();
+
+    // ===========================
     // EMAIL VALIDATION
     // ===========================
 
-    const emailValidation = validateEmail(email);
+    const emailValidation =
+      validateEmail(normalizedEmail);
 
     if (!emailValidation.valid) {
       return res.status(400).json({
@@ -253,26 +488,26 @@ const register = async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-
     // ===========================
     // CHECK EXISTING USER
+    // EMAIL ONLY
     // ===========================
 
+    // Phone is intentionally NOT checked here
+    // because multiple users are allowed to
+    // have the same phone number.
+
     const existingUser = await User.findOne({
-      $or: [{ email: normalizedEmail }],
+      email: normalizedEmail,
     });
 
     if (existingUser) {
-      const errors = {};
-
-      if (existingUser.email === normalizedEmail) {
-        errors.email = "An account with this email already exists";
-      }
-
       return res.status(409).json({
         success: false,
-        errors,
+        errors: {
+          email:
+            "An account with this email already exists",
+        },
       });
     }
 
@@ -281,13 +516,18 @@ const register = async (req, res) => {
     // ===========================
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const hashedPassword = await bcrypt.hash(
+      password,
+      salt
+    );
 
     // ===========================
     // GENERATE VERIFICATION CODE
     // ===========================
 
-    const verificationCode = generateVerificationCode();
+    const verificationCode =
+      generateVerificationCode();
 
     // ===========================
     // CREATE USER
@@ -298,10 +538,12 @@ const register = async (req, res) => {
       email: normalizedEmail,
       phone: normalizedPhone,
       password: hashedPassword,
+
       isEmailVerified: false,
       isActive: true,
-      emailVerificationCode: verificationCode,
-      emailVerificationExpires: undefined,
+
+      emailVerificationCode:
+        verificationCode,
     });
 
     // console.log(`✅ User created: ${newUser.email}`);
@@ -310,27 +552,41 @@ const register = async (req, res) => {
     // ACCOUNT CREATED NOTIFICATION
     // ======================================================
 
-    await createNotification({
-      userId: newUser._id,
-      userName: newUser.name,
-      email: newUser.email,
-      title: "Account Created",
-      message: `Welcome ${newUser.name}! Your account has been created successfully.`,
-      type: "user_created",
-    });
+    try {
+      await createNotification({
+        userId: newUser._id,
+        userName: newUser.name,
+        email: newUser.email,
+        title: "Account Created",
+        message: `Welcome ${newUser.name}! Your account has been created successfully.`,
+        type: "user_created",
+      });
+    } catch (notificationError) {
+      console.error(
+        "❌ Failed to create account notification:",
+        notificationError.message
+      );
+    }
 
     // ======================================================
     // VERIFICATION CODE NOTIFICATION
     // ======================================================
 
-    await createNotification({
-      userId: newUser._id,
-      userName: newUser.name,
-      email: newUser.email,
-      title: "Email Verification Code",
-      message: `Your email verification code is: <strong>${verificationCode}</strong>. Please use this code to verify your email address.`,
-      type: "email_verification",
-    });
+    try {
+      await createNotification({
+        userId: newUser._id,
+        userName: newUser.name,
+        email: newUser.email,
+        title: "Email Verification Code",
+        message: `Your email verification code is: <strong>${verificationCode}</strong>. Please use this code to verify your email address.`,
+        type: "email_verification",
+      });
+    } catch (notificationError) {
+      console.error(
+        "❌ Failed to create verification notification:",
+        notificationError.message
+      );
+    }
 
     // ======================================================
     // USER ACTIVITY
@@ -344,17 +600,22 @@ const register = async (req, res) => {
         action: "user_created",
         description: `New user ${newUser.name} created an account`,
         ipAddress:
-          req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+          req.headers["x-forwarded-for"]
+            ?.split(",")[0]
+            ?.trim() ||
           req.socket.remoteAddress ||
           null,
-        userAgent: req.headers["user-agent"] || null,
+        userAgent:
+          req.headers["user-agent"] || null,
       });
 
-      console.log(`✅ User activity created for ${newUser.email}`);
+      console.log(
+        `✅ User activity created for ${newUser.email}`
+      );
     } catch (activityError) {
       console.error(
         "❌ Failed to create user activity:",
-        activityError.message,
+        activityError.message
       );
     }
 
@@ -371,7 +632,7 @@ const register = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
-      },
+      }
     );
 
     // ======================================================
@@ -380,29 +641,39 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
+
       message:
         "Registration successful. Please check your notifications for your verification code.",
+
       requiresEmailVerification: true,
+
       emailSent: true,
+
       token,
+
       user: {
         id: newUser._id,
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phone,
         role: newUser.role,
-        isEmailVerified: newUser.isEmailVerified,
+        isEmailVerified:
+          newUser.isEmailVerified,
         isActive: newUser.isActive,
         statistics: newUser.statistics,
         createdAt: newUser.createdAt,
       },
     });
   } catch (error) {
-    console.error("REGISTER ERROR:", error);
+    console.error(
+      "REGISTER ERROR:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Something went wrong during registration.",
+      message:
+        "Something went wrong during registration.",
       error: error.message,
       name: error.name,
     });
