@@ -3993,10 +3993,84 @@ const getMyNotifications = async (req, res) => {
   }
 };
 
-// MARK NOTIFICATION AS READ
+// // MARK NOTIFICATION AS READ
+// const markNotificationAsRead = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const notification = await Notification.findById(id);
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     notification.isRead = true;
+//     notification.status = "read";
+//     notification.readAt = new Date();
+
+//     await notification.save();
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Notification marked as read",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error("❌ Mark notification as read error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to mark notification as read",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // MARK ALL NOTIFICATIONS AS READ
+// const markAllNotificationsAsRead = async (req, res) => {
+//   try {
+//     const result = await Notification.updateMany(
+//       { isRead: false },
+//       {
+//         $set: {
+//           isRead: true,
+//           status: "read",
+//           readAt: new Date(),
+//         },
+//       }
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `${result.modifiedCount} notifications marked as read`,
+//       modifiedCount: result.modifiedCount,
+//     });
+//   } catch (error) {
+//     console.error("❌ Mark all notifications as read error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to mark all notifications as read",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// MARK NOTIFICATION AS READ - FIXED (Supports both params & body)
 const markNotificationAsRead = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Support both URL params AND request body
+    const id = req.params.id || req.params.notificationId || req.body.id || req.body.notificationId;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Notification ID is required",
+      });
+    }
 
     const notification = await Notification.findById(id);
 
@@ -4029,11 +4103,24 @@ const markNotificationAsRead = async (req, res) => {
   }
 };
 
-// MARK ALL NOTIFICATIONS AS READ
+// MARK ALL NOTIFICATIONS AS READ - FIXED
 const markAllNotificationsAsRead = async (req, res) => {
   try {
+    // Support IDs in body if provided, otherwise mark all
+    const { notificationIds } = req.body;
+
+    let query = { isRead: false };
+    
+    // If specific IDs are provided, only mark those
+    if (notificationIds && Array.isArray(notificationIds) && notificationIds.length > 0) {
+      query = { 
+        _id: { $in: notificationIds },
+        isRead: false 
+      };
+    }
+
     const result = await Notification.updateMany(
-      { isRead: false },
+      query,
       {
         $set: {
           isRead: true,
@@ -4058,6 +4145,8 @@ const markAllNotificationsAsRead = async (req, res) => {
     });
   }
 };
+
+
 
 // DELETE NOTIFICATION
 const deleteNotification = async (req, res) => {
