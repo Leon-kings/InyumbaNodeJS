@@ -261,7 +261,7 @@ const register = async (req, res) => {
     // ===========================
 
     const existingUser = await User.findOne({
-      $or: [{ email: normalizedEmail }, { phone: normalizedPhone }],
+      $or: [{ email: normalizedEmail }],
     });
 
     if (existingUser) {
@@ -271,9 +271,6 @@ const register = async (req, res) => {
         errors.email = "An account with this email already exists";
       }
 
-      if (existingUser.phone === normalizedPhone) {
-        errors.phone = "An account with this phone number already exists";
-      }
 
       return res.status(409).json({
         success: false,
@@ -309,7 +306,7 @@ const register = async (req, res) => {
       emailVerificationExpires: undefined,
     });
 
-    console.log(`✅ User created: ${newUser.email}`);
+    // console.log(`✅ User created: ${newUser.email}`);
 
     // ======================================================
     // ACCOUNT CREATED NOTIFICATION
