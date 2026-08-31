@@ -254,7 +254,7 @@ const register = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const normalizedPhone = phone.trim();
+  
 
     // ===========================
     // CHECK EXISTING USER
@@ -400,14 +400,15 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("REGISTER ERROR:", error);
+  console.error("REGISTER ERROR:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong during registration.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
-  }
+  return res.status(500).json({
+    success: false,
+    message: "Something went wrong during registration.",
+    error: error.message,
+    name: error.name,
+  });
+}
 };
 
 // ======================================================
