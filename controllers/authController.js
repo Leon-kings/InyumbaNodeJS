@@ -1,4 +1,3 @@
-
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -11,6 +10,39 @@ const transporter = require("../services/emailTransporter");
 // ======================================================
 // EMAIL VALIDATION
 // ======================================================
+
+// const validateEmail = (email) => {
+//   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+//   if (!emailRegex.test(email)) {
+//     return {
+//       valid: false,
+//       message: "Invalid email format",
+//     };
+//   }
+
+//   const disposableDomains = [
+//     "tempmail.com",
+//     "temp-mail.org",
+//     "guerrillamail.com",
+//     "10minutemail.com",
+//     "throwawaymail.com",
+//     "mailinator.com",
+//   ];
+
+//   const domain = email.split("@")[1].toLowerCase();
+
+//   if (disposableDomains.includes(domain)) {
+//     return {
+//       valid: false,
+//       message: "Disposable email addresses are not allowed",
+//     };
+//   }
+
+//   return {
+//     valid: true,
+//   };
+// };
 
 const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,6 +65,7 @@ const validateEmail = (email) => {
 
   const domain = email.split("@")[1].toLowerCase();
 
+  // Check disposable email domains
   if (disposableDomains.includes(domain)) {
     return {
       valid: false,
@@ -40,6 +73,26 @@ const validateEmail = (email) => {
     };
   }
 
+  // Rwandan school/university email structure
+  // Examples:
+  // ug2424867@ines.ac.rw
+  // student123@ur.ac.rw
+  // 220001234@ur.ac.rw
+  // student@rp.ac.rw
+  // name@auca.ac.rw
+  const rwandaSchoolEmailRegex =
+    /^[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.ac\.rw$/i;
+
+  const isRwandaSchoolEmail = rwandaSchoolEmailRegex.test(email);
+
+  // Rwandan academic emails are accepted
+  if (isRwandaSchoolEmail) {
+    return {
+      valid: true,
+    };
+  }
+
+  // All other properly formatted, non-disposable emails are also accepted
   return {
     valid: true,
   };
@@ -680,7 +733,6 @@ const resendVerificationCode = async (req, res) => {
     });
   }
 };
-
 
 const markNotificationAsRead = async (req, res) => {
   try {

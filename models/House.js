@@ -300,8 +300,7 @@ const houseSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Number of guests is required"],
       default: 1,
-      },
-   
+    },
 
     // ==========================================================
     // AMENITIES
