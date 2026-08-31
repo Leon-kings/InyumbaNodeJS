@@ -2020,11 +2020,116 @@ const bulkDeleteNotifications = async (req, res) => {
   }
 };
 
-// MARK NOTIFICATION AS READ
+// // MARK NOTIFICATION AS READ
+// const markNotificationAsRead = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const user = req.user;
+
+//     const notification = await Notification.findById(id);
+
+//     if (!notification) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Notification not found",
+//       });
+//     }
+
+//     // Check permission
+//     const hasPermission =
+//       notification.targetRoles.includes(user.role) ||
+//       notification.targetUserId?.toString() === user.id ||
+//       notification.targetUserEmail === user.email ||
+//       notification.userId?.toString() === user.id ||
+//       user.role === "admin";
+
+//     if (!hasPermission) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "You don't have permission to mark this notification as read",
+//       });
+//     }
+
+//     notification.isRead = true;
+//     notification.status = "read";
+//     notification.readAt = new Date();
+
+//     if (!notification.readBy) {
+//       notification.readBy = [];
+//     }
+
+//     notification.readBy.push({
+//       userId: user.id,
+//       userEmail: user.email,
+//       userRole: user.role,
+//     });
+
+//     await notification.save();
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Notification marked as read",
+//       data: notification,
+//     });
+//   } catch (error) {
+//     console.error("❌ Mark notification as read error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to mark notification as read",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// // MARK ALL NOTIFICATIONS AS READ
+// const markAllNotificationsAsRead = async (req, res) => {
+//   try {
+//     const user = req.user;
+//     const { role } = req.query;
+
+//     let filter = {
+//       isRead: false,
+//     };
+
+//     if (role) {
+//       filter.targetRoles = { $in: [role] };
+//     } else if (user) {
+//       filter.$or = [
+//         { targetRoles: { $in: [user.role] } },
+//         { targetUserId: user.id },
+//         { targetUserEmail: user.email },
+//         { userId: user.id },
+//       ];
+//     }
+
+//     const result = await Notification.updateMany(filter, {
+//       $set: {
+//         isRead: true,
+//         status: "read",
+//         readAt: new Date(),
+//       },
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `${result.modifiedCount} notifications marked as read`,
+//       modifiedCount: result.modifiedCount,
+//     });
+//   } catch (error) {
+//     console.error("❌ Mark all notifications as read error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to mark all notifications as read",
+//       error: error.message,
+//     });
+//   }
+// };
+
 const markNotificationAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;
 
     const notification = await Notification.findById(id);
 
@@ -2035,34 +2140,9 @@ const markNotificationAsRead = async (req, res) => {
       });
     }
 
-    // Check permission
-    const hasPermission =
-      notification.targetRoles.includes(user.role) ||
-      notification.targetUserId?.toString() === user.id ||
-      notification.targetUserEmail === user.email ||
-      notification.userId?.toString() === user.id ||
-      user.role === "admin";
-
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: "You don't have permission to mark this notification as read",
-      });
-    }
-
     notification.isRead = true;
     notification.status = "read";
     notification.readAt = new Date();
-
-    if (!notification.readBy) {
-      notification.readBy = [];
-    }
-
-    notification.readBy.push({
-      userId: user.id,
-      userEmail: user.email,
-      userRole: user.role,
-    });
 
     await notification.save();
 
@@ -2085,31 +2165,16 @@ const markNotificationAsRead = async (req, res) => {
 // MARK ALL NOTIFICATIONS AS READ
 const markAllNotificationsAsRead = async (req, res) => {
   try {
-    const user = req.user;
-    const { role } = req.query;
-
-    let filter = {
-      isRead: false,
-    };
-
-    if (role) {
-      filter.targetRoles = { $in: [role] };
-    } else if (user) {
-      filter.$or = [
-        { targetRoles: { $in: [user.role] } },
-        { targetUserId: user.id },
-        { targetUserEmail: user.email },
-        { userId: user.id },
-      ];
-    }
-
-    const result = await Notification.updateMany(filter, {
-      $set: {
-        isRead: true,
-        status: "read",
-        readAt: new Date(),
-      },
-    });
+    const result = await Notification.updateMany(
+      { isRead: false },
+      {
+        $set: {
+          isRead: true,
+          status: "read",
+          readAt: new Date(),
+        },
+      }
+    );
 
     return res.status(200).json({
       success: true,
