@@ -254,7 +254,6 @@ const register = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const normalizedPhone = phone.trim();
 
     // ===========================
     // CHECK EXISTING USER
@@ -270,7 +269,6 @@ const register = async (req, res) => {
       if (existingUser.email === normalizedEmail) {
         errors.email = "An account with this email already exists";
       }
-
 
       return res.status(409).json({
         success: false,
@@ -405,7 +403,8 @@ const register = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Something went wrong during registration.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error: error.message,
+      name: error.name,
     });
   }
 };
