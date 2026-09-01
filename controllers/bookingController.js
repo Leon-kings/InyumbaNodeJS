@@ -5888,10 +5888,57 @@ const markNotificationAsRead = async (req, res) => {
 };
 
 // MARK ALL NOTIFICATIONS AS READ
+// const markAllNotificationsAsRead = async (req, res) => {
+//   try {
+//     const result = await Notification.updateMany(
+//       { isRead: false },
+//       {
+//         $set: {
+//           isRead: true,
+//           status: "read",
+//           readAt: new Date(),
+//         },
+//       }
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `${result.modifiedCount} notifications marked as read`,
+//       modifiedCount: result.modifiedCount,
+//     });
+//   } catch (error) {
+//     console.error("❌ Mark all notifications as read error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to mark all notifications as read",
+//       error: error.message,
+//     });
+//   }
+// };
+
 const markAllNotificationsAsRead = async (req, res) => {
   try {
+    const { ids } = req.body;
+
+    // ==========================================
+    // VALIDATE IDS
+    // ==========================================
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an array of notification IDs",
+      });
+    }
+
+    // ==========================================
+    // MARK ONLY PROVIDED IDS AS READ
+    // ==========================================
     const result = await Notification.updateMany(
-      { isRead: false },
+      {
+        _id: { $in: ids },
+        isRead: false,
+      },
       {
         $set: {
           isRead: true,
@@ -5907,11 +5954,11 @@ const markAllNotificationsAsRead = async (req, res) => {
       modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    console.error("❌ Mark all notifications as read error:", error);
+    console.error("❌ Mark selected notifications as read error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to mark all notifications as read",
+      message: "Failed to mark notifications as read",
       error: error.message,
     });
   }
