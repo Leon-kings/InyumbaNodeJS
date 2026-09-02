@@ -2605,7 +2605,10 @@ const sendEmail = async ({ to, subject, html, text }) => {
 // ======================================================
 
 const getFrontendUrl = () => {
-  return process.env.FRONTEND_URL || "https://inyumba-studentportal.vercel.app";
+  // Use environment variable or fallback to default
+  const url = process.env.FRONTEND_URL || "https://inyumba-studentportal.vercel.app";
+  // Remove trailing slash if present
+  return url.replace(/\/$/, '');
 };
 
 // ======================================================
@@ -2760,7 +2763,11 @@ const sendAccountCreationConfirmation = async (user) => {
 const sendVerificationEmail = async (user, verificationCode) => {
   const frontendUrl = getFrontendUrl();
   const verificationToken = generateVerificationToken(user.email);
+  
+  // Construct the verification link with proper URL
   const verificationLink = `${frontendUrl}/verification/email/status?token=${verificationToken}&code=${verificationCode}&email=${encodeURIComponent(user.email)}`;
+
+  console.log(`🔗 Verification link generated: ${verificationLink}`);
 
   const html = `
     <!DOCTYPE html>
@@ -2880,6 +2887,8 @@ const sendVerificationEmail = async (user, verificationCode) => {
 const sendPasswordResetEmail = async (user, resetToken, resetCode) => {
   const frontendUrl = getFrontendUrl();
   const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&code=${resetCode}&email=${encodeURIComponent(user.email)}`;
+
+  console.log(`🔗 Password reset link generated: ${resetLink}`);
 
   const html = `
     <!DOCTYPE html>
