@@ -322,8 +322,9 @@ router.post("/logout", logout);
 
 // User activities
 router.get("/activities", getUserActivities);
-router.delete("/activities/:id", deleteUserActivity);
 router.delete("/activities/bulk", bulkDeleteUserActivities);
+router.delete("/activities/:id", deleteUserActivity);
+
 
 // Current user profile
 router.get("/profile", getCurrentUser);

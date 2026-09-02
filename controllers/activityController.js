@@ -441,6 +441,39 @@ exports.deleteUserActivity = async (req, res) => {
 //   }
 // };
 
+// exports.bulkDeleteUserActivities = async (req, res) => {
+//   try {
+//     const { ids } = req.body || {};
+
+//     if (!Array.isArray(ids) || ids.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Please provide an array of activity IDs",
+//       });
+//     }
+
+//     const uniqueIds = [...new Set(ids)];
+
+//     const result = await UserActivity.deleteMany({
+//       _id: { $in: uniqueIds },
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `${result.deletedCount} user activities deleted successfully`,
+//       deletedCount: result.deletedCount,
+//     });
+//   } catch (error) {
+//     console.error("BULK DELETE USER ACTIVITIES ERROR:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to delete user activities",
+//       error: error.message,
+//     });
+//   }
+// };
+
 exports.bulkDeleteUserActivities = async (req, res) => {
   try {
     const { ids } = req.body || {};
@@ -452,10 +485,8 @@ exports.bulkDeleteUserActivities = async (req, res) => {
       });
     }
 
-    const uniqueIds = [...new Set(ids)];
-
     const result = await UserActivity.deleteMany({
-      _id: { $in: uniqueIds },
+      _id: { $in: ids },
     });
 
     return res.status(200).json({
