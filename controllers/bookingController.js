@@ -1,5 +1,3 @@
-
-
 // // ============================================================
 // // CONTROLLERS / BOOKING.CONTROLLER.JS (Enhanced with Notifications)
 // // ============================================================
@@ -82,7 +80,7 @@
 //       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef; border-top: none;">
 //         <p style="font-size: 16px; margin-bottom: 20px;">Hello ${booking.fullName},</p>
 //         <p style="font-size: 16px; margin-bottom: 20px;">Your booking has been created successfully. Here are the details:</p>
-        
+
 //         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
 //           <h3 style="margin: 0 0 15px; color: #667eea;">Booking Details</h3>
 //           <p style="margin: 5px 0;"><strong>Property:</strong> ${booking.houseName}</p>
@@ -94,13 +92,13 @@
 //           <p style="margin: 5px 0;"><strong>Status:</strong> ${booking.status}</p>
 //           <p style="margin: 5px 0;"><strong>Payment Status:</strong> ${booking.paymentStatus}</p>
 //         </div>
-        
+
 //         <div style="background: #e7f5ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #339af0;">
 //           <p style="margin: 0; color: #1c7ed6; font-size: 14px;">
 //             📌 Please wait for the host to confirm your booking. You will receive a notification once confirmed.
 //           </p>
 //         </div>
-        
+
 //         <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
 //         <p style="color: #6c757d; font-size: 14px; text-align: center; margin: 0;">
 //           This is an automated confirmation. Please keep this email for your records.
@@ -132,7 +130,7 @@
 //             <strong>⚠️ New booking requires your attention</strong>
 //           </p>
 //         </div>
-        
+
 //         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
 //           <h3 style="margin: 0 0 15px; color: #f5576c;">Guest Details</h3>
 //           <p style="margin: 5px 0;"><strong>Name:</strong> ${booking.fullName}</p>
@@ -140,7 +138,7 @@
 //           <p style="margin: 5px 0;"><strong>Phone:</strong> ${booking.phone}</p>
 //           ${booking.university ? `<p style="margin: 5px 0;"><strong>University:</strong> ${booking.university}</p>` : ""}
 //         </div>
-        
+
 //         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
 //           <h3 style="margin: 0 0 15px; color: #667eea;">Booking Details</h3>
 //           <p style="margin: 5px 0;"><strong>Property:</strong> ${booking.houseName}</p>
@@ -151,16 +149,16 @@
 //           <p style="margin: 5px 0;"><strong>Guests:</strong> ${booking.guests}</p>
 //           <p style="margin: 5px 0;"><strong>Total Amount:</strong> $${booking.totalAmount}</p>
 //         </div>
-        
+
 //         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
 //           <p style="margin: 0; text-align: center;">
-//             <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/host/bookings/${booking._id}" 
+//             <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/host/bookings/${booking._id}"
 //                style="display: inline-block; background: #667eea; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px;">
 //               View & Respond
 //             </a>
 //           </p>
 //         </div>
-        
+
 //         <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
 //         <p style="color: #6c757d; font-size: 14px; text-align: center; margin: 0;">
 //           Please login to the host panel to confirm or decline this booking.
@@ -2284,22 +2282,6 @@
 //   uploadBookingScreenshot,
 // };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // ============================================================
 // // CONTROLLERS / BOOKING.CONTROLLER.JS (FULLY ENHANCED)
 // // ============================================================
@@ -2383,7 +2365,7 @@
 //       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef; border-top: none;">
 //         <p style="font-size: 16px; margin-bottom: 20px;">Hello ${booking.fullName},</p>
 //         <p style="font-size: 16px; margin-bottom: 20px;">Your booking has been created successfully. Here are the details:</p>
-        
+
 //         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
 //           <h3 style="margin: 0 0 15px; color: #667eea;">Booking Details</h3>
 //           <p style="margin: 5px 0;"><strong>Property:</strong> ${booking.houseName}</p>
@@ -2395,13 +2377,13 @@
 //           <p style="margin: 5px 0;"><strong>Status:</strong> ${booking.status}</p>
 //           <p style="margin: 5px 0;"><strong>Payment Status:</strong> ${booking.paymentStatus}</p>
 //         </div>
-        
+
 //         <div style="background: #e7f5ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #339af0;">
 //           <p style="margin: 0; color: #1c7ed6; font-size: 14px;">
 //             📌 Please wait for the host to confirm your booking. You will receive a notification once confirmed.
 //           </p>
 //         </div>
-        
+
 //         <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
 //         <p style="color: #6c757d; font-size: 14px; text-align: center; margin: 0;">
 //           This is an automated confirmation. Please keep this email for your records.
@@ -2433,7 +2415,7 @@
 //             <strong>⚠️ New booking requires your attention</strong>
 //           </p>
 //         </div>
-        
+
 //         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
 //           <h3 style="margin: 0 0 15px; color: #f5576c;">Guest Details</h3>
 //           <p style="margin: 5px 0;"><strong>Name:</strong> ${booking.fullName}</p>
@@ -2441,7 +2423,7 @@
 //           <p style="margin: 5px 0;"><strong>Phone:</strong> ${booking.phone}</p>
 //           ${booking.university ? `<p style="margin: 5px 0;"><strong>University:</strong> ${booking.university}</p>` : ""}
 //         </div>
-        
+
 //         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e9ecef;">
 //           <h3 style="margin: 0 0 15px; color: #667eea;">Booking Details</h3>
 //           <p style="margin: 5px 0;"><strong>Property:</strong> ${booking.houseName}</p>
@@ -2452,16 +2434,16 @@
 //           <p style="margin: 5px 0;"><strong>Guests:</strong> ${booking.guests}</p>
 //           <p style="margin: 5px 0;"><strong>Total Amount:</strong> $${booking.totalAmount}</p>
 //         </div>
-        
+
 //         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #dee2e6;">
 //           <p style="margin: 0; text-align: center;">
-//             <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/host/bookings/${booking._id}" 
+//             <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/host/bookings/${booking._id}"
 //                style="display: inline-block; background: #667eea; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px;">
 //               View & Respond
 //             </a>
 //           </p>
 //         </div>
-        
+
 //         <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
 //         <p style="color: #6c757d; font-size: 14px; text-align: center; margin: 0;">
 //           Please login to the host panel to confirm or decline this booking.
@@ -3521,7 +3503,7 @@
 //     // ============================================================
 
 //     let notificationType = "";
-    
+
 //     switch (paymentStatus) {
 //       case "verified":
 //         notificationType = "payment_verified";
@@ -3603,7 +3585,7 @@
 //     // ============================================================
 //     // CREATE NOTIFICATION FOR DELETION
 //     // ============================================================
-    
+
 //     await createAllRoleNotifications(bookingData, "deleted");
 
 //     res.json({
@@ -3654,7 +3636,7 @@
 //     // ============================================================
 //     // CREATE NOTIFICATION FOR CANCELLATION
 //     // ============================================================
-    
+
 //     await createAllRoleNotifications(booking, "cancelled");
 
 //     res.json({
@@ -3787,7 +3769,7 @@
 //     // ============================================================
 //     // CREATE HOUSE STATUS NOTIFICATION
 //     // ============================================================
-    
+
 //     await createHouseStatusNotification(booking, oldHouseStatus, houseStatus);
 
 //     // Also create role-based notifications
@@ -4110,12 +4092,12 @@
 //     const { notificationIds } = req.body;
 
 //     let query = { isRead: false };
-    
+
 //     // If specific IDs are provided, only mark those
 //     if (notificationIds && Array.isArray(notificationIds) && notificationIds.length > 0) {
-//       query = { 
+//       query = {
 //         _id: { $in: notificationIds },
-//         isRead: false 
+//         isRead: false
 //       };
 //     }
 
@@ -4145,8 +4127,6 @@
 //     });
 //   }
 // };
-
-
 
 // // DELETE NOTIFICATION
 // const deleteNotification = async (req, res) => {
@@ -4312,28 +4292,6 @@
 //   // Upload middleware
 //   uploadBookingScreenshot,
 // };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // ============================================================
 // CONTROLLERS / BOOKING.CONTROLLER.JS (Enhanced with Notifications)
@@ -4510,24 +4468,35 @@ const getHostNotificationEmail = (booking) => ({
 // ===========================================
 
 // Create or update notification for specific role
-const createOrUpdateRoleNotification = async (booking, type, role, userInfo = null) => {
+const createOrUpdateRoleNotification = async (
+  booking,
+  type,
+  role,
+  userInfo = null,
+) => {
   try {
     // ============================================================
     // VALIDATION
     // ============================================================
 
     if (!booking) {
-      console.error("❌ Cannot create booking notification: booking is missing");
+      console.error(
+        "❌ Cannot create booking notification: booking is missing",
+      );
       return null;
     }
 
     if (!booking._id) {
-      console.error("❌ Cannot create booking notification: booking._id is missing");
+      console.error(
+        "❌ Cannot create booking notification: booking._id is missing",
+      );
       return null;
     }
 
     if (!role) {
-      console.error("❌ Cannot create booking notification: notification role is missing");
+      console.error(
+        "❌ Cannot create booking notification: notification role is missing",
+      );
       return null;
     }
 
@@ -4697,7 +4666,7 @@ const createOrUpdateRoleNotification = async (booking, type, role, userInfo = nu
       // ============================================================
       // UPDATE EXISTING NOTIFICATION
       // ============================================================
-      
+
       notification.type = notificationType;
       notification.title = title;
       notification.message = message;
@@ -4705,7 +4674,7 @@ const createOrUpdateRoleNotification = async (booking, type, role, userInfo = nu
       notification.status = "new";
       notification.priority = priority;
       notification.updatedAt = new Date();
-      
+
       // Update metadata
       notification.metadata = {
         bookingId: bookingReference,
@@ -4729,8 +4698,10 @@ const createOrUpdateRoleNotification = async (booking, type, role, userInfo = nu
       if (targetUserEmail) notification.targetUserEmail = targetUserEmail;
 
       await notification.save();
-      
-      console.log(`✅ Updated existing ${role} notification for booking ${bookingReference}`);
+
+      console.log(
+        `✅ Updated existing ${role} notification for booking ${bookingReference}`,
+      );
     } else {
       // ============================================================
       // CREATE NEW NOTIFICATION
@@ -4767,13 +4738,18 @@ const createOrUpdateRoleNotification = async (booking, type, role, userInfo = nu
       });
 
       await notification.save();
-      
-      console.log(`✅ Created new ${role} notification for booking ${bookingReference}`);
+
+      console.log(
+        `✅ Created new ${role} notification for booking ${bookingReference}`,
+      );
     }
 
     return notification;
   } catch (error) {
-    console.error(`❌ Error creating/updating ${role} notification:`, error.message);
+    console.error(
+      `❌ Error creating/updating ${role} notification:`,
+      error.message,
+    );
     return null;
   }
 };
@@ -4782,16 +4758,18 @@ const createOrUpdateRoleNotification = async (booking, type, role, userInfo = nu
 const createAllRoleNotifications = async (booking, type, userInfo = null) => {
   try {
     if (!booking || !booking._id) {
-      console.error("❌ Cannot create notifications: booking or booking._id is missing");
+      console.error(
+        "❌ Cannot create notifications: booking or booking._id is missing",
+      );
       return [];
     }
 
     const roles = ["admin", "manager"];
-    
+
     if (booking.ownerEmail) {
       roles.push("host");
     }
-    
+
     if (booking.email) {
       roles.push("user");
     }
@@ -4814,7 +4792,9 @@ const createAllRoleNotifications = async (booking, type, userInfo = null) => {
       }
     }
 
-    console.log(`✅ ${notifications.length} notifications processed for booking ${booking.bookingId || booking._id}`);
+    console.log(
+      `✅ ${notifications.length} notifications processed for booking ${booking.bookingId || booking._id}`,
+    );
     return notifications;
   } catch (error) {
     console.error("❌ Error creating all role notifications:", error.message);
@@ -5456,7 +5436,7 @@ const verifyPayment = async (req, res) => {
 
     // Create/Update notification based on payment status
     let notificationType = "";
-    
+
     switch (paymentStatus) {
       case "verified":
         notificationType = "payment_verified";
@@ -5555,10 +5535,51 @@ const deleteBooking = async (req, res) => {
 };
 
 // CANCEL BOOKING
+// const cancelBooking = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { reason } = req.body;
+
+//     const booking = await Booking.findById(id);
+
+//     if (!booking) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Booking not found",
+//       });
+//     }
+
+//     booking.status = "cancelled";
+
+//     if (reason) {
+//       booking.notes = `Cancelled: ${reason}`;
+//     }
+
+//     await booking.save();
+
+//     // Create notification for cancellation
+//     await createAllRoleNotifications(booking, "cancelled");
+
+//     res.json({
+//       success: true,
+//       message: "Booking cancelled",
+//       data: booking,
+//     });
+//   } catch (error) {
+//     console.error("❌ Cancel booking error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
 const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const { reason } = req.body;
+
+    // Prevent error when no request body is sent
+    const { reason } = req.body || {};
 
     const booking = await Booking.findById(id);
 
@@ -5580,14 +5601,15 @@ const cancelBooking = async (req, res) => {
     // Create notification for cancellation
     await createAllRoleNotifications(booking, "cancelled");
 
-    res.json({
+    return res.status(200).json({
       success: true,
       message: "Booking cancelled",
       data: booking,
     });
   } catch (error) {
     console.error("❌ Cancel booking error:", error);
-    res.status(500).json({
+
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -5945,7 +5967,7 @@ const markAllNotificationsAsRead = async (req, res) => {
           status: "read",
           readAt: new Date(),
         },
-      }
+      },
     );
 
     return res.status(200).json({

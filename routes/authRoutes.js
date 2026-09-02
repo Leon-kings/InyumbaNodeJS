@@ -206,7 +206,11 @@ const {
   bulkMarkNotificationsAsRead,
 } = require("../controllers/authController");
 
-const { getUserActivities } = require("../controllers/activityController");
+const {
+  getUserActivities,
+  deleteUserActivity,
+  bulkDeleteUserActivities,
+} = require("../controllers/activityController");
 
 const {
   registerValidationRules,
@@ -318,6 +322,8 @@ router.post("/logout", logout);
 
 // User activities
 router.get("/activities", getUserActivities);
+router.delete("/activities", deleteUserActivity);
+router.delete("/activities/bulk", bulkDeleteUserActivities);
 
 // Current user profile
 router.get("/profile", getCurrentUser);
