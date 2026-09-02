@@ -392,13 +392,58 @@ exports.deleteUserActivity = async (req, res) => {
 // BULK DELETE USER ACTIVITIES
 // ============================================================
 
+// exports.bulkDeleteUserActivities = async (req, res) => {
+//   try {
+//     const { ids } = req.body;
+
+//     // ============================================
+//     // VALIDATE IDS
+//     // ============================================
+
+//     if (!Array.isArray(ids) || ids.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Please provide an array of activity IDs",
+//       });
+//     }
+
+//     // ============================================
+//     // REMOVE DUPLICATE IDS
+//     // ============================================
+
+//     const uniqueIds = [...new Set(ids)];
+
+//     // ============================================
+//     // DELETE ACTIVITIES
+//     // ============================================
+
+//     const result = await UserActivity.deleteMany({
+//       _id: { $in: uniqueIds },
+//     });
+
+//     // ============================================
+//     // SUCCESS
+//     // ============================================
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `${result.deletedCount} user activities deleted successfully`,
+//       deletedCount: result.deletedCount,
+//     });
+//   } catch (error) {
+//     console.error("BULK DELETE USER ACTIVITIES ERROR:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to delete user activities",
+//       error: error.message,
+//     });
+//   }
+// };
+
 exports.bulkDeleteUserActivities = async (req, res) => {
   try {
-    const { ids } = req.body;
-
-    // ============================================
-    // VALIDATE IDS
-    // ============================================
+    const { ids } = req.body || {};
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
@@ -407,23 +452,11 @@ exports.bulkDeleteUserActivities = async (req, res) => {
       });
     }
 
-    // ============================================
-    // REMOVE DUPLICATE IDS
-    // ============================================
-
     const uniqueIds = [...new Set(ids)];
-
-    // ============================================
-    // DELETE ACTIVITIES
-    // ============================================
 
     const result = await UserActivity.deleteMany({
       _id: { $in: uniqueIds },
     });
-
-    // ============================================
-    // SUCCESS
-    // ============================================
 
     return res.status(200).json({
       success: true,
