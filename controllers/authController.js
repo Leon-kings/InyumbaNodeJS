@@ -2606,7 +2606,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
 
 const getFrontendUrl = () => {
   // Use environment variable or fallback to default
-  const url = process.env.FRONTEND_URL || "https://inyumba-studentportal.vercel.app";
+  const url = process.env.FRONTEND_URL || "https://www.inyumba.com";
   // Remove trailing slash if present
   return url.replace(/\/$/, '');
 };
