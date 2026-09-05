@@ -40,6 +40,8 @@ const notificationSchema = new mongoose.Schema(
         "user_login",
         "user_logout",
         "email_verified",
+        "email_verification",
+        "user_created",
         "password_changed",
         "password_reset",
         "profile_updated",
