@@ -428,14 +428,14 @@
 //     });
 //   }
 // };
+const crypto = require("crypto");
 
 const Payment = require("../models/Payment");
+
 const {
   initiatePayment,
   checkPaymentStatus,
 } = require("../services/kpayPaymentService");
-
-const crypto = require("crypto");
 
 const generateReferenceId = () => {
   return `PAY-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
@@ -463,9 +463,11 @@ const normalizePhone = (phone) => {
   return value;
 };
 
-// =====================================================
-// CREATE PAYMENT
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| CREATE PAYMENT
+|--------------------------------------------------------------------------
+*/
 
 exports.createPayment = async (req, res) => {
   try {
@@ -477,6 +479,7 @@ exports.createPayment = async (req, res) => {
       payerPhone,
       amount,
       currency,
+      paymentMethod,
     } = req.body;
 
     if (
@@ -485,12 +488,20 @@ exports.createPayment = async (req, res) => {
       !payerName ||
       !payerEmail ||
       !payerPhone ||
-      !amount
+      !amount ||
+      !paymentMethod
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "booking, bookingId, payerName, payerEmail, payerPhone and amount are required",
+          "booking, bookingId, payerName, payerEmail, payerPhone, amount and paymentMethod are required",
+      });
+    }
+
+    if (!["momo", "card"].includes(paymentMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: "paymentMethod must be momo or card",
       });
     }
 
@@ -510,25 +521,43 @@ exports.createPayment = async (req, res) => {
     const payment = await Payment.create({
       booking,
       bookingId,
+
       payerName,
+
       payerEmail,
+
       payerPhone: phone,
+
       amount: numericAmount,
+
       currency: currency || "RWF",
+
       provider: "kpay",
+
+      paymentMethod,
+
       referenceId,
+
       status: "pending",
+
       initiatedAt: new Date(),
     });
 
     try {
       const kpayResponse = await initiatePayment({
         phone,
+
         email: payerEmail,
+
         name: payerName,
+
         amount: numericAmount,
+
         referenceId,
+
         bookingId,
+
+        paymentMethod,
       });
 
       payment.rawResponse = kpayResponse;
@@ -543,25 +572,48 @@ exports.createPayment = async (req, res) => {
 
         return res.status(201).json({
           success: true,
+
           message: "Payment initialized successfully",
 
           payment: {
             id: payment._id,
+
             booking: payment.booking,
+
             bookingId: payment.bookingId,
+
             referenceId: payment.referenceId,
+
             transactionId: payment.transactionId,
+
+            payerName: payment.payerName,
+
+            payerEmail: payment.payerEmail,
+
+            payerPhone: payment.payerPhone,
+
             amount: payment.amount,
+
             currency: payment.currency,
+
+            provider: payment.provider,
+
+            paymentMethod: payment.paymentMethod,
+
             status: payment.status,
           },
 
           kpay: {
             success: kpayResponse.success,
+
             reply: kpayResponse.reply,
+
             url: kpayResponse.url,
+
             tid: kpayResponse.tid,
+
             refid: kpayResponse.refid,
+
             retcode: kpayResponse.retcode,
           },
         });
@@ -578,11 +630,14 @@ exports.createPayment = async (req, res) => {
 
       return res.status(400).json({
         success: false,
+
         message: payment.reason,
 
         payment: {
           id: payment._id,
+
           referenceId: payment.referenceId,
+
           status: payment.status,
         },
 
@@ -603,12 +658,16 @@ exports.createPayment = async (req, res) => {
 
       return res.status(502).json({
         success: false,
+
         message: "KPay payment request failed",
 
         payment: {
           id: payment._id,
+
           referenceId: payment.referenceId,
+
           status: payment.status,
+
           reason: payment.reason,
         },
 
@@ -623,15 +682,19 @@ exports.createPayment = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: "Failed to create payment",
+
       error: error.message,
     });
   }
 };
 
-// =====================================================
-// CHECK PAYMENT STATUS
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| CHECK PAYMENT STATUS
+|--------------------------------------------------------------------------
+*/
 
 exports.checkPaymentStatus = async (req, res) => {
   try {
@@ -640,6 +703,7 @@ exports.checkPaymentStatus = async (req, res) => {
     if (!referenceId) {
       return res.status(400).json({
         success: false,
+
         message: "referenceId is required",
       });
     }
@@ -651,6 +715,7 @@ exports.checkPaymentStatus = async (req, res) => {
     if (!payment) {
       return res.status(404).json({
         success: false,
+
         message: "Payment not found",
       });
     }
@@ -685,7 +750,9 @@ exports.checkPaymentStatus = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+
       payment,
+
       kpay: kpayResponse,
     });
   } catch (error) {
@@ -696,15 +763,19 @@ exports.checkPaymentStatus = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: "Failed to check payment status",
+
       error: error.response?.data || error.message,
     });
   }
 };
 
-// =====================================================
-// GET ONE PAYMENT
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| GET PAYMENT
+|--------------------------------------------------------------------------
+*/
 
 exports.getPayment = async (req, res) => {
   try {
@@ -717,26 +788,32 @@ exports.getPayment = async (req, res) => {
     if (!payment) {
       return res.status(404).json({
         success: false,
+
         message: "Payment not found",
       });
     }
 
     return res.status(200).json({
       success: true,
+
       payment,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
+
       message: "Failed to get payment",
+
       error: error.message,
     });
   }
 };
 
-// =====================================================
-// GET BOOKING PAYMENTS
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| GET BOOKING PAYMENTS
+|--------------------------------------------------------------------------
+*/
 
 exports.getBookingPayments = async (req, res) => {
   try {
@@ -750,20 +827,25 @@ exports.getBookingPayments = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+
       payments,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
+
       message: "Failed to get booking payments",
+
       error: error.message,
     });
   }
 };
 
-// =====================================================
-// KPAY CALLBACK
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| KPAY CALLBACK
+|--------------------------------------------------------------------------
+*/
 
 exports.kpayCallback = async (req, res) => {
   try {
@@ -778,6 +860,7 @@ exports.kpayCallback = async (req, res) => {
     if (!referenceId) {
       return res.status(400).json({
         success: false,
+
         message: "Payment reference is missing",
       });
     }
@@ -789,6 +872,7 @@ exports.kpayCallback = async (req, res) => {
     if (!payment) {
       return res.status(404).json({
         success: false,
+
         message: "Payment not found",
       });
     }
@@ -818,15 +902,15 @@ exports.kpayCallback = async (req, res) => {
       payment.completedAt = payment.completedAt || new Date();
 
       payment.reason = data.statusdesc || "Successfully processed transaction";
-    } else if (
-      status === "failed" ||
-      status === "failure" ||
-      status === "cancelled"
-    ) {
-      payment.status = status === "cancelled" ? "cancelled" : "failed";
+    } else if (status === "failed" || status === "failure") {
+      payment.status = "failed";
 
       payment.reason =
         data.statusdesc || data.message || data.reason || "Payment failed";
+    } else if (status === "cancelled") {
+      payment.status = "cancelled";
+
+      payment.reason = data.statusdesc || data.message || "Payment cancelled";
     } else {
       payment.status = "pending";
 
@@ -837,6 +921,7 @@ exports.kpayCallback = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+
       message: "KPay callback processed",
     });
   } catch (error) {
@@ -847,24 +932,28 @@ exports.kpayCallback = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: "Failed to process KPay callback",
+
       error: error.message,
     });
   }
 };
 
-// =====================================================
-// PAYMENT STATISTICS
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| PAYMENT STATISTICS
+|--------------------------------------------------------------------------
+*/
 
 exports.getPaymentStatistics = async (req, res) => {
   try {
     const now = new Date();
 
     const currentYear = now.getFullYear();
+
     const currentMonth = now.getMonth();
 
-    // Start of today
     const startOfDay = new Date(
       currentYear,
       currentMonth,
@@ -875,10 +964,8 @@ exports.getPaymentStatistics = async (req, res) => {
       0,
     );
 
-    // Start of current month
     const startOfMonth = new Date(currentYear, currentMonth, 1, 0, 0, 0, 0);
 
-    // Start of next month
     const startOfNextMonth = new Date(
       currentYear,
       currentMonth + 1,
@@ -889,95 +976,91 @@ exports.getPaymentStatistics = async (req, res) => {
       0,
     );
 
-    // Start of current year
     const startOfYear = new Date(currentYear, 0, 1, 0, 0, 0, 0);
 
-    // Start of next year
     const startOfNextYear = new Date(currentYear + 1, 0, 1, 0, 0, 0, 0);
-
-    // -------------------------------------------------
-    // TODAY'S INCOME
-    // -------------------------------------------------
 
     const todayIncomeResult = await Payment.aggregate([
       {
         $match: {
           status: "successful",
+
           completedAt: {
             $gte: startOfDay,
           },
         },
       },
+
       {
         $group: {
           _id: null,
+
           total: {
             $sum: "$amount",
           },
+
           count: {
             $sum: 1,
           },
         },
       },
     ]);
-
-    // -------------------------------------------------
-    // MONTH INCOME
-    // -------------------------------------------------
 
     const monthIncomeResult = await Payment.aggregate([
       {
         $match: {
           status: "successful",
+
           completedAt: {
             $gte: startOfMonth,
+
             $lt: startOfNextMonth,
           },
         },
       },
+
       {
         $group: {
           _id: null,
+
           total: {
             $sum: "$amount",
           },
+
           count: {
             $sum: 1,
           },
         },
       },
     ]);
-
-    // -------------------------------------------------
-    // YEAR INCOME
-    // -------------------------------------------------
 
     const yearIncomeResult = await Payment.aggregate([
       {
         $match: {
           status: "successful",
+
           completedAt: {
             $gte: startOfYear,
+
             $lt: startOfNextYear,
           },
         },
       },
+
       {
         $group: {
           _id: null,
+
           total: {
             $sum: "$amount",
           },
+
           count: {
             $sum: 1,
           },
         },
       },
     ]);
-
-    // -------------------------------------------------
-    // ALL-TIME INCOME
-    // -------------------------------------------------
 
     const totalIncomeResult = await Payment.aggregate([
       {
@@ -985,12 +1068,15 @@ exports.getPaymentStatistics = async (req, res) => {
           status: "successful",
         },
       },
+
       {
         $group: {
           _id: null,
+
           total: {
             $sum: "$amount",
           },
+
           count: {
             $sum: 1,
           },
@@ -998,17 +1084,15 @@ exports.getPaymentStatistics = async (req, res) => {
       },
     ]);
 
-    // -------------------------------------------------
-    // PAYMENT STATUS COUNTS
-    // -------------------------------------------------
-
     const statusResult = await Payment.aggregate([
       {
         $group: {
           _id: "$status",
+
           count: {
             $sum: 1,
           },
+
           amount: {
             $sum: "$amount",
           },
@@ -1047,21 +1131,20 @@ exports.getPaymentStatistics = async (req, res) => {
       if (statusStats[item._id]) {
         statusStats[item._id] = {
           count: item.count,
+
           amount: item.amount,
         };
       }
     });
 
-    // -------------------------------------------------
-    // MONTHLY INCOME FOR CURRENT YEAR
-    // -------------------------------------------------
-
     const monthlyIncome = await Payment.aggregate([
       {
         $match: {
           status: "successful",
+
           completedAt: {
             $gte: startOfYear,
+
             $lt: startOfNextYear,
           },
         },
@@ -1112,15 +1195,14 @@ exports.getPaymentStatistics = async (req, res) => {
 
       return {
         month,
+
         monthNumber: index + 1,
+
         income: found ? found.income : 0,
+
         payments: found ? found.payments : 0,
       };
     });
-
-    // -------------------------------------------------
-    // RESPONSE
-    // -------------------------------------------------
 
     return res.status(200).json({
       success: true,
@@ -1128,24 +1210,31 @@ exports.getPaymentStatistics = async (req, res) => {
       statistics: {
         today: {
           income: todayIncomeResult[0]?.total || 0,
+
           payments: todayIncomeResult[0]?.count || 0,
         },
 
         month: {
           income: monthIncomeResult[0]?.total || 0,
+
           payments: monthIncomeResult[0]?.count || 0,
+
           month: monthNames[currentMonth],
+
           year: currentYear,
         },
 
         year: {
           income: yearIncomeResult[0]?.total || 0,
+
           payments: yearIncomeResult[0]?.count || 0,
+
           year: currentYear,
         },
 
         allTime: {
           income: totalIncomeResult[0]?.total || 0,
+
           payments: totalIncomeResult[0]?.count || 0,
         },
 
@@ -1159,7 +1248,9 @@ exports.getPaymentStatistics = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: "Failed to get payment statistics",
+
       error: error.message,
     });
   }
