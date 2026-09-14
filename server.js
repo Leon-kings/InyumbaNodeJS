@@ -22,6 +22,7 @@ const houseRoutes = require("./routes/houseRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const questionRoutes = require("./routes/questionRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 /* ============================================================
    APP
@@ -66,6 +67,8 @@ app.use("/requests", requestRoutes);
 app.use("/bookings", bookingRoutes);
 
 app.use("/questions", questionRoutes);
+
+app.use("/payments", paymentRoutes);
 
 /* ============================================================
    HEALTH CHECK
